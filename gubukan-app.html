@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gubukan App</title>
+<style>
+/* ============================================================
+   GUBUKAN APP — Warm Earthy Batik-inspired UI
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:        #0f0e0c;
+  --bg2:       #1a1814;
+  --bg3:       #252218;
+  --card:      #1e1c16;
+  --border:    #2e2b20;
+  --gold:      #d4a843;
+  --gold2:     #f0c96a;
+  --cream:     #f5edd8;
+  --green:     #4caf82;
+  --red:       #e05c5c;
+  --blue:      #5c9ee0;
+  --orange:    #e08a3c;
+  --text:      #e8dfc8;
+  --text2:     #a09880;
+  --text3:     #6b6352;
+  --shadow:    0 4px 24px rgba(0,0,0,0.5);
+  --radius:    14px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ---- TOP BAR ---- */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+.topbar-month {
+  font-size: 12px; color: var(--text2);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+.topbar-sync {
+  width: 32px; height: 32px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px;
+  transition: transform 0.3s;
+}
+.topbar-sync.spinning { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- NAV TABS ---- */
+.nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding: 6px 0 env(safe-area-inset-bottom);
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
+  padding: 6px 0;
+  cursor: pointer; border: none; background: none;
+  color: var(--text3); font-size: 10px;
+  transition: color 0.2s;
+}
+.nav-item.active { color: var(--gold); }
+.nav-icon { font-size: 20px; line-height: 1; }
+
+/* ---- MAIN CONTENT ---- */
+.main {
+  padding: 70px 0 90px;
+  min-height: 100vh;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+/* ---- DASHBOARD ---- */
+.dash-header {
+  padding: 16px;
+  background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+  border-bottom: 1px solid var(--border);
+}
+.dash-greeting { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.dash-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--cream); }
+.dash-period { font-size: 12px; color: var(--gold); margin-top: 2px; }
+
+.summary-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; padding: 14px;
+}
+.summary-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  position: relative; overflow: hidden;
+}
+.summary-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.summary-card.green::before { background: var(--green); }
+.summary-card.red::before   { background: var(--red); }
+.summary-card.gold::before  { background: var(--gold); }
+.summary-card.blue::before  { background: var(--blue); }
+.summary-card.orange::before { background: var(--orange); }
+
+.sc-label { font-size: 10px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.sc-value { font-size: 18px; font-weight: 600; color: var(--cream); line-height: 1; }
+.sc-value.green { color: var(--green); }
+.sc-value.red   { color: var(--red); }
+.sc-value.gold  { color: var(--gold); }
+.sc-sub { font-size: 10px; color: var(--text3); margin-top: 4px; }
+
+.summary-card-wide {
+  grid-column: 1 / -1;
+}
+
+/* Progress Bar */
+.progress-bar {
+  height: 6px; background: var(--border);
+  border-radius: 3px; margin-top: 8px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold2));
+  transition: width 0.8s ease;
+}
+
+/* Section Header */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 14px 8px;
+}
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px; color: var(--cream);
+}
+.section-action {
+  font-size: 11px; color: var(--gold);
+  cursor: pointer; padding: 4px 10px;
+  border: 1px solid var(--gold);
+  border-radius: 20px;
+  background: none;
+}
+
+/* Recent Events List */
+.event-list { padding: 0 14px; display: flex; flex-direction: column; gap: 8px; }
+
+.event-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.event-card:active { border-color: var(--gold); }
+
+.event-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.event-dot.green  { background: var(--green); }
+.event-dot.orange { background: var(--orange); }
+.event-dot.red    { background: var(--red); }
+
+.event-info { flex: 1; min-width: 0; }
+.event-customer { font-size: 13px; font-weight: 600; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.event-omzet { text-align: right; }
+.event-omzet-val { font-size: 13px; font-weight: 600; color: var(--green); }
+.event-margin { font-size: 10px; color: var(--text2); }
+
+/* ---- CHART AREA ---- */
+.chart-wrap {
+  margin: 0 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.chart-title { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+.bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bar-wrap { width: 100%; display: flex; gap: 2px; align-items: flex-end; height: 65px; }
+.bar {
+  flex: 1; border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  transition: height 0.6s ease;
+}
+.bar.income { background: var(--green); }
+.bar.expense { background: var(--red); }
+.bar-label { font-size: 9px; color: var(--text3); }
+
+/* ---- EVENTS PAGE ---- */
+.filter-row {
+  display: flex; gap: 8px; padding: 12px 14px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.filter-chip.active {
+  border-color: var(--gold);
+  background: rgba(212,168,67,0.15);
+  color: var(--gold);
+}
+
+.fab {
+  position: fixed; bottom: 80px; right: 16px;
+  width: 52px; height: 52px;
+  background: var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: var(--bg);
+  box-shadow: 0 4px 20px rgba(212,168,67,0.4);
+  cursor: pointer; border: none;
+  z-index: 50;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.fab:active { transform: scale(0.94); }
+
+/* ---- MODAL / BOTTOM SHEET ---- */
+.overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7);
+  display: none; align-items: flex-end;
+  backdrop-filter: blur(4px);
+}
+.overlay.open { display: flex; }
+
+.sheet {
+  width: 100%;
+  background: var(--bg2);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border);
+  padding: 0 0 env(safe-area-inset-bottom);
+  max-height: 92vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+.sheet-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sheet-title { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--cream); }
+.sheet-close {
+  width: 30px; height: 30px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px; color: var(--text2);
+}
+
+.sheet-body { padding: 16px; }
+
+/* ---- FORM ---- */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+.form-control {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-control:focus { border-color: var(--gold); }
+.form-control::placeholder { color: var(--text3); }
+select.form-control { appearance: none; cursor: pointer; }
+textarea.form-control { resize: vertical; min-height: 70px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.form-section-title {
+  font-size: 12px; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin: 16px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Item rows in form */
+.item-row {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px;
+  align-items: center;
+}
+.item-row input {
+  background: none; border: none;
+  color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; outline: none; width: 100%;
+}
+.item-row .item-qty { width: 50px; text-align: center; }
+.item-row .item-price { width: 80px; text-align: right; }
+.item-row .item-del {
+  color: var(--red); cursor: pointer;
+  font-size: 16px; padding: 0 4px;
+  background: none; border: none;
+}
+
+.add-item-btn {
+  width: 100%;
+  padding: 8px;
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text3);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+
+/* Expense rows */
+.expense-row {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.expense-row-top {
+  display: grid; grid-template-columns: 1fr auto auto;
+  gap: 8px; align-items: center;
+}
+.expense-row-top input {
+  background: none; border: none;
+  color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; outline: none; width: 100%;
+}
+.expense-cat {
+  font-size: 10px; padding: 2px 8px;
+  border-radius: 10px; border: none;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+.expense-cat.HPP { background: rgba(92,158,224,0.2); color: var(--blue); }
+.expense-cat.Operasional { background: rgba(224,138,60,0.2); color: var(--orange); }
+.expense-cat.Overhead { background: rgba(160,152,128,0.2); color: var(--text2); }
+
+/* Totals card */
+.totals-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px; margin: 12px 0;
+}
+.total-row {
+  display: flex; justify-content: space-between;
+  font-size: 12px; padding: 3px 0;
+  color: var(--text2);
+}
+.total-row.highlight { font-weight: 600; font-size: 14px; color: var(--cream); }
+.total-row.profit { color: var(--green); font-weight: 600; }
+.total-row.loss   { color: var(--red);   font-weight: 600; }
+
+/* Submit button */
+.btn-submit {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  border: none; border-radius: var(--radius-sm);
+  color: var(--bg); font-weight: 700;
+  font-size: 15px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  margin-top: 8px;
+  transition: opacity 0.2s;
+}
+.btn-submit:active { opacity: 0.85; }
+
+.btn-outline {
+  width: 100%; padding: 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2); font-size: 13px;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  margin-top: 6px;
+}
+
+/* ---- KAS PAGE ---- */
+.kas-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+}
+.kas-tab {
+  flex: 1; padding: 12px;
+  text-align: center; font-size: 12px;
+  cursor: pointer; color: var(--text2);
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s;
+}
+.kas-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.kas-content { display: none; }
+.kas-content.active { display: block; }
+
+/* Trans list */
+.trans-list { padding: 0 14px; display: flex; flex-direction: column; gap: 6px; }
+.trans-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.trans-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.trans-icon.in  { background: rgba(76,175,130,0.15); }
+.trans-icon.out { background: rgba(224,92,92,0.15); }
+.trans-info { flex: 1; min-width: 0; }
+.trans-desc { font-size: 13px; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trans-meta { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.trans-amount { font-size: 13px; font-weight: 600; }
+.trans-amount.in  { color: var(--green); }
+.trans-amount.out { color: var(--red); }
+
+/* ---- RT PAGE ---- */
+.rt-summary {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; padding: 14px;
+}
+.rt-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px; text-align: center;
+}
+.rt-card-label { font-size: 9px; color: var(--text3); text-transform: uppercase; margin-bottom: 4px; }
+.rt-card-val { font-size: 13px; font-weight: 600; }
+
+/* ---- SETTINGS PAGE ---- */
+.settings-list { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.settings-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+}
+.settings-icon { font-size: 20px; width: 32px; text-align: center; }
+.settings-info { flex: 1; }
+.settings-title { font-size: 13px; color: var(--cream); }
+.settings-desc  { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.settings-arrow { color: var(--text3); font-size: 14px; }
+
+.url-input-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px; margin: 0 14px;
+}
+.url-status { font-size: 11px; margin-top: 8px; }
+.url-status.ok  { color: var(--green); }
+.url-status.err { color: var(--red); }
+
+/* ---- TOAST ---- */
+.toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 13px; color: var(--text);
+  z-index: 999;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+
+/* ---- LOADING ---- */
+.loading {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px; gap: 12px;
+  color: var(--text2); font-size: 13px;
+}
+.spinner {
+  width: 28px; height: 28px;
+  border: 2px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ---- EMPTY STATE ---- */
+.empty {
+  text-align: center; padding: 40px 20px;
+  color: var(--text3); font-size: 13px;
+}
+.empty-icon { font-size: 40px; margin-bottom: 10px; }
+
+/* ---- MONTH PICKER ---- */
+.month-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; padding: 16px;
+}
+.month-btn {
+  padding: 10px; text-align: center;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 12px; color: var(--text2);
+}
+.month-btn.active {
+  border-color: var(--gold);
+  background: rgba(212,168,67,0.15);
+  color: var(--gold);
+}
+
+/* ---- EVENT DETAIL SHEET ---- */
+.detail-omzet {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px; color: var(--gold);
+  margin: 4px 0;
+}
+.detail-badge {
+  display: inline-block;
+  padding: 3px 10px; border-radius: 10px;
+  font-size: 11px; font-weight: 600;
+}
+.detail-badge.profit { background: rgba(76,175,130,0.2); color: var(--green); }
+.detail-badge.loss   { background: rgba(224,92,92,0.2);  color: var(--red); }
+
+.breakdown-item {
+  display: flex; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.breakdown-item:last-child { border-bottom: none; }
+.breakdown-cat { font-size: 10px; color: var(--text3); }
+
+/* Responsive tweaks */
+@media (min-width: 480px) {
+  .main { max-width: 480px; margin: 0 auto; }
+  .topbar, .nav { max-width: 480px; left: 50%; transform: translateX(-50%); }
+  .overlay .sheet { max-width: 480px; margin: 0 auto; }
+  .fab { right: calc(50% - 240px + 16px); }
+  .toast { max-width: 400px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">🍲 Gubukan</div>
+  <div class="topbar-month" id="monthLabel" onclick="openMonthPicker()">Loading...</div>
+  <div class="topbar-sync" id="syncBtn" onclick="syncData()">🔄</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div class="page active" id="page-dash">
+    <div class="dash-header">
+      <div class="dash-greeting">Selamat datang, Mas Tiy 👋</div>
+      <div class="dash-title" id="dashTitle">Dashboard</div>
+      <div class="dash-period" id="dashPeriod">—</div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card green">
+        <div class="sc-label">Omzet Gubukan</div>
+        <div class="sc-value green" id="dOmzet">Rp 0</div>
+        <div class="sc-sub" id="dEventCount">0 event</div>
+      </div>
+      <div class="summary-card gold">
+        <div class="sc-label">Laba Bersih</div>
+        <div class="sc-value gold" id="dLaba">Rp 0</div>
+        <div class="sc-sub" id="dMargin">margin 0%</div>
+        <div class="progress-bar"><div class="progress-fill" id="dMarginBar" style="width:0%"></div></div>
+      </div>
+      <div class="summary-card blue">
+        <div class="sc-label">Toko Online</div>
+        <div class="sc-value" id="dTokba">Rp 0</div>
+        <div class="sc-sub" id="dTokbaSaldo">saldo</div>
+      </div>
+      <div class="summary-card orange">
+        <div class="sc-label">Kas RT</div>
+        <div class="sc-value" id="dRT">Rp 0</div>
+        <div class="sc-sub" id="dRTSaldo">saldo</div>
+      </div>
+      <div class="summary-card-wide summary-card red">
+        <div class="sc-label">Total Pengeluaran Bisnis</div>
+        <div class="sc-value" id="dTotalExp">Rp 0</div>
+        <div class="sc-sub" id="dExpBreak">HPP + Operasional + Overhead</div>
+      </div>
+    </div>
+
+    <div id="chartSection" class="chart-wrap" style="margin-bottom:14px;">
+      <div class="chart-title">📊 Trend 6 Bulan Terakhir</div>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Event Terkini</div>
+      <button class="section-action" onclick="gotoPage('events')">Lihat Semua</button>
+    </div>
+    <div class="event-list" id="recentEvents">
+      <div class="loading"><div class="spinner"></div>Memuat data...</div>
+    </div>
+  </div>
+
+  <!-- ==================== EVENTS ==================== -->
+  <div class="page" id="page-events">
+    <div class="filter-row" id="eventFilters">
+      <div class="filter-chip active" data-filter="all">Semua</div>
+      <div class="filter-chip" data-filter="lunas">✅ Lunas</div>
+      <div class="filter-chip" data-filter="dp">💰 DP</div>
+      <div class="filter-chip" data-filter="follow">📞 Follow Up</div>
+    </div>
+    <div class="event-list" id="eventsList">
+      <div class="loading"><div class="spinner"></div>Memuat...</div>
+    </div>
+  </div>
+
+  <!-- ==================== KAS ==================== -->
+  <div class="page" id="page-kas">
+    <div class="kas-tabs">
+      <div class="kas-tab active" data-kastab="gubukan" onclick="switchKasTab('gubukan')">🍲 Gubukan</div>
+      <div class="kas-tab" data-kastab="tokba" onclick="switchKasTab('tokba')">🛒 Toko Online</div>
+    </div>
+
+    <!-- Gubukan Kas -->
+    <div class="kas-content active" id="kas-gubukan">
+      <div class="summary-grid" style="padding-top:12px;">
+        <div class="summary-card green">
+          <div class="sc-label">Total Masuk</div>
+          <div class="sc-value green" id="kGubIn">Rp 0</div>
+        </div>
+        <div class="summary-card red">
+          <div class="sc-label">Total Keluar</div>
+          <div class="sc-value red" id="kGubOut">Rp 0</div>
+        </div>
+      </div>
+      <div class="section-header">
+        <div class="section-title">Pengeluaran</div>
+      </div>
+      <div class="trans-list" id="expensesList">
+        <div class="loading"><div class="spinner"></div>Memuat...</div>
+      </div>
+    </div>
+
+    <!-- Tokba Kas -->
+    <div class="kas-content" id="kas-tokba">
+      <div class="summary-grid" style="padding-top:12px;">
+        <div class="summary-card green">
+          <div class="sc-label">Masuk</div>
+          <div class="sc-value green" id="kTokIn">Rp 0</div>
+        </div>
+        <div class="summary-card red">
+          <div class="sc-label">Keluar</div>
+          <div class="sc-value red" id="kTokOut">Rp 0</div>
+        </div>
+      </div>
+      <div class="section-header">
+        <div class="section-title">Transaksi</div>
+        <button class="section-action" onclick="openSheet('tokbaSheet')">+ Tambah</button>
+      </div>
+      <div class="trans-list" id="tokbaList">
+        <div class="loading"><div class="spinner"></div>Memuat...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== RT ==================== -->
+  <div class="page" id="page-rt">
+    <div class="rt-summary">
+      <div class="rt-card">
+        <div class="rt-card-label">Masuk</div>
+        <div class="rt-card-val" style="color:var(--green)" id="rtIn">0</div>
+      </div>
+      <div class="rt-card">
+        <div class="rt-card-label">Keluar</div>
+        <div class="rt-card-val" style="color:var(--red)" id="rtOut">0</div>
+      </div>
+      <div class="rt-card">
+        <div class="rt-card-label">Saldo</div>
+        <div class="rt-card-val" style="color:var(--gold)" id="rtSaldo">0</div>
+      </div>
+    </div>
+
+    <div class="summary-grid" style="padding-top:0;">
+      <div class="summary-card">
+        <div class="sc-label">Rutin</div>
+        <div class="sc-value" id="rtRutin">Rp 0</div>
+      </div>
+      <div class="summary-card">
+        <div class="sc-label">Jajan</div>
+        <div class="sc-value" id="rtJajan">Rp 0</div>
+      </div>
+      <div class="summary-card-wide summary-card">
+        <div class="sc-label">Extraordinary</div>
+        <div class="sc-value" id="rtExtra">Rp 0</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Catatan RT</div>
+      <button class="section-action" onclick="openSheet('rtSheet')">+ Tambah</button>
+    </div>
+    <div class="trans-list" id="rtList">
+      <div class="loading"><div class="spinner"></div>Memuat...</div>
+    </div>
+  </div>
+
+  <!-- ==================== SETTINGS ==================== -->
+  <div class="page" id="page-settings">
+    <div class="settings-list">
+      <div style="padding:14px 0 8px;">
+        <div class="form-label">URL Google Apps Script</div>
+        <div class="url-input-wrap">
+          <input type="url" class="form-control" id="apiUrlInput"
+            placeholder="https://script.google.com/macros/s/..." style="margin-bottom:8px;">
+          <button class="btn-submit" onclick="saveApiUrl()" style="margin:0;">Simpan & Test Koneksi</button>
+          <div class="url-status" id="urlStatus"></div>
+        </div>
+      </div>
+      <div class="settings-item" onclick="syncData()">
+        <div class="settings-icon">🔄</div>
+        <div class="settings-info">
+          <div class="settings-title">Sync Data</div>
+          <div class="settings-desc">Tarik data terbaru dari Google Sheets</div>
+        </div>
+        <div class="settings-arrow">›</div>
+      </div>
+      <div class="settings-item" onclick="openSheet('vendorSheet')">
+        <div class="settings-icon">👥</div>
+        <div class="settings-info">
+          <div class="settings-title">Master Vendor</div>
+          <div class="settings-desc">Pak Arifin, Mba Ika, Bu Dewi, dll</div>
+        </div>
+        <div class="settings-arrow">›</div>
+      </div>
+      <div class="settings-item" onclick="exportMonth()">
+        <div class="settings-icon">📤</div>
+        <div class="settings-info">
+          <div class="settings-title">Export Bulan Ini</div>
+          <div class="settings-desc">Ringkasan PDF / print</div>
+        </div>
+        <div class="settings-arrow">›</div>
+      </div>
+    </div>
+
+    <div style="padding:14px;color:var(--text3);font-size:11px;text-align:center;">
+      Gubukan App v1.0 · Data tersimpan di Google Sheets
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<!-- ==================== BOTTOM NAV ==================== -->
+<nav class="nav">
+  <button class="nav-item active" onclick="gotoPage('dash')" data-page="dash">
+    <span class="nav-icon">📊</span>Dashboard
+  </button>
+  <button class="nav-item" onclick="gotoPage('events')" data-page="events">
+    <span class="nav-icon">🗓️</span>Event
+  </button>
+  <button class="nav-item" onclick="gotoPage('kas')" data-page="kas">
+    <span class="nav-icon">💰</span>Kas
+  </button>
+  <button class="nav-item" onclick="gotoPage('rt')" data-page="rt">
+    <span class="nav-icon">🏠</span>RT
+  </button>
+  <button class="nav-item" onclick="gotoPage('settings')" data-page="settings">
+    <span class="nav-icon">⚙️</span>Setting
+  </button>
+</nav>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn" onclick="openAddSheet()">+</button>
+
+<!-- ==================== OVERLAYS ==================== -->
+
+<!-- Add Event Sheet -->
+<div class="overlay" id="eventSheet" onclick="overlayClose(event,'eventSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="eventSheetTitle">Tambah Event</div>
+      <div class="sheet-close" onclick="closeSheet('eventSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="editEventId">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="fDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">No. Event</label>
+          <input type="text" class="form-control" id="fEventNo" placeholder="101">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Customer / EO</label>
+        <input type="text" class="form-control" id="fCustomer" placeholder="Nama customer / EO">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Lokasi</label>
+        <input type="text" class="form-control" id="fLocation" placeholder="Nama gedung / lokasi">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-control" id="fStatus">
+          <option value="lunas">✅ Lunas</option>
+          <option value="dp">💰 DP</option>
+          <option value="follow">📞 Follow Up</option>
+          <option value="batal">❌ Batal</option>
+        </select>
+      </div>
+
+      <!-- MENU ITEMS -->
+      <div class="form-section-title">🍽️ Menu & Qty</div>
+      <div id="itemRows"></div>
+      <button class="add-item-btn" onclick="addItemRow()">＋ Tambah Menu</button>
+
+      <!-- BIAYA -->
+      <div class="form-section-title">💸 Biaya</div>
+      <div id="expenseRows"></div>
+      <button class="add-item-btn" onclick="addExpenseRow()">＋ Tambah Biaya</button>
+
+      <!-- TOTALS -->
+      <div class="totals-card" id="eventTotals">
+        <div class="total-row"><span>Omzet</span><span id="tOmzet">Rp 0</span></div>
+        <div class="total-row"><span>HPP</span><span id="tHPP">Rp 0</span></div>
+        <div class="total-row"><span>Operasional</span><span id="tOps">Rp 0</span></div>
+        <div class="total-row"><span>Overhead</span><span id="tOvh">Rp 0</span></div>
+        <div class="total-row highlight"><span>Laba Kotor</span><span id="tLabaKotor">Rp 0</span></div>
+        <div class="total-row profit" id="tLabaRow"><span>Laba Bersih</span><span id="tLaba">Rp 0</span></div>
+        <div class="total-row"><span>Margin</span><span id="tMargin">0%</span></div>
+        <div class="total-row"><span>Isrun (10%)</span><span id="tIsrun">Rp 0</span></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <textarea class="form-control" id="fNote" placeholder="Catatan tambahan..."></textarea>
+      </div>
+
+      <button class="btn-submit" onclick="saveEvent()">💾 Simpan Event</button>
+      <button class="btn-outline" onclick="closeSheet('eventSheet')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tokba Sheet -->
+<div class="overlay" id="tokbaSheet" onclick="overlayClose(event,'tokbaSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">Transaksi Toko Online</div>
+      <div class="sheet-close" onclick="closeSheet('tokbaSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Tanggal</label>
+        <input type="date" class="form-control" id="tDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <input type="text" class="form-control" id="tKet" placeholder="tarik shopee / beli mozza...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Masuk (Rp)</label>
+          <input type="number" class="form-control" id="tMasuk" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Keluar (Rp)</label>
+          <input type="number" class="form-control" id="tKeluar" placeholder="0">
+        </div>
+      </div>
+      <button class="btn-submit" onclick="saveTokba()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- RT Sheet -->
+<div class="overlay" id="rtSheet" onclick="overlayClose(event,'rtSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">Pengeluaran RT</div>
+      <div class="sheet-close" onclick="closeSheet('rtSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Tanggal</label>
+        <input type="date" class="form-control" id="rDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <input type="text" class="form-control" id="rItem" placeholder="Nama item / keperluan">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kategori</label>
+        <select class="form-control" id="rKat">
+          <option value="masuk">💚 Uang Masuk</option>
+          <option value="rutin">🔵 Rutin (belanja, cicilan, sekolah)</option>
+          <option value="jajan">🟡 Jajan</option>
+          <option value="extraordinary">🔴 Extraordinary</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jumlah (Rp)</label>
+        <input type="number" class="form-control" id="rJumlah" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input type="text" class="form-control" id="rNote" placeholder="Opsional">
+      </div>
+      <button class="btn-submit" onclick="saveRT()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Event Detail Sheet -->
+<div class="overlay" id="detailSheet" onclick="overlayClose(event,'detailSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">Detail Event</div>
+      <div class="sheet-close" onclick="closeSheet('detailSheet')">✕</div>
+    </div>
+    <div class="sheet-body" id="detailBody">
+    </div>
+  </div>
+</div>
+
+<!-- Month Picker Sheet -->
+<div class="overlay" id="monthSheet" onclick="overlayClose(event,'monthSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">Pilih Bulan</div>
+      <div class="sheet-close" onclick="closeSheet('monthSheet')">✕</div>
+    </div>
+    <div class="month-grid" id="monthGrid"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let API_URL = localStorage.getItem('gubukan_api_url') || '';
+let currentMonth = localStorage.getItem('gubukan_month') || getCurrentMonth();
+let state = {
+  events: [], items: [], expenses: [],
+  tokba: [], rt: [], vendors: []
+};
+let currentPage = 'dash';
+
+function getCurrentMonth() {
+  return new Date().toISOString().slice(0,7);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function gotoPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  currentPage = page;
+
+  // FAB visibility
+  const fab = document.getElementById('fabBtn');
+  fab.style.display = ['dash','settings'].includes(page) ? 'none' : 'flex';
+
+  renderPage(page);
+}
+
+function renderPage(page) {
+  if (page === 'dash')     renderDash();
+  if (page === 'events')   renderEvents();
+  if (page === 'kas')      renderKas();
+  if (page === 'rt')       renderRT();
+}
+
+// ============================================================
+// API
+// ============================================================
+async function api(params, body=null) {
+  if (!API_URL) throw new Error('URL API belum diset. Buka Settings!');
+  const url = new URL(API_URL);
+  if (params) Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+
+  const opts = { method: body ? 'POST' : 'GET' };
+  if (body) { opts.body = JSON.stringify(body); opts.headers = {'Content-Type':'application/json'}; }
+
+  const res = await fetch(url, opts);
+  const json = await res.json();
+  if (json.status !== 'ok') throw new Error(json.message);
+  return json.data;
+}
+
+async function syncData() {
+  const btn = document.getElementById('syncBtn');
+  btn.classList.add('spinning');
+  try {
+    if (!API_URL) { toast('⚠️ Set URL API di Settings dulu!'); return; }
+    const monthly = await api({ action: 'getMonthly', month: currentMonth });
+    state.events   = await api({ action: 'getAll', sheet: 'events' });
+    state.items     = await api({ action: 'getAll', sheet: 'event_items' });
+    state.expenses  = await api({ action: 'getAll', sheet: 'expenses' });
+    state.tokba     = monthly.tokba || [];
+    state.rt        = monthly.rt || [];
+    state.vendors   = await api({ action: 'getAll', sheet: 'vendors' });
+    cacheState();
+    renderPage(currentPage);
+    toast('✅ Data berhasil disync!');
+  } catch(e) {
+    toast('❌ ' + e.message);
+  } finally {
+    btn.classList.remove('spinning');
+  }
+}
+
+function cacheState() {
+  localStorage.setItem('gubukan_cache', JSON.stringify(state));
+}
+
+function loadCache() {
+  const c = localStorage.getItem('gubukan_cache');
+  if (c) state = JSON.parse(c);
+}
+
+// ============================================================
+// FORMATTERS
+// ============================================================
+function rp(n) {
+  n = Number(n) || 0;
+  if (Math.abs(n) >= 1000000) return 'Rp ' + (n/1000000).toFixed(1) + 'jt';
+  if (Math.abs(n) >= 1000)    return 'Rp ' + (n/1000).toFixed(0) + 'rb';
+  return 'Rp ' + n.toLocaleString('id');
+}
+
+function rpFull(n) {
+  return 'Rp ' + (Number(n)||0).toLocaleString('id-ID');
+}
+
+function monthName(m) {
+  const [y, mo] = m.split('-');
+  const names = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+  return names[parseInt(mo)-1] + ' ' + y;
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('id-ID', {day:'numeric',month:'short'});
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDash() {
+  const mEvents   = state.events.filter(e => e.bulan === currentMonth);
+  const mExpenses = state.expenses.filter(e => e.bulan === currentMonth);
+  const mTokba    = state.tokba.filter(e => e.bulan === currentMonth);
+  const mRT       = state.rt.filter(e => e.bulan === currentMonth);
+
+  const omzet   = mEvents.reduce((s,e) => s + (Number(e.omzet)||0), 0);
+  const hpp     = mExpenses.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const ops     = mExpenses.filter(x=>x.kategori==='Operasional').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const ovh     = mExpenses.filter(x=>x.kategori==='Overhead').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const laba    = omzet - hpp - ops - ovh;
+  const margin  = omzet > 0 ? (laba/omzet*100).toFixed(1) : 0;
+
+  const tokIn   = mTokba.reduce((s,x)=>s+(Number(x.masuk)||0),0);
+  const tokOut  = mTokba.reduce((s,x)=>s+(Number(x.keluar)||0),0);
+  const tokSaldo = tokIn - tokOut;
+
+  const rtMasuk = mRT.reduce((s,x)=>s+(Number(x.masuk)||0),0);
+  const rtKeluar= mRT.reduce((s,x)=>s+(Number(x.rutin)||0)+(Number(x.jajan)||0)+(Number(x.extraordinary)||0),0);
+  const rtSaldo = rtMasuk - rtKeluar;
+
+  document.getElementById('dashTitle').textContent = monthName(currentMonth);
+  document.getElementById('dashPeriod').textContent = mEvents.length + ' event terdaftar';
+  document.getElementById('monthLabel').textContent = monthName(currentMonth);
+
+  document.getElementById('dOmzet').textContent = rp(omzet);
+  document.getElementById('dEventCount').textContent = mEvents.length + ' event';
+  document.getElementById('dLaba').textContent = rp(laba);
+  document.getElementById('dMargin').textContent = 'margin ' + margin + '%';
+  document.getElementById('dMarginBar').style.width = Math.min(margin, 100) + '%';
+  document.getElementById('dTokba').textContent = rp(tokSaldo);
+  document.getElementById('dTokbaSaldo').textContent = 'saldo bersih';
+  document.getElementById('dRT').textContent = rp(rtSaldo);
+  document.getElementById('dRTSaldo').textContent = 'saldo kas RT';
+  document.getElementById('dTotalExp').textContent = rp(hpp + ops + ovh);
+  document.getElementById('dExpBreak').textContent =
+    `HPP ${rp(hpp)} · Ops ${rp(ops)} · Ovh ${rp(ovh)}`;
+
+  // Recent events
+  const recent = [...mEvents].sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal)).slice(0,5);
+  const el = document.getElementById('recentEvents');
+  if (!recent.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada event bulan ini</div>';
+    return;
+  }
+  el.innerHTML = recent.map(ev => {
+    const evExp = state.expenses.filter(x=>x.event_id===ev.id);
+    const evOmzet = Number(ev.omzet)||0;
+    const evCost  = evExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+    const evLaba  = evOmzet - evCost;
+    const evMargin= evOmzet>0?(evLaba/evOmzet*100).toFixed(0):0;
+    const dot = ev.status==='lunas'?'green': ev.status==='dp'?'orange':'red';
+    return `<div class="event-card" onclick="showDetail('${ev.id}')">
+      <div class="event-dot ${dot}"></div>
+      <div class="event-info">
+        <div class="event-customer">${ev.customer||'-'}</div>
+        <div class="event-meta">${fmtDate(ev.tanggal)} · ${ev.lokasi||'-'}</div>
+      </div>
+      <div class="event-omzet">
+        <div class="event-omzet-val">${rp(evOmzet)}</div>
+        <div class="event-margin">${evMargin}%</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  renderBarChart();
+}
+
+function renderBarChart() {
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    months.push(d.toISOString().slice(0,7));
+  }
+  const data = months.map(m => {
+    const evs = state.events.filter(e=>e.bulan===m);
+    const exps = state.expenses.filter(e=>e.bulan===m);
+    const inc = evs.reduce((s,e)=>s+(Number(e.omzet)||0),0);
+    const out = exps.reduce((s,e)=>s+(Number(e.jumlah)||0),0);
+    return { m, inc, out };
+  });
+  const maxVal = Math.max(...data.map(d=>Math.max(d.inc,d.out)), 1);
+  const bc = document.getElementById('barChart');
+  bc.innerHTML = data.map(d => {
+    const iH = Math.round((d.inc/maxVal)*65);
+    const oH = Math.round((d.out/maxVal)*65);
+    return `<div class="bar-group">
+      <div class="bar-wrap">
+        <div class="bar income" style="height:${iH}px" title="${rp(d.inc)}"></div>
+        <div class="bar expense" style="height:${oH}px" title="${rp(d.out)}"></div>
+      </div>
+      <div class="bar-label">${monthName(d.m).split(' ')[0]}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+function renderEvents() {
+  const mEvents = state.events.filter(e => e.bulan === currentMonth);
+  const el = document.getElementById('eventsList');
+  if (!mEvents.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada event<br>Tekan + untuk tambah</div>';
+    return;
+  }
+  el.innerHTML = mEvents.sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal)).map(ev => {
+    const evExp   = state.expenses.filter(x=>x.event_id===ev.id);
+    const evOmzet = Number(ev.omzet)||0;
+    const evCost  = evExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+    const evLaba  = evOmzet - evCost;
+    const evMargin= evOmzet>0?(evLaba/evOmzet*100).toFixed(0):0;
+    const dot = ev.status==='lunas'?'green':ev.status==='dp'?'orange':'red';
+    return `<div class="event-card" onclick="showDetail('${ev.id}')">
+      <div class="event-dot ${dot}"></div>
+      <div class="event-info">
+        <div class="event-customer">${ev.customer||'-'}</div>
+        <div class="event-meta">${fmtDate(ev.tanggal)} · ${ev.lokasi||'-'}</div>
+      </div>
+      <div class="event-omzet">
+        <div class="event-omzet-val">${rp(evOmzet)}</div>
+        <div class="event-margin" style="color:${evLaba>=0?'var(--green)':'var(--red)'}">
+          ${evLaba>=0?'+':''}${evMargin}%
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showDetail(eventId) {
+  const ev = state.events.find(e=>e.id===eventId);
+  if (!ev) return;
+  const evItems = state.items.filter(x=>x.event_id===eventId);
+  const evExp   = state.expenses.filter(x=>x.event_id===eventId);
+  const omzet   = Number(ev.omzet)||0;
+  const hpp     = evExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const ops     = evExp.filter(x=>x.kategori==='Operasional').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const ovh     = evExp.filter(x=>x.kategori==='Overhead').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const laba    = omzet - hpp - ops - ovh;
+  const margin  = omzet>0?(laba/omzet*100).toFixed(1):0;
+  const isrun   = omzet * 0.1;
+
+  const profitClass = laba >= 0 ? 'profit' : 'loss';
+  const profitLabel = laba >= 0 ? '✅ Profit' : '❌ Rugi';
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--text2);">${fmtDate(ev.tanggal)} · ${ev.status}</div>
+      <div style="font-size:18px;font-weight:600;color:var(--cream);margin:4px 0;">${ev.customer}</div>
+      <div style="font-size:12px;color:var(--text2);">📍 ${ev.lokasi||'-'}</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div class="detail-omzet">${rp(omzet)}</div>
+      <span class="detail-badge ${profitClass}">${profitLabel} ${Math.abs(margin)}%</span>
+    </div>
+
+    <div class="totals-card">
+      ${evItems.map(it=>`
+        <div class="breakdown-item">
+          <div><div>${it.menu}</div><div class="breakdown-cat">${it.qty} pcs × ${rp(it.harga_satuan)}</div></div>
+          <div style="color:var(--green)">${rp(it.total)}</div>
+        </div>`).join('')}
+      <div class="breakdown-item" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
+        <span style="color:var(--text2);font-size:11px;">HPP Bahan</span><span style="color:var(--blue)">${rp(hpp)}</span>
+      </div>
+      <div class="breakdown-item">
+        <span style="color:var(--text2);font-size:11px;">Ops (fee, transport)</span><span style="color:var(--orange)">${rp(ops)}</span>
+      </div>
+      <div class="breakdown-item">
+        <span style="color:var(--text2);font-size:11px;">Overhead</span><span style="color:var(--text2)">${rp(ovh)}</span>
+      </div>
+      <div class="breakdown-item" style="font-weight:600;">
+        <span>Laba Bersih</span>
+        <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)}</span>
+      </div>
+      <div class="breakdown-item">
+        <span style="font-size:11px;color:var(--text2);">Isrun 10%</span>
+        <span style="color:var(--gold)">${rp(isrun)}</span>
+      </div>
+    </div>
+
+    ${evExp.length ? `
+    <div class="form-section-title">Detail Pengeluaran</div>
+    ${evExp.map(x=>`
+      <div class="breakdown-item">
+        <div>
+          <div style="font-size:12px;">${x.keterangan}</div>
+          <div class="breakdown-cat">${x.kategori} · ${x.toko||''}</div>
+        </div>
+        <div style="color:var(--red);font-size:12px;">${rp(x.jumlah)}</div>
+      </div>`).join('')}
+    ` : ''}
+
+    ${ev.catatan ? `<div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);">📝 ${ev.catatan}</div>` : ''}
+
+    <button class="btn-submit" style="margin-top:16px;" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
+    <button class="btn-outline" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
+  `;
+
+  openSheet('detailSheet');
+}
+
+// ============================================================
+// KAS
+// ============================================================
+function renderKas() {
+  const mExp  = state.expenses.filter(e=>e.bulan===currentMonth);
+  const mTok  = state.tokba.filter(e=>e.bulan===currentMonth);
+
+  // Gubukan
+  const gIn  = state.events.filter(e=>e.bulan===currentMonth).reduce((s,e)=>s+(Number(e.omzet)||0),0);
+  const gOut = mExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  document.getElementById('kGubIn').textContent  = rp(gIn);
+  document.getElementById('kGubOut').textContent = rp(gOut);
+
+  const el = document.getElementById('expensesList');
+  if (!mExp.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada pengeluaran</div>';
+  } else {
+    el.innerHTML = mExp.map(x=>`
+      <div class="trans-item">
+        <div class="trans-icon out">💸</div>
+        <div class="trans-info">
+          <div class="trans-desc">${x.keterangan}</div>
+          <div class="trans-meta">${x.kategori} · ${fmtDate(x.tanggal)}</div>
+        </div>
+        <div class="trans-amount out">${rp(x.jumlah)}</div>
+      </div>`).join('');
+  }
+
+  // Tokba
+  const tIn  = mTok.reduce((s,x)=>s+(Number(x.masuk)||0),0);
+  const tOut = mTok.reduce((s,x)=>s+(Number(x.keluar)||0),0);
+  document.getElementById('kTokIn').textContent  = rp(tIn);
+  document.getElementById('kTokOut').textContent = rp(tOut);
+
+  const tel = document.getElementById('tokbaList');
+  if (!mTok.length) {
+    tel.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada transaksi</div>';
+  } else {
+    tel.innerHTML = mTok.map(x=>`
+      <div class="trans-item">
+        <div class="trans-icon ${Number(x.masuk)>0?'in':'out'}">${Number(x.masuk)>0?'📥':'📤'}</div>
+        <div class="trans-info">
+          <div class="trans-desc">${x.keterangan}</div>
+          <div class="trans-meta">${fmtDate(x.tanggal)}</div>
+        </div>
+        <div class="trans-amount ${Number(x.masuk)>0?'in':'out'}">
+          ${Number(x.masuk)>0? '+'+rp(x.masuk) : '-'+rp(x.keluar)}
+        </div>
+      </div>`).join('');
+  }
+}
+
+function switchKasTab(tab) {
+  document.querySelectorAll('.kas-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.kas-content').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`[data-kastab="${tab}"]`).classList.add('active');
+  document.getElementById('kas-' + tab).classList.add('active');
+}
+
+// ============================================================
+// RT
+// ============================================================
+function renderRT() {
+  const mRT = state.rt.filter(e=>e.bulan===currentMonth);
+  const masuk  = mRT.reduce((s,x)=>s+(Number(x.masuk)||0),0);
+  const rutin  = mRT.reduce((s,x)=>s+(Number(x.rutin)||0),0);
+  const jajan  = mRT.reduce((s,x)=>s+(Number(x.jajan)||0),0);
+  const extra  = mRT.reduce((s,x)=>s+(Number(x.extraordinary)||0),0);
+  const keluar = rutin + jajan + extra;
+  const saldo  = masuk - keluar;
+
+  document.getElementById('rtIn').textContent    = rp(masuk);
+  document.getElementById('rtOut').textContent   = rp(keluar);
+  document.getElementById('rtSaldo').textContent = rp(saldo);
+  document.getElementById('rtRutin').textContent = rp(rutin);
+  document.getElementById('rtJajan').textContent = rp(jajan);
+  document.getElementById('rtExtra').textContent = rp(extra);
+
+  const el = document.getElementById('rtList');
+  if (!mRT.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🏠</div>Belum ada catatan RT<br>Tekan + untuk tambah</div>';
+    return;
+  }
+  el.innerHTML = [...mRT].reverse().map(x=>{
+    const isMasuk = Number(x.masuk)>0;
+    const amt = isMasuk ? Number(x.masuk) : (Number(x.rutin)||0)+(Number(x.jajan)||0)+(Number(x.extraordinary)||0);
+    const kat = isMasuk?'masuk': x.rutin?'rutin': x.jajan?'jajan':'extraordinary';
+    const katColor = {masuk:'var(--green)',rutin:'var(--blue)',jajan:'var(--gold)',extraordinary:'var(--red)'};
+    return `<div class="trans-item">
+      <div class="trans-icon ${isMasuk?'in':'out'}">${isMasuk?'💚':'💸'}</div>
+      <div class="trans-info">
+        <div class="trans-desc">${x.item}</div>
+        <div class="trans-meta" style="color:${katColor[kat]}">${kat} · ${fmtDate(x.tanggal)}</div>
+      </div>
+      <div class="trans-amount ${isMasuk?'in':'out'}">${isMasuk?'+':'−'}${rp(amt)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// FORM: ADD EVENT
+// ============================================================
+let itemCount = 0;
+let expCount  = 0;
+
+function openAddSheet() {
+  if (currentPage === 'events') {
+    resetEventForm();
+    openSheet('eventSheet');
+  } else if (currentPage === 'kas') {
+    openSheet('tokbaSheet');
+  } else if (currentPage === 'rt') {
+    openSheet('rtSheet');
+  }
+}
+
+function resetEventForm() {
+  document.getElementById('editEventId').value = '';
+  document.getElementById('eventSheetTitle').textContent = 'Tambah Event';
+  document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('fEventNo').value = '';
+  document.getElementById('fCustomer').value = '';
+  document.getElementById('fLocation').value = '';
+  document.getElementById('fStatus').value = 'lunas';
+  document.getElementById('fNote').value = '';
+  document.getElementById('itemRows').innerHTML = '';
+  document.getElementById('expenseRows').innerHTML = '';
+  itemCount = 0; expCount = 0;
+  addItemRow(); addItemRow();
+  addExpenseRow('HPP'); addExpenseRow('Operasional');
+  calcTotals();
+}
+
+function addItemRow() {
+  itemCount++;
+  const id = 'item_' + itemCount;
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.id = id;
+  row.innerHTML = `
+    <input type="text" placeholder="Menu (Zuppa, Waffle...)" class="item-menu">
+    <input type="number" placeholder="Qty" class="item-qty" oninput="calcTotals()">
+    <input type="number" placeholder="Harga" class="item-price" oninput="calcTotals()">
+    <button class="item-del" onclick="this.closest('.item-row').remove();calcTotals()">✕</button>`;
+  document.getElementById('itemRows').appendChild(row);
+}
+
+function addExpenseRow(defaultKat='HPP') {
+  expCount++;
+  const id = 'exp_' + expCount;
+  const row = document.createElement('div');
+  row.className = 'expense-row';
+  row.id = id;
+  const cats = ['HPP','Operasional','Overhead'];
+  row.innerHTML = `
+    <div class="expense-row-top">
+      <input type="text" placeholder="Keterangan biaya..." class="exp-ket">
+      <select class="expense-cat ${defaultKat}" onchange="this.className='expense-cat '+this.value;calcTotals()" >
+        ${cats.map(c=>`<option value="${c}" ${c===defaultKat?'selected':''}>${c}</option>`).join('')}
+      </select>
+      <button class="item-del" onclick="this.closest('.expense-row').remove();calcTotals()">✕</button>
+    </div>
+    <input type="number" placeholder="Jumlah (Rp)" class="form-control exp-jumlah"
+      style="margin-top:6px;" oninput="calcTotals()">`;
+  document.getElementById('expenseRows').appendChild(row);
+}
+
+function calcTotals() {
+  // Omzet from items
+  let omzet = 0;
+  document.querySelectorAll('.item-row').forEach(row => {
+    const qty   = Number(row.querySelector('.item-qty')?.value)||0;
+    const price = Number(row.querySelector('.item-price')?.value)||0;
+    omzet += qty * price;
+  });
+
+  // Expenses
+  let hpp=0, ops=0, ovh=0;
+  document.querySelectorAll('.expense-row').forEach(row => {
+    const kat    = row.querySelector('select')?.value;
+    const jumlah = Number(row.querySelector('.exp-jumlah')?.value)||0;
+    if (kat==='HPP')         hpp += jumlah;
+    else if (kat==='Operasional') ops += jumlah;
+    else                          ovh += jumlah;
+  });
+
+  const labaKotor = omzet - hpp - ops;
+  const labaBersih = labaKotor - ovh;
+  const margin = omzet > 0 ? (labaBersih/omzet*100).toFixed(1) : 0;
+  const isrun = omzet * 0.1;
+
+  document.getElementById('tOmzet').textContent    = rpFull(omzet);
+  document.getElementById('tHPP').textContent      = rpFull(hpp);
+  document.getElementById('tOps').textContent      = rpFull(ops);
+  document.getElementById('tOvh').textContent      = rpFull(ovh);
+  document.getElementById('tLabaKotor').textContent= rpFull(labaKotor);
+  document.getElementById('tLaba').textContent     = rpFull(labaBersih);
+  document.getElementById('tMargin').textContent   = margin + '%';
+  document.getElementById('tIsrun').textContent    = rpFull(isrun);
+
+  const lRow = document.getElementById('tLabaRow');
+  lRow.className = 'total-row ' + (labaBersih >= 0 ? 'profit' : 'loss');
+}
+
+async function saveEvent() {
+  const customer = document.getElementById('fCustomer').value.trim();
+  if (!customer) { toast('⚠️ Isi nama customer dulu!'); return; }
+
+  // Calc omzet
+  let omzet = 0;
+  const items = [];
+  document.querySelectorAll('.item-row').forEach(row => {
+    const menu  = row.querySelector('.item-menu')?.value.trim();
+    const qty   = Number(row.querySelector('.item-qty')?.value)||0;
+    const price = Number(row.querySelector('.item-price')?.value)||0;
+    if (menu && qty > 0) {
+      omzet += qty * price;
+      items.push({ menu, qty, harga_satuan: price, total: qty*price });
+    }
+  });
+
+  const expenses = [];
+  document.querySelectorAll('.expense-row').forEach(row => {
+    const ket    = row.querySelector('.exp-ket')?.value.trim();
+    const kat    = row.querySelector('select')?.value;
+    const jumlah = Number(row.querySelector('.exp-jumlah')?.value)||0;
+    if (ket && jumlah > 0) expenses.push({ keterangan: ket, kategori: kat, jumlah });
+  });
+
+  const tanggal = document.getElementById('fDate').value;
+  const bulan   = tanggal.slice(0,7);
+  const eventData = {
+    bulan, tanggal,
+    no_event:  document.getElementById('fEventNo').value,
+    customer,
+    lokasi:    document.getElementById('fLocation').value,
+    status:    document.getElementById('fStatus').value,
+    catatan:   document.getElementById('fNote').value,
+    omzet,
+    isrun:     omzet * 0.1,
+  };
+
+  const editId = document.getElementById('editEventId').value;
+
+  try {
+    let eventId;
+    if (editId) {
+      await api(null, { action:'update', sheet:'events', id:editId, data:eventData });
+      eventId = editId;
+      state.events = state.events.map(e => e.id===editId ? {...e,...eventData} : e);
+      state.items    = state.items.filter(x=>x.event_id!==editId);
+      state.expenses = state.expenses.filter(x=>x.event_id!==editId);
+    } else {
+      const res = await api(null, { action:'insert', sheet:'events', data:eventData });
+      eventId = res.id;
+      state.events.push({...eventData, id:eventId});
+    }
+
+    // Save items
+    for (const item of items) {
+      const res = await api(null, { action:'insert', sheet:'event_items', data:{...item, event_id:eventId, bulan} });
+      state.items.push({...item, event_id:eventId, bulan, id:res.id});
+    }
+
+    // Save expenses
+    for (const exp of expenses) {
+      const res = await api(null, { action:'insert', sheet:'expenses', data:{...exp, event_id:eventId, bulan, tanggal} });
+      state.expenses.push({...exp, event_id:eventId, bulan, tanggal, id:res.id});
+    }
+
+    cacheState();
+    closeSheet('eventSheet');
+    renderPage(currentPage);
+    toast('✅ Event berhasil disimpan!');
+  } catch(e) {
+    toast('❌ ' + e.message);
+  }
+}
+
+function editEvent(id) {
+  const ev = state.events.find(e=>e.id===id);
+  if (!ev) return;
+  closeSheet('detailSheet');
+  setTimeout(() => {
+    resetEventForm();
+    document.getElementById('editEventId').value = id;
+    document.getElementById('eventSheetTitle').textContent = 'Edit Event';
+    document.getElementById('fDate').value     = ev.tanggal?.slice(0,10)||'';
+    document.getElementById('fEventNo').value  = ev.no_event||'';
+    document.getElementById('fCustomer').value = ev.customer||'';
+    document.getElementById('fLocation').value = ev.lokasi||'';
+    document.getElementById('fStatus').value   = ev.status||'lunas';
+    document.getElementById('fNote').value     = ev.catatan||'';
+
+    // Load existing items
+    const evItems = state.items.filter(x=>x.event_id===id);
+    document.getElementById('itemRows').innerHTML = '';
+    itemCount = 0;
+    if (evItems.length) {
+      evItems.forEach(it => {
+        addItemRow();
+        const rows = document.querySelectorAll('.item-row');
+        const row  = rows[rows.length-1];
+        row.querySelector('.item-menu').value  = it.menu||'';
+        row.querySelector('.item-qty').value   = it.qty||'';
+        row.querySelector('.item-price').value = it.harga_satuan||'';
+      });
+    } else { addItemRow(); }
+
+    const evExp = state.expenses.filter(x=>x.event_id===id);
+    document.getElementById('expenseRows').innerHTML = '';
+    expCount = 0;
+    if (evExp.length) {
+      evExp.forEach(ex => {
+        addExpenseRow(ex.kategori||'HPP');
+        const rows = document.querySelectorAll('.expense-row');
+        const row  = rows[rows.length-1];
+        row.querySelector('.exp-ket').value    = ex.keterangan||'';
+        row.querySelector('.exp-jumlah').value = ex.jumlah||'';
+      });
+    } else { addExpenseRow('HPP'); }
+
+    calcTotals();
+    openSheet('eventSheet');
+  }, 300);
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Hapus event ini?')) return;
+  try {
+    await api(null, { action:'delete', sheet:'events', id });
+    state.events   = state.events.filter(e=>e.id!==id);
+    state.items     = state.items.filter(x=>x.event_id!==id);
+    state.expenses  = state.expenses.filter(x=>x.event_id!==id);
+    cacheState();
+    closeSheet('detailSheet');
+    renderPage(currentPage);
+    toast('🗑️ Event dihapus');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ============================================================
+// SAVE TOKBA & RT
+// ============================================================
+async function saveTokba() {
+  const ket    = document.getElementById('tKet').value.trim();
+  const masuk  = Number(document.getElementById('tMasuk').value)||0;
+  const keluar = Number(document.getElementById('tKeluar').value)||0;
+  const tanggal= document.getElementById('tDate').value;
+  if (!ket || (!masuk && !keluar)) { toast('⚠️ Isi keterangan & jumlah!'); return; }
+  try {
+    const bulan = tanggal.slice(0,7);
+    const data = { bulan, tanggal, keterangan:ket, masuk, keluar };
+    const res = await api(null, { action:'insert', sheet:'tokba', data });
+    state.tokba.push({...data, id:res.id});
+    cacheState();
+    closeSheet('tokbaSheet');
+    renderPage(currentPage);
+    toast('✅ Transaksi disimpan!');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function saveRT() {
+  const item   = document.getElementById('rItem').value.trim();
+  const kat    = document.getElementById('rKat').value;
+  const jumlah = Number(document.getElementById('rJumlah').value)||0;
+  const tanggal= document.getElementById('rDate').value;
+  if (!item || !jumlah) { toast('⚠️ Isi keterangan & jumlah!'); return; }
+  try {
+    const bulan = tanggal.slice(0,7);
+    const data = {
+      bulan, tanggal, item,
+      masuk:          kat==='masuk'  ? jumlah : 0,
+      rutin:          kat==='rutin'  ? jumlah : 0,
+      jajan:          kat==='jajan'  ? jumlah : 0,
+      extraordinary:  kat==='extraordinary' ? jumlah : 0,
+      catatan: document.getElementById('rNote').value,
+    };
+    const res = await api(null, { action:'insert', sheet:'rumah_tangga', data });
+    state.rt.push({...data, id:res.id});
+    cacheState();
+    closeSheet('rtSheet');
+    renderPage(currentPage);
+    toast('✅ Catatan RT disimpan!');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function saveApiUrl() {
+  const url = document.getElementById('apiUrlInput').value.trim();
+  if (!url) { toast('⚠️ URL tidak boleh kosong!'); return; }
+  API_URL = url;
+  localStorage.setItem('gubukan_api_url', url);
+  document.getElementById('urlStatus').textContent = '🔄 Testing...';
+  document.getElementById('urlStatus').className = 'url-status';
+  fetch(url + '?action=getSummary')
+    .then(r=>r.json())
+    .then(d=>{
+      if (d.status==='ok') {
+        document.getElementById('urlStatus').textContent = '✅ Koneksi berhasil!';
+        document.getElementById('urlStatus').className = 'url-status ok';
+        syncData();
+      } else throw new Error(d.message);
+    })
+    .catch(e=>{
+      document.getElementById('urlStatus').textContent = '❌ Gagal: ' + e.message;
+      document.getElementById('urlStatus').className = 'url-status err';
+    });
+}
+
+// ============================================================
+// MONTH PICKER
+// ============================================================
+function openMonthPicker() { openSheet('monthSheet'); buildMonthGrid(); }
+
+function buildMonthGrid() {
+  const months = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    months.push(d.toISOString().slice(0,7));
+  }
+  document.getElementById('monthGrid').innerHTML = months.map(m=>
+    `<div class="month-btn ${m===currentMonth?'active':''}" onclick="selectMonth('${m}')">${monthName(m)}</div>`
+  ).join('');
+}
+
+function selectMonth(m) {
+  currentMonth = m;
+  localStorage.setItem('gubukan_month', m);
+  closeSheet('monthSheet');
+  renderPage(currentPage);
+}
+
+// ============================================================
+// SHEET CONTROLS
+// ============================================================
+function openSheet(id) { document.getElementById(id).classList.add('open'); }
+function closeSheet(id){ document.getElementById(id).classList.remove('open'); }
+function overlayClose(e, id) { if (e.target.classList.contains('overlay')) closeSheet(id); }
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// EVENT FILTER CHIPS
+// ============================================================
+document.getElementById('eventFilters').addEventListener('click', e => {
+  const chip = e.target.closest('.filter-chip');
+  if (!chip) return;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  // TODO: filter logic
+});
+
+// ============================================================
+// EXPORT (Print)
+// ============================================================
+function exportMonth() {
+  toast('📤 Fitur export akan segera hadir!');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  // Load API URL into settings
+  if (API_URL) document.getElementById('apiUrlInput').value = API_URL;
+
+  // Load default dates
+  const today = new Date().toISOString().slice(0,10);
+  ['fDate','tDate','rDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = today;
+  });
+
+  // Load cached data
+  loadCache();
+
+  // Render
+  renderDash();
+  document.getElementById('monthLabel').textContent = monthName(currentMonth);
+
+  // Auto sync if URL exists
+  if (API_URL) syncData();
+  else toast('⚠️ Set URL API di Settings untuk mulai!');
+}
+
+init();
+</script>
+</body>
+</html>
