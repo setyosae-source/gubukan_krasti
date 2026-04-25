@@ -879,7 +879,7 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   }
 
   /* Content max width for readability */
-  .page { max-width: 900px; }
+  .page { max-width: 100%; }
 
   /* FAB position */
   .fab { right: 24px; bottom: 24px; }
@@ -1139,19 +1139,19 @@ textarea.form-control { resize: vertical; min-height: 70px; }
     </div>
   </div>
 
-</div><!-- end main -->
+  <!-- ==================== LAPORAN ==================== -->
+  <div class="page" id="page-laporan">
+    <div class="dash-header">
+      <div class="dash-greeting">Laporan Keuangan Bulanan</div>
+      <div class="dash-title" id="laporanTitle">—</div>
+      <div class="dash-period" id="laporanPeriod">—</div>
+    </div>
+    <div id="laporanContent">
+      <div class="loading"><div class="spinner"></div>Memuat laporan...</div>
+    </div>
+  </div>
 
-<!-- LAPORAN PAGE -->
-<div class="page" id="page-laporan">
-  <div class="dash-header">
-    <div class="dash-greeting">Laporan Keuangan Bulanan</div>
-    <div class="dash-title" id="laporanTitle">—</div>
-    <div class="dash-period" id="laporanPeriod">—</div>
-  </div>
-  <div id="laporanContent">
-    <div class="loading"><div class="spinner"></div>Memuat laporan...</div>
-  </div>
-</div>
+</div><!-- end main -->
 
 <!-- ==================== BOTTOM NAV ==================== -->
 <nav class="nav">
