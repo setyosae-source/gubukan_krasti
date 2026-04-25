@@ -3838,23 +3838,23 @@ function renderLaporan() {
         📊 Neraca Bulan ${monthName(currentMonth)}
       </div>
       <div class="laporan-summary-row">
-        <span style="color:var(--text2)">Total Penerimaan Bisnis</span>
-        <span style="color:var(--green);font-weight:600">${rpFull(totalPenerimaan)}</span>
+        <span style="color:var(--text2)">Total Omzet</span>
+        <span style="color:var(--green);font-weight:600">${rpFull(totalOmzet)}</span>
       </div>
       <div class="laporan-summary-row">
-        <span style="color:var(--text2)">Total Pengeluaran Bisnis</span>
-        <span style="color:var(--red)">(${rpFull(totalPengeluaran)})</span>
+        <span style="color:var(--text2)">Total Biaya</span>
+        <span style="color:var(--red)">(${rpFull(totalBiaya)})</span>
       </div>
       <div class="laporan-summary-row total">
-        <span>Laba Bersih</span>
+        <span>Laba Bersih Usaha</span>
         <span style="color:${labaBersih>=0?'var(--green)':'var(--red)'}">${rpFull(labaBersih)}</span>
       </div>
       <div class="laporan-summary-row" style="font-size:12px;">
-        <span style="color:var(--text3)">Margin Bisnis</span>
+        <span style="color:var(--text3)">Margin %</span>
         <span style="color:var(--gold);font-weight:600">${margin}%</span>
       </div>
       <div class="laporan-summary-row" style="font-size:12px;">
-        <span style="color:var(--text3)">Isrun 10%</span>
+        <span style="color:var(--text3)">Isrun 10% dari Laba</span>
         <span style="color:var(--gold)">${rpFull(isrun)}</span>
       </div>
     </div>
