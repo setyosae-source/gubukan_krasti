@@ -2006,12 +2006,14 @@ function computePeriodRange(period) {
       from = new Date(2025, 0, 1);
       to   = new Date(2099, 11, 31);
       break;
-    case 'custom_month':
+    case 'custom_month': {
       // period.month = 'YYYY-MM'
-      const [cy, cm] = (period.month||getCurrentMonth()).split('-').map(Number);
+      const parts = (period.month||getCurrentMonth()).split('-').map(Number);
+      const cy = parts[0], cm = parts[1];
       from = new Date(cy, cm-1, 1);
       to   = new Date(cy, cm, 0);
       break;
+    }
     case 'custom_range':
       from = new Date(period.from);
       to   = new Date(period.to);
@@ -2029,7 +2031,13 @@ function computePeriodRange(period) {
 function filterByPeriod(arr, dateField='tanggal') {
   const range = computePeriodRange(currentPeriod);
   return arr.filter(r => {
-    const d = (r[dateField]||'').slice(0,10);
+    let d = (r[dateField]||'');
+    // Handle ISO datetime with timezone: 2026-06-27T17:00:00.000Z
+    if (d.includes('T')) {
+      // Parse as local date to avoid timezone shift
+      d = d.slice(0,10);
+    }
+    d = d.slice(0,10);
     return d >= range.from && d <= range.to;
   });
 }
