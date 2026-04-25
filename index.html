@@ -1897,13 +1897,19 @@ function computePeriodRange(period) {
 function filterByPeriod(arr, dateField='tanggal') {
   const range = computePeriodRange(currentPeriod);
   return arr.filter(r => {
-    let d = (r[dateField]||'');
-    // Handle ISO datetime with timezone: 2026-06-27T17:00:00.000Z
-    if (d.includes('T')) {
-      // Parse as local date to avoid timezone shift
-      d = d.slice(0,10);
-    }
+    // Primary: tanggal field
+    let d = (r[dateField]||'').toString();
+    if (d.includes('T')) d = d.slice(0,10);
     d = d.slice(0,10);
+    // Fallback: gunakan kolom bulan (YYYY-MM) jika tanggal kosong/invalid
+    if (!d || d.length < 7) {
+      const b = (r.bulan||'').slice(0,7);
+      if (!b) return true; // no date info → include
+      // bulan masuk jika range overlap bulan tersebut
+      const bFrom = b + '-01';
+      const bTo   = b + '-31';
+      return bFrom <= range.to && bTo >= range.from;
+    }
     return d >= range.from && d <= range.to;
   });
 }
@@ -1950,6 +1956,22 @@ function isOpsRow(x) {
   const k = (x.kategori||'').toLowerCase();
   const t = (x.keterangan||'').toLowerCase();
   return OPS_KEYWORDS.some(w => k.includes(w) || t.includes(w));
+}
+
+// Central filtered state - ALL render functions should use this
+// Called once at the start of each render, returns filtered slices
+function getFiltered() {
+  return {
+    events:      filterByPeriod(state.events     || []),
+    expenses:    filterByPeriod(state.expenses    || []),
+    items:       filterByPeriod(state.items       || []),
+    stok_masuk:  filterByPeriod(state.stok_masuk  || []),
+    stok_keluar: filterByPeriod(state.stok_keluar || []),
+    pengeluaran: filterByPeriod(state.pengeluaran || []),
+    penerimaan:  filterByPeriod(state.penerimaan  || []),
+    tokba:       filterByPeriod(state.tokba       || []),
+    rt:          filterByPeriod(state.rt          || []),
+  };
 }
 
 
@@ -2114,10 +2136,11 @@ function fmtDate(d) {
 // DASHBOARD
 // ============================================================
 function renderDash() {
-  const mEvents   = filterByPeriod(state.events);
-  const mExpenses = filterByPeriod(state.expenses);
-  const mTokba    = state.tokba;
-  const mRT       = state.rt;
+  const f = getFiltered();
+  const mEvents   = f.events;
+  const mExpenses = f.expenses;
+  const mTokba    = f.tokba;
+  const mRT       = f.rt;
 
   const omzet   = mEvents.reduce((s,e) => s + (Number(e.omzet)||0), 0);
   const hpp  = mExpenses.filter(x => !isOpsRow(x)).reduce((s,x)=>s+(Number(x.jumlah)||0),0);
@@ -2145,9 +2168,9 @@ function renderDash() {
   document.getElementById('dMargin').textContent = 'margin ' + margin + '%';
   document.getElementById('dMarginBar').style.width = Math.min(margin, 100) + '%';
   // New v3 stats
-  const mStokKeluar  = filterByPeriod(state.stok_keluar||[]);
-  const mPengeluaran = filterByPeriod(state.pengeluaran||[]);
-  const mPenerimaan  = filterByPeriod(state.penerimaan||[]);
+  const mStokKeluar  = f.stok_keluar;
+  const mPengeluaran = f.pengeluaran;
+  const mPenerimaan  = f.penerimaan;
   const hppV3  = mStokKeluar.reduce((s,r)=>s+(Number(r.total_hpp)||0),0);
   const opsV3  = mPengeluaran.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
   const terimaV3 = mPenerimaan.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
@@ -2163,7 +2186,7 @@ function renderDash() {
 
   // Recent events - today & future only, sorted ascending (nearest first)
   const todayStr = new Date().toISOString().slice(0,10);
-  const recent = [...state.events]
+  const recent = [...f.events]
     .filter(ev => ev.tanggal >= todayStr && ev.status !== 'batal')
     .sort((a,b) => new Date(a.tanggal)-new Date(b.tanggal))
     .slice(0,8);
@@ -2515,20 +2538,7 @@ function renderKas() {
   filterKas(window._kasFilter);
 }
 
-function getSaldoAkhirBulan(bulan) {
-  // Hitung saldo akhir untuk bulan tertentu dari semua data
-  const journal = buildKasJournalByMonth(bulan);
-  const totalIn  = journal.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
-  const totalOut = journal.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
-  return totalIn - totalOut;
-}
 
-function getPrevMonth(m) {
-  const [y, mo] = m.split('-').map(Number);
-  const d = new Date(y, mo-1, 1);
-  d.setMonth(d.getMonth()-1);
-  return d.toISOString().slice(0,7);
-}
 
 function filterKas(filter) {
   window._kasFilter = filter;
@@ -2538,9 +2548,10 @@ function filterKas(filter) {
   const journal  = buildKasJournal();
   const filtered = filter==='all' ? journal : journal.filter(j=>j.type===filter);
 
-  // Saldo awal = saldo akhir bulan sebelumnya
-  const prevMonth  = getPrevMonth(currentMonth);
-  const saldoAwal  = getSaldoAkhirBulan(prevMonth);
+  // Saldo awal = saldo kumulatif semua transaksi sebelum periode ini
+  const range2     = computePeriodRange(currentPeriod);
+  const prevEnd    = new Date(new Date(range2.from) - 86400000).toISOString().slice(0,10);
+  const saldoAwal  = getSaldoKumulatifSampai(prevEnd);
   const totalIn    = filtered.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
   const totalOut   = filtered.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
   const saldoAkhir = saldoAwal + totalIn - totalOut;
@@ -2665,48 +2676,82 @@ function kasSortBy(col) {
   filterKas(window._kasFilter);
 }
 
-function buildKasJournalByMonth(m) {
-  const journal = [];
-  const allSources = [
-    ...(state.penerimaan||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).map(r=>{
-      const ev=state.events.find(e=>e.id===r.event_id);
-      return {type:'terima',dir:'in',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💰',
-        label:r.label||r.jenis,meta:(ev?ev.customer+' · ':'')+r.metode};
-    }),
-    ...(state.stok_masuk||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).map(r=>({
-      type:'stok',dir:'out',amount:Number(r.total_nilai)||0,tanggal:r.tanggal,icon:'📦',
-      label:r.nama+' '+r.qty+' '+r.satuan,meta:r.toko||r.kategori,
-    })),
-    ...(state.pengeluaran||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).map(r=>{
-      const ev=state.events.find(e=>e.id===r.event_id);
-      return {type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'🚗',
-        label:r.keterangan,meta:r.kategori+(ev?' · '+ev.customer:' · Umum')};
-    }),
-    ...(state.tokba||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).flatMap(r=>{
-      const res=[];
-      if(Number(r.masuk)>0) res.push({type:'tokba',dir:'in',amount:Number(r.masuk),tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
-      if(Number(r.keluar)>0) res.push({type:'tokba',dir:'out',amount:Number(r.keluar),tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
-      return res;
-    }),
-  ];
-  // fallback expenses
-  if (!(state.pengeluaran||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).length) {
-    (state.expenses||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).forEach(r=>{
+function buildKasJournalByRange(from, to) {
+  // Filter helper: tanggal dalam range from..to
+  const inRange = (tgl) => { const d=(tgl||'').slice(0,10); return d>=from && d<=to; };
+
+  const allSources = [];
+
+  // 1. MASUK: dari penerimaan (input manual baru)
+  (state.penerimaan||[]).filter(r=>inRange(r.tanggal)).forEach(r=>{
+    const ev=state.events.find(e=>e.id===r.event_id);
+    allSources.push({type:'terima',dir:'in',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💰',
+      label:r.label||r.jenis||'Penerimaan',meta:(ev?ev.customer+' · ':'')+String(r.metode||'')});
+  });
+
+  // 2. MASUK: dari omzet events (data historis — tidak ada di penerimaan)
+  //    Hanya tampil jika penerimaan kosong (supaya tidak double count)
+  if (!(state.penerimaan||[]).filter(r=>inRange(r.tanggal)).length) {
+    (state.events||[]).filter(r=>inRange(r.tanggal)).forEach(ev=>{
+      if ((Number(ev.omzet)||0) > 0) {
+        allSources.push({type:'terima',dir:'in',amount:Number(ev.omzet)||0,tanggal:ev.tanggal,icon:'💰',
+          label:(ev.no_event?'Ev '+ev.no_event+' · ':'')+String(ev.customer||'-'),meta:ev.lokasi||'Event Catering'});
+      }
+    });
+  }
+
+  // 3. MASUK: dari tokba
+  (state.tokba||[]).filter(r=>inRange(r.tanggal)).forEach(r=>{
+    if(Number(r.masuk)>0) allSources.push({type:'tokba',dir:'in',amount:Number(r.masuk),
+      tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
+    if(Number(r.keluar)>0) allSources.push({type:'tokba',dir:'out',amount:Number(r.keluar),
+      tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
+  });
+
+  // 4. KELUAR: dari pengeluaran (input manual baru)
+  (state.pengeluaran||[]).filter(r=>inRange(r.tanggal)).forEach(r=>{
+    const ev=state.events.find(e=>e.id===r.event_id);
+    allSources.push({type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'🚗',
+      label:r.keterangan,meta:r.kategori+(ev?' · '+ev.customer:' · Umum')});
+  });
+
+  // 5. KELUAR: dari expenses (data historis — fallback jika pengeluaran kosong)
+  if (!(state.pengeluaran||[]).filter(r=>inRange(r.tanggal)).length) {
+    (state.expenses||[]).filter(r=>inRange(r.tanggal)).forEach(r=>{
       allSources.push({type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💸',
         label:r.keterangan,meta:r.kategori+(r.toko?' · '+r.toko:'')});
     });
   }
+
+  // 6. KELUAR: dari stok_masuk
+  (state.stok_masuk||[]).filter(r=>inRange(r.tanggal)).forEach(r=>{
+    allSources.push({type:'stok',dir:'out',amount:Number(r.total_nilai)||0,tanggal:r.tanggal,icon:'📦',
+      label:(r.nama||'')+' '+r.qty+' '+r.satuan,meta:r.toko||r.kategori});
+  });
+
   return allSources;
 }
 
+// Hitung saldo kumulatif sampai akhir bulan tertentu (dari semua data sejak awal)
+function getSaldoKumulatifSampai(batasAkhir) {
+  // Ambil semua data dari tanggal paling awal sampai batasAkhir
+  const from = '2000-01-01';
+  const journal = buildKasJournalByRange(from, batasAkhir);
+  const totalIn  = journal.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
+  const totalOut = journal.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
+  return totalIn - totalOut;
+}
+
+function getPrevMonthEnd(m) {
+  // Akhir bulan sebelumnya: misal currentMonth '2025-05' → '2025-04-30'
+  const [y, mo] = m.split('-').map(Number);
+  const lastDay = new Date(y, mo-1, 0); // day 0 = hari terakhir bulan sebelumnya
+  return lastDay.toISOString().slice(0,10);
+}
+
 function buildKasJournal() {
-  // Filter by period
   const range = computePeriodRange(currentPeriod);
-  const all = buildKasJournalByMonth(currentMonth);
-  return all.filter(j => {
-    const d = (j.tanggal||'').slice(0,10);
-    return d >= range.from && d <= range.to;
-  });
+  return buildKasJournalByRange(range.from, range.to);
 }
 
 function switchKasTab(tab) {
@@ -3729,17 +3774,18 @@ const _origOpenSheet = window.openSheet;
 // LAPORAN BULANAN
 // ============================================================
 function renderLaporan() {
-  document.getElementById('laporanTitle').textContent = monthName(currentMonth);
+  const f = getFiltered();
+  document.getElementById('laporanTitle').textContent = currentPeriod.label || monthName(currentMonth);
   const lapRange = computePeriodRange(currentPeriod);
   const lpEl=document.getElementById('laporanPeriod'); if(lpEl) lpEl.textContent = fmtDate(lapRange.from) + ' s/d ' + fmtDate(lapRange.to);
 
-  const mEvents  = filterByPeriod(state.events);
-  const mSK      = filterByPeriod(state.stok_keluar||[]);
-  const mPeng    = filterByPeriod(state.pengeluaran||[]);
-  const mTerima  = filterByPeriod(state.penerimaan||[]);
-  const mExp     = filterByPeriod(state.expenses||[]);
-  const mTokba   = filterByPeriod(state.tokba||[]);
-  const mRT      = filterByPeriod(state.rt||[]);
+  const mEvents  = f.events;
+  const mSK      = f.stok_keluar;
+  const mPeng    = f.pengeluaran;
+  const mTerima  = f.penerimaan;
+  const mExp     = f.expenses;
+  const mTokba   = f.tokba;
+  const mRT      = f.rt;
 
   // ---- PENERIMAAN ----
   const omzetEvent = mEvents.reduce((s,e) => s+(Number(e.omzet)||0), 0);
@@ -3748,10 +3794,10 @@ function renderLaporan() {
   const totalOmzet = omzetEvent + tokbaIn;
 
   // ---- PENGELUARAN ----
-  // HPP: dari stok_masuk (beli stok), fallback expenses
+  // HPP: dari stok_masuk (beli stok), fallback expenses NON-ops
   const hppStok  = filterByPeriod(state.stok_masuk||[])
                     .reduce((s,r)=>s+(Number(r.total_nilai)||0),0);
-  const hppExp   = mExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const hppExp   = mExp.filter(x=>!isOpsRow(x)).reduce((s,x)=>s+(Number(x.jumlah)||0),0);
   const hppTotal = hppStok > 0 ? hppStok : hppExp;
 
   // Ops grouping
@@ -3791,7 +3837,7 @@ function renderLaporan() {
 
     <!-- RINGKASAN EKSEKUTIF -->
     <div class="summary-card">
-      <div class="summary-title">📊 Ringkasan Eksekutif · ${monthName(currentMonth)}</div>
+      <div class="summary-title">📊 Ringkasan Eksekutif · ${currentPeriod.label||monthName(currentMonth)}</div>
       <div class="summary-row">
         <span class="lbl">Omzet Gubukan (Event)</span>
         <span style="color:var(--green)">${rpFull(omzetEvent)}</span>
@@ -3840,7 +3886,7 @@ function renderLaporan() {
       </div>
       <div class="laporan-section-body" id="secPenerima">
         ${mEvents.length ? mEvents.sort((a,b)=>new Date(a.tanggal)-new Date(b.tanggal)).map(ev => {
-          const evPays = (state.penerimaan||[]).filter(p=>p.event_id===ev.id);
+          const evPays = f.penerimaan.filter(p=>p.event_id===ev.id);
           const paid   = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
           const omz    = Number(ev.omzet)||0;
           const statusColor = {lunas:'var(--green)',dp:'var(--orange)',booking:'var(--blue)',follow:'var(--red)',pending:'var(--orange)',batal:'var(--red)'};
