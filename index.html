@@ -831,31 +831,15 @@ body {
 /* ============================================================
    KAS TABLE
    ============================================================ */
-.kas-table-wrap { overflow-x: auto; }
+.kas-table-wrap { overflow-x: hidden; }
 .kas-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
+  table-layout: fixed;
 }
-.kas-table th {
-  background: var(--bg3);
-  color: var(--ink3);
-  padding: 10px 12px;
-  text-align: left;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  white-space: nowrap;
-  user-select: none;
-}
-.kas-table th:hover { color: var(--gold); }
-.kas-table th.sort-asc::after  { content: ' ↑'; color: var(--gold); }
-.kas-table th.sort-desc::after { content: ' ↓'; color: var(--gold); }
-.kas-table th.debit  { text-align: right; color: var(--green); }
-.kas-table th.kredit { text-align: right; color: var(--red); }
+/* Header tidak ditampilkan — diganti baris summary per tanggal */
+.kas-table thead { display: none; }
 .kas-date-row { background: var(--bg3); cursor: pointer; }
 .kas-date-toggle { float:right; margin-left:6px; display:inline-block; transition:transform 0.2s; }
 .kas-date-toggle.collapsed { transform: rotate(-90deg); }
@@ -865,8 +849,7 @@ body {
   font-weight: 600;
   color: var(--ink3);
   border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 .kas-table td {
   padding: 9px 12px;
@@ -875,11 +858,33 @@ body {
 }
 .kas-table tr.kas-data-row:hover { background: var(--surface); }
 .kas-table tr.kas-data-row.collapsed-row { display: none; }
-.td-desc-main { color: var(--ink); font-size: 12px; }
-.td-desc-meta { font-size: 10px; color: var(--ink3); margin-top: 1px; }
-.td-debit  { text-align: right; color: var(--green); font-weight: 600; font-family: var(--font-mono); white-space: nowrap; }
-.td-kredit { text-align: right; color: var(--red);   font-weight: 600; font-family: var(--font-mono); white-space: nowrap; }
-.td-empty  { text-align: right; color: var(--ink4); }
+/* 3 kolom: icon (28px) | deskripsi (flex) | nominal (auto) */
+.td-icon   { width: 28px; font-size: 14px; vertical-align: middle; }
+.td-desc   { width: auto; overflow: hidden; }
+.td-desc-main { color: var(--ink); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.td-desc-meta { font-size: 10px; color: var(--ink3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.td-nominal {
+  width: 120px;
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.td-nominal-in  { color: var(--green); font-weight: 700; font-size: 12px; font-family: var(--font-mono); }
+.td-nominal-in::before { content: '+'; font-size: 10px; opacity: 0.7; margin-right: 1px; }
+.td-nominal-out { color: var(--red);   font-weight: 700; font-size: 12px; font-family: var(--font-mono); }
+.td-nominal-out::before { content: '−'; font-size: 10px; opacity: 0.7; margin-right: 1px; }
+.td-nominal-label {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+.td-nominal-label.in  { background: var(--green-dim); color: var(--green); }
+.td-nominal-label.out { background: var(--red-dim);   color: var(--red);   }
 .kas-table tfoot td {
   padding: 10px 12px;
   background: var(--bg3);
@@ -887,6 +892,7 @@ body {
   border-top: 2px solid var(--border2);
   white-space: nowrap;
   font-family: var(--font-mono);
+  font-size: 12px;
 }
 
 /* ============================================================
@@ -3078,14 +3084,17 @@ function renderKasTable(data, totalIn, totalOut, saldoAwal, saldoAkhir) {
       </td>
     </tr>`;
     items.forEach((j,idx) => {
+      const isIn = j.dir === 'in';
       rows += `<tr class="kas-data-row collapsed-row" data-group="${gid}">
         <td class="td-icon">${j.icon}</td>
         <td class="td-desc">
           <div class="td-desc-main">${j.label}</div>
           <div class="td-desc-meta">${j.meta}</div>
         </td>
-        <td class="td-debit">${j.dir==='in' ? rp(j.amount) : '<span class="td-empty">—</span>'}</td>
-        <td class="td-kredit">${j.dir==='out' ? rp(j.amount) : '<span class="td-empty">—</span>'}</td>
+        <td class="td-nominal">
+          <div><span class="td-nominal-label ${isIn?'in':'out'}">${isIn?'Debit':'Kredit'}</span></div>
+          <div class="${isIn?'td-nominal-in':'td-nominal-out'}">${rp(j.amount)}</div>
+        </td>
       </tr>`;
     });
   });
@@ -3096,23 +3105,25 @@ function renderKasTable(data, totalIn, totalOut, saldoAwal, saldoAkhir) {
         <thead>
           <tr>
             <th style="width:28px;"></th>
-            <th class="${thClass('tgl')}" onclick="kasSortBy('tgl')">Tgl / Deskripsi</th>
-            <th class="debit ${thClass('debit')}" onclick="kasSortBy('debit')" style="width:90px;">Debit</th>
-            <th class="kredit ${thClass('kredit')}" onclick="kasSortBy('kredit')" style="width:90px;">Kredit</th>
+            <th>Deskripsi</th>
+            <th style="width:120px;text-align:right;">Nominal</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
         <tfoot>
           <tr>
             <td colspan="2" style="color:var(--ink3);font-size:11px;">
-              Saldo Awal: ${rp(saldoAwal)}
+              <span style="color:var(--green);">▲ Masuk: ${rp(totalIn)}</span>
+              &nbsp;·&nbsp;
+              <span style="color:var(--red);">▼ Keluar: ${rp(totalOut)}</span>
             </td>
-            <td style="text-align:right;color:var(--green);">${rp(totalIn)}</td>
-            <td style="text-align:right;color:var(--red);">${rp(totalOut)}</td>
+            <td style="text-align:right;color:var(--ink3);font-size:10px;">
+              Awal: ${rp(saldoAwal)}
+            </td>
           </tr>
           <tr>
-            <td colspan="2" style="color:var(--ink);font-size:13px;">Saldo Akhir</td>
-            <td colspan="2" style="text-align:right;font-size:14px;
+            <td colspan="2" style="color:var(--ink);font-size:13px;font-weight:700;">Saldo Akhir</td>
+            <td style="text-align:right;font-size:15px;font-weight:800;
               color:${saldoAkhir>=0?'var(--green)':'var(--red)'};">${rp(saldoAkhir)}</td>
           </tr>
         </tfoot>
