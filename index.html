@@ -297,6 +297,29 @@ body {
   position: relative;
 }
 
+/* Pull to refresh */
+.ptr-indicator {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: center;
+  height: 0; overflow: hidden;
+  transition: height 0.2s;
+  z-index: 10;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--ink3); gap: 8px;
+}
+.ptr-indicator.visible  { height: 48px; }
+.ptr-indicator.loading  { height: 48px; }
+.ptr-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: ptr-spin 0.7s linear infinite;
+}
+@keyframes ptr-spin { to { transform: rotate(360deg); } }
+
 /* Bottom nav (mobile) */
 .bottom-nav {
   flex-shrink: 0;
@@ -524,6 +547,26 @@ body {
   flex-direction: column;
   gap: 6px;
   padding: 0 16px;
+}
+.event-group-header {
+  padding: 6px 16px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.event-group-header.upcoming {
+  color: var(--gold);
+}
+.event-group-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 16px;
 }
 .event-item {
   background: var(--surface);
@@ -1223,7 +1266,11 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
     </nav>
 
     <!-- ===== MAIN CONTENT ===== -->
-    <main class="main">
+    <main class="main" id="mainScroll">
+      <div class="ptr-indicator" id="ptrIndicator">
+        <div class="ptr-spinner" id="ptrSpinner" style="display:none"></div>
+        <span id="ptrText">↓ Tarik untuk refresh</span>
+      </div>
 
       <!-- ==================== DASHBOARD ==================== -->
       <div class="page active" id="page-dash">
@@ -2146,22 +2193,35 @@ async function apiWrite(action, sheet, data, id) {
   return Array.isArray(result) ? (result[0] || data) : (result || data);
 }
 
-async function supaFetch(table, extraParams='') {
+async function supaFetch(table, extraParams='', retry=2) {
   const url = SUPA_URL + '/rest/v1/' + table + '?select=*&limit=10000' + extraParams;
-  const res = await fetch(url, { headers: SUPA_HEADERS });
-  if (!res.ok) throw new Error('Supabase fetch ' + table + ': ' + res.status);
-  return await res.json();
+  for (let i = 0; i <= retry; i++) {
+    try {
+      const res = await fetch(url, { headers: SUPA_HEADERS });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    } catch(e) {
+      if (i === retry) throw new Error(table + ': ' + (e.message||'gagal'));
+      await new Promise(r => setTimeout(r, 1000 * (i+1))); // wait 1s, 2s
+    }
+  }
 }
 
 async function syncData() {
   const btn = document.getElementById('syncBtn');
-  btn.classList.add('spinning');
+  if (btn) btn.classList.add('spinning');
+
+  // Tampil data cache dulu agar tidak kosong saat fetch
+  loadCache();
+  renderPage(currentPage);
+
   try {
-    const [events, items, expenses, stokMasuk, stokKeluar, pengeluaran, penerimaan, tokba, rt, vendors] = await Promise.all([
-      supaFetch('gubukan_events',        '&order=tanggal.asc'),
+    const [events, items, expenses, stokMasuk, stokKeluar,
+           pengeluaran, penerimaan, tokba, rt, vendors] = await Promise.all([
+      supaFetch('gubukan_events',     '&order=tanggal.asc'),
       supaFetch('gubukan_event_items'),
       supaFetch('gubukan_expenses'),
-      supaFetch('gubukan_stok_masuk',    '&order=tanggal.asc'),
+      supaFetch('gubukan_stok_masuk', '&order=tanggal.asc'),
       supaFetch('gubukan_stok_keluar'),
       supaFetch('gubukan_pengeluaran'),
       supaFetch('gubukan_penerimaan'),
@@ -2186,9 +2246,16 @@ async function syncData() {
     populateStokDatalist();
     toast('✅ ' + state.events.length + ' events · ' + state.expenses.length + ' expenses');
   } catch(e) {
-    toast('❌ ' + e.message);
+    // Tetap tampil data cache jika ada
+    const msg = e.message || 'Gagal terhubung';
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      toast('⚠️ Offline · menampilkan data terakhir');
+    } else {
+      toast('❌ ' + msg);
+    }
+    console.error('syncData error:', e);
   } finally {
-    btn.classList.remove('spinning');
+    if (btn) btn.classList.remove('spinning');
   }
 }
 
@@ -2363,11 +2430,12 @@ function filterEvents(f) {
 }
 
 function renderEvents() {
-  const mAll = filterByPeriod(state.events).sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
-  const filter = window._evFilter || 'all';
-  const filtered = filter==='all' ? mAll : mAll.filter(e=>e.status===filter);
-  
-  document.getElementById('eventsCount').textContent = 
+  // Ambil SEMUA events (tidak filter periode) untuk halaman Event
+  const allEvs = [...state.events];
+  const filter  = window._evFilter || 'all';
+  const filtered = filter==='all' ? allEvs : allEvs.filter(e=>e.status===filter);
+
+  document.getElementById('eventsCount').textContent =
     filtered.length + ' event' + (filter!=='all'?' · '+filter:'');
 
   const el = document.getElementById('eventList');
@@ -2376,9 +2444,35 @@ function renderEvents() {
     el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada event</div>';
     return;
   }
+
+  const today = new Date().toISOString().slice(0,10);
   const statusLabel = {booking:'Booking',dp:'DP',lunas:'Lunas',follow:'Follow Up',pending:'Pending',batal:'Batal'};
-  el.innerHTML = filtered.map(ev => {
-    const evOmzet = Number(ev.omzet)||0;
+
+  // Pisah upcoming (tanggal >= hari ini) dan riwayat
+  const upcoming = filtered
+    .filter(e => (e.tanggal||'') >= today)
+    .sort((a,b) => new Date(a.tanggal)-new Date(b.tanggal)); // ascending: terdekat dulu
+
+  const riwayat  = filtered
+    .filter(e => (e.tanggal||'') < today)
+    .sort((a,b) => new Date(b.tanggal)-new Date(a.tanggal)); // descending: paling akhir dulu
+
+  // Helper: group array by YYYY-MM, return [{label, items}]
+  function groupByMonth(evs, ascending) {
+    const groups = {};
+    evs.forEach(ev => {
+      const m = (ev.tanggal||'').slice(0,7);
+      if (!groups[m]) groups[m] = [];
+      groups[m].push(ev);
+    });
+    const keys = Object.keys(groups).sort((a,b) => ascending
+      ? a.localeCompare(b) : b.localeCompare(a));
+    return keys.map(k => ({ label: monthName(k), key: k, items: groups[k] }));
+  }
+
+  // Helper render satu event row
+  function evRow(ev) {
+    const omzet = Number(ev.omzet)||0;
     const st = ev.status||'pending';
     return `<div class="event-item" onclick="showDetail('${ev.id}')">
       <div class="event-status ${st}"></div>
@@ -2387,11 +2481,38 @@ function renderEvents() {
         <div class="event-meta">${fmtDate(ev.tanggal)} · ${ev.lokasi||'-'}</div>
       </div>
       <div class="event-right">
-        <div class="event-omzet">${evOmzet>0?rp(evOmzet):'—'}</div>
+        <div class="event-omzet">${omzet>0?rp(omzet):'—'}</div>
         <div class="event-badge ${st}">${statusLabel[st]||st}</div>
       </div>
     </div>`;
-  }).join('');
+  }
+
+  let html = '';
+
+  // ── UPCOMING ──────────────────────────────────────────────
+  if (upcoming.length) {
+    const upGroups = groupByMonth(upcoming, true);
+    upGroups.forEach(g => {
+      html += `<div class="event-group-header upcoming">📅 ${g.label}</div>`;
+      html += g.items.map(ev => evRow(ev)).join('');
+    });
+  }
+
+  // ── DIVIDER ───────────────────────────────────────────────
+  if (upcoming.length && riwayat.length) {
+    html += '<div class="event-group-divider"></div>';
+  }
+
+  // ── RIWAYAT ───────────────────────────────────────────────
+  if (riwayat.length) {
+    const rvGroups = groupByMonth(riwayat, false);
+    rvGroups.forEach(g => {
+      html += `<div class="event-group-header">🗂️ ${g.label}</div>`;
+      html += g.items.map(ev => evRow(ev)).join('');
+    });
+  }
+
+  el.innerHTML = html;
 }
 
 
@@ -4902,6 +5023,78 @@ function init() {
 }
 
 init();
+
+
+// ============================================================
+// PULL TO REFRESH
+// ============================================================
+(function() {
+  const THRESHOLD = 70;   // px drag sebelum trigger
+  const MAX_PULL  = 100;  // px max tarik
+
+  let startY = 0, pullY = 0, pulling = false, triggered = false;
+
+  const main      = document.getElementById('mainScroll');
+  const indicator = document.getElementById('ptrIndicator');
+  const spinner   = document.getElementById('ptrSpinner');
+  const ptrText   = document.getElementById('ptrText');
+
+  if (!main) return;
+
+  main.addEventListener('touchstart', e => {
+    if (main.scrollTop > 0) return;      // hanya saat di posisi atas
+    startY    = e.touches[0].clientY;
+    pulling   = true;
+    triggered = false;
+  }, { passive: true });
+
+  main.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    pullY = e.touches[0].clientY - startY;
+    if (pullY <= 0) { pulling = false; return; }
+
+    const drag = Math.min(pullY * 0.5, MAX_PULL); // resistance
+    indicator.style.height = drag + 'px';
+    indicator.classList.toggle('visible', drag > 20);
+
+    if (drag >= THRESHOLD && !triggered) {
+      ptrText.textContent = '↑ Lepas untuk refresh';
+      triggered = true;
+    } else if (drag < THRESHOLD) {
+      ptrText.textContent = '↓ Tarik untuk refresh';
+      triggered = false;
+    }
+  }, { passive: true });
+
+  main.addEventListener('touchend', async () => {
+    if (!pulling) return;
+    pulling = false;
+
+    if (triggered) {
+      // Tampil spinner
+      indicator.style.height = '48px';
+      spinner.style.display  = 'block';
+      ptrText.textContent    = 'Memuat...';
+
+      try {
+        await syncData();
+      } catch(e) {}
+
+      spinner.style.display = 'none';
+      ptrText.textContent   = '✓ Selesai';
+      setTimeout(() => {
+        indicator.style.height = '0px';
+        indicator.classList.remove('visible');
+        ptrText.textContent = '↓ Tarik untuk refresh';
+      }, 800);
+    } else {
+      indicator.style.height = '0px';
+      indicator.classList.remove('visible');
+    }
+
+    pullY = 0;
+  });
+})();
 
 </script>
 </body>
