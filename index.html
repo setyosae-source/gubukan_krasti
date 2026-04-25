@@ -11,88 +11,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 :root {
-  /* Navy (default) */
-  --bg:        #0a0f1e;
-  --bg2:       #0d1528;
-  --bg3:       #111d35;
-  --card:      #0f1a30;
-  --border:    #1e2d4a;
-  --gold:      #4d9ef7;
-  --gold2:     #7bb8ff;
-  --cream:     #e8f0ff;
+  --bg:        #0f0e0c;
+  --bg2:       #1a1814;
+  --bg3:       #252218;
+  --card:      #1e1c16;
+  --border:    #2e2b20;
+  --gold:      #d4a843;
+  --gold2:     #f0c96a;
+  --cream:     #f5edd8;
   --green:     #4caf82;
   --red:       #e05c5c;
-  --blue:      #4d9ef7;
+  --blue:      #5c9ee0;
   --orange:    #e08a3c;
-  --text:      #d0dff5;
-  --text2:     #7a9bc4;
-  --text3:     #3d5a80;
+  --text:      #e8dfc8;
+  --text2:     #a09880;
+  --text3:     #6b6352;
   --shadow:    0 4px 24px rgba(0,0,0,0.5);
   --radius:    14px;
   --radius-sm: 8px;
 }
-
-/* ---- THEMES ---- */
-[data-theme="earthy"] {
-  --bg:#0f0e0c; --bg2:#1a1814; --bg3:#252218; --card:#1e1c16;
-  --border:#2e2b20; --gold:#d4a843; --gold2:#f0c96a; --cream:#f5edd8;
-  --text:#e8dfc8; --text2:#a09880; --text3:#6b6352;
-}
-[data-theme="navy"] {
-  --bg:#0a0f1e; --bg2:#0d1528; --bg3:#111d35; --card:#0f1a30;
-  --border:#1e2d4a; --gold:#4d9ef7; --gold2:#7bb8ff; --cream:#e8f0ff;
-  --text:#d0dff5; --text2:#7a9bc4; --text3:#3d5a80;
-}
-[data-theme="forest"] {
-  --bg:#0a1208; --bg2:#0f1a0c; --bg3:#152410; --card:#111e0e;
-  --border:#1e3018; --gold:#5cb85c; --gold2:#7dd87d; --cream:#e8f5e8;
-  --text:#d0f0d0; --text2:#7ab87a; --text3:#3d6b3d;
-}
-[data-theme="purple"] {
-  --bg:#0e0a1e; --bg2:#150d28; --bg3:#1c1235; --card:#130f30;
-  --border:#251a4a; --gold:#9b59b6; --gold2:#c39bd3; --cream:#f0e8ff;
-  --text:#e0d0ff; --text2:#9b7ac4; --text3:#5a3d80;
-}
-[data-theme="rose"] {
-  --bg:#1a0a0e; --bg2:#280d15; --bg3:#35111c; --card:#300f1a;
-  --border:#4a1a28; --gold:#e05c8a; --gold2:#f07aa0; --cream:#ffe8f0;
-  --text:#f5d0dd; --text2:#c47a95; --text3:#803d55;
-}
-[data-theme="light"] {
-  --bg:#f0f4ff; --bg2:#e8eef8; --bg3:#dde5f5; --card:#edf1fb;
-  --border:#c8d5ea; --gold:#2563eb; --gold2:#3b82f6; --cream:#1e3a5f;
-  --green:#16a34a; --red:#dc2626; --orange:#ea580c;
-  --text:#1e3a5f; --text2:#4a6fa5; --text3:#8fa8c8;
-}
-
-/* Theme picker */
-.theme-grid {
-  display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 10px; padding: 14px;
-}
-.theme-card {
-  border-radius: var(--radius-sm);
-  border: 2px solid transparent;
-  overflow: hidden; cursor: pointer;
-  transition: border-color 0.2s, transform 0.15s;
-}
-.theme-card:active { transform: scale(0.96); }
-.theme-card.active { border-color: var(--gold); }
-.theme-preview {
-  height: 52px;
-  display: flex; flex-direction: column;
-  padding: 6px 8px; gap: 4px;
-}
-.theme-preview-bar {
-  height: 6px; border-radius: 3px;
-  opacity: 0.9;
-}
-.theme-name {
-  text-align: center; font-size: 11px;
-  color: var(--text2); padding: 5px 0;
-  background: var(--card);
-}
-
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -618,21 +555,111 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 .empty-icon { font-size: 40px; margin-bottom: 10px; }
 
 /* ---- MONTH PICKER ---- */
+.month-picker-scroll { padding: 8px 14px 16px; overflow-y: auto; max-height: 70vh; }
+.month-year-group { margin-bottom: 14px; }
+.month-year-label {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px; color: var(--gold);
+  margin-bottom: 8px; padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.month-year-badge {
+  font-size: 10px; color: var(--text3);
+  font-family: 'DM Sans', sans-serif;
+}
 .month-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 8px; padding: 16px;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
 }
 .month-btn {
-  padding: 10px; text-align: center;
+  padding: 8px 4px; text-align: center;
   background: var(--bg3); border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  cursor: pointer; font-size: 12px; color: var(--text2);
+  cursor: pointer; font-size: 11px; color: var(--text2);
+  transition: all 0.15s; position: relative;
 }
+.month-btn:active { transform: scale(0.95); }
 .month-btn.active {
   border-color: var(--gold);
-  background: rgba(212,168,67,0.15);
-  color: var(--gold);
+  background: rgba(77,158,247,0.15);
+  color: var(--gold); font-weight: 600;
 }
+.month-btn.has-data::after {
+  content: ''; position: absolute;
+  top: 4px; right: 4px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.month-btn.future { opacity: 0.5; }
+
+
+/* ---- PAYMENT SYSTEM ---- */
+.payment-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.payment-tab {
+  flex: 1; padding: 10px; text-align: center;
+  font-size: 12px; cursor: pointer;
+  color: var(--text2); border-bottom: 2px solid transparent;
+  transition: color 0.2s;
+}
+.payment-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.payment-step {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); margin-bottom: 6px;
+}
+.payment-step-icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.payment-step-icon.done  { background: rgba(76,175,130,0.2); }
+.payment-step-icon.pend  { background: rgba(212,168,67,0.2); }
+.payment-step-icon.wait  { background: rgba(110,110,110,0.15); }
+.payment-step-info { flex: 1; }
+.payment-step-label { font-size: 12px; color: var(--text2); }
+.payment-step-amount { font-size: 14px; font-weight: 600; color: var(--cream); }
+.payment-step-date { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.payment-step-action {
+  font-size: 11px; color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 12px; padding: 3px 10px;
+  cursor: pointer; background: none; white-space: nowrap;
+}
+.payment-progress {
+  background: var(--border); border-radius: 4px;
+  height: 8px; margin: 10px 0; overflow: hidden;
+}
+.payment-progress-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--green), var(--gold));
+  transition: width 0.6s ease;
+}
+.payment-summary {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 6px; margin-bottom: 12px;
+}
+.payment-summary-item {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px; text-align: center;
+}
+.payment-summary-label { font-size: 9px; color: var(--text3); text-transform: uppercase; margin-bottom: 3px; }
+.payment-summary-val { font-size: 12px; font-weight: 600; }
+
+/* Invoice print styles */
+@media print {
+  body > *:not(#invoicePrint) { display: none !important; }
+  #invoicePrint { display: block !important; }
+  .invoice-wrap { box-shadow: none !important; }
+}
+#invoicePrint { display: none; }
+
 
 /* ---- EVENT DETAIL SHEET ---- */
 .detail-omzet {
@@ -733,9 +760,11 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   <div class="page" id="page-events">
     <div class="filter-row" id="eventFilters">
       <div class="filter-chip active" data-filter="all">Semua</div>
-      <div class="filter-chip" data-filter="lunas">✅ Lunas</div>
+      <div class="filter-chip" data-filter="booking">📅 Booking</div>
       <div class="filter-chip" data-filter="dp">💰 DP</div>
+      <div class="filter-chip" data-filter="lunas">✅ Lunas</div>
       <div class="filter-chip" data-filter="follow">📞 Follow Up</div>
+      <div class="filter-chip" data-filter="pending">⏳ Pending</div>
     </div>
     <div class="event-list" id="eventsList">
       <div class="loading"><div class="spinner"></div>Memuat...</div>
@@ -860,11 +889,6 @@ textarea.form-control { resize: vertical; min-height: 70px; }
         </div>
         <div class="settings-arrow">›</div>
       </div>
-
-      <div style="padding:4px 0 6px;">
-        <div style="padding:0 14px 8px;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">🎨 Tema Warna</div>
-        <div class="theme-grid" id="themeGrid"></div>
-      </div>
       <div class="settings-item" onclick="exportMonth()">
         <div class="settings-icon">📤</div>
         <div class="settings-info">
@@ -941,9 +965,11 @@ textarea.form-control { resize: vertical; min-height: 70px; }
       <div class="form-group">
         <label class="form-label">Status</label>
         <select class="form-control" id="fStatus">
+          <option value="booking">📅 Booking</option>
+          <option value="dp">💰 DP Masuk</option>
           <option value="lunas">✅ Lunas</option>
-          <option value="dp">💰 DP</option>
           <option value="follow">📞 Follow Up</option>
+          <option value="pending">⏳ Pending</option>
           <option value="batal">❌ Batal</option>
         </select>
       </div>
@@ -1073,9 +1099,67 @@ textarea.form-control { resize: vertical; min-height: 70px; }
       <div class="sheet-title">Pilih Bulan</div>
       <div class="sheet-close" onclick="closeSheet('monthSheet')">✕</div>
     </div>
-    <div class="month-grid" id="monthGrid"></div>
+    <div class="month-picker-scroll" id="monthGrid"></div>
   </div>
 </div>
+
+
+<!-- Payment Sheet -->
+<div class="overlay" id="paymentSheet" onclick="overlayClose(event,'paymentSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="paymentSheetTitle">Catat Pembayaran</div>
+      <div class="sheet-close" onclick="closeSheet('paymentSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="payEventId">
+      <input type="hidden" id="payType">
+      <div class="form-group">
+        <label class="form-label">Jenis Pembayaran</label>
+        <select class="form-control" id="payJenis">
+          <option value="booking">📅 Booking Fee (Rp 100.000)</option>
+          <option value="dp">💰 DP (50% dari total)</option>
+          <option value="pelunasan">✅ Pelunasan</option>
+          <option value="custom">💵 Jumlah Custom</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal Bayar</label>
+          <input type="date" class="form-control" id="payTgl">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-control" id="payJumlah" placeholder="0" oninput="calcSisaBayar()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Metode Pembayaran</label>
+        <select class="form-control" id="payMetode">
+          <option value="transfer">🏦 Transfer Bank</option>
+          <option value="cash">💵 Cash</option>
+          <option value="qris">📱 QRIS</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input type="text" class="form-control" id="payNote" placeholder="No. ref, nama pengirim, dll">
+      </div>
+      <div class="totals-card" id="payTotalsCard">
+        <div class="total-row"><span>Total Tagihan</span><span id="payTotal">Rp 0</span></div>
+        <div class="total-row"><span>Sudah Dibayar</span><span id="payDibayar" style="color:var(--green)">Rp 0</span></div>
+        <div class="total-row highlight"><span>Sisa Tagihan</span><span id="paySisa" style="color:var(--red)">Rp 0</span></div>
+      </div>
+      <button class="btn-submit" onclick="savePayment()">💾 Simpan & Cetak Bukti</button>
+      <button class="btn-outline" onclick="savePayment(false)">💾 Simpan Saja</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Print Area -->
+<div id="invoicePrint"></div>
+
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -1089,7 +1173,7 @@ let API_URL = localStorage.getItem('gubukan_api_url') || '';
 let currentMonth = localStorage.getItem('gubukan_month') || getCurrentMonth();
 let state = {
   events: [], items: [], expenses: [],
-  tokba: [], rt: [], vendors: []
+  tokba: [], rt: [], vendors: [], payments: []
 };
 let currentPage = 'dash';
 
@@ -1153,23 +1237,16 @@ async function syncData() {
   btn.classList.add('spinning');
   try {
     if (!API_URL) { toast('⚠️ Set URL API di Settings dulu!'); return; }
-    const [events, items, expenses, tokba, rt, vendors] = await Promise.all([
-      api({ action: 'getAll', sheet: 'events' }),
-      api({ action: 'getAll', sheet: 'event_items' }),
-      api({ action: 'getAll', sheet: 'expenses' }),
-      api({ action: 'getAll', sheet: 'tokba' }),
-      api({ action: 'getAll', sheet: 'rumah_tangga' }),
-      api({ action: 'getAll', sheet: 'vendors' }),
-    ]);
-    state.events   = events   || [];
-    state.items    = items    || [];
-    state.expenses = expenses || [];
-    state.tokba    = tokba    || [];
-    state.rt       = rt       || [];
-    state.vendors  = vendors  || [];
+    const monthly = await api({ action: 'getMonthly', month: currentMonth });
+    state.events   = await api({ action: 'getAll', sheet: 'events' });
+    state.items     = await api({ action: 'getAll', sheet: 'event_items' });
+    state.expenses  = await api({ action: 'getAll', sheet: 'expenses' });
+    state.tokba     = monthly.tokba || [];
+    state.rt        = monthly.rt || [];
+    state.vendors   = await api({ action: 'getAll', sheet: 'vendors' });
     cacheState();
     renderPage(currentPage);
-    toast('✅ ' + state.events.length + ' events disync!');
+    toast('✅ Data berhasil disync!');
   } catch(e) {
     toast('❌ ' + e.message);
   } finally {
@@ -1266,7 +1343,8 @@ function renderDash() {
     const evCost  = evExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
     const evLaba  = evOmzet - evCost;
     const evMargin= evOmzet>0?(evLaba/evOmzet*100).toFixed(0):0;
-    const dot = ev.status==='lunas'?'green': ev.status==='dp'?'orange':'red';
+    const dotColor = {lunas:'green',dp:'orange',booking:'blue',pending:'orange',follow:'red',batal:'red'};
+    const dot = dotColor[ev.status] || 'red';
     return `<div class="event-card" onclick="showDetail('${ev.id}')">
       <div class="event-dot ${dot}"></div>
       <div class="event-info">
@@ -1328,7 +1406,8 @@ function renderEvents() {
     const evCost  = evExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
     const evLaba  = evOmzet - evCost;
     const evMargin= evOmzet>0?(evLaba/evOmzet*100).toFixed(0):0;
-    const dot = ev.status==='lunas'?'green':ev.status==='dp'?'orange':'red';
+    const dotColor2 = {lunas:'green',dp:'orange',booking:'blue',pending:'orange',follow:'red',batal:'red'};
+    const dot = dotColor2[ev.status] || 'red';
     return `<div class="event-card" onclick="showDetail('${ev.id}')">
       <div class="event-dot ${dot}"></div>
       <div class="event-info">
@@ -1348,8 +1427,19 @@ function renderEvents() {
 function showDetail(eventId) {
   const ev = state.events.find(e=>e.id===eventId);
   if (!ev) return;
+  window._detailEventId = eventId;
+  renderDetailTab('info');
+  openSheet('detailSheet');
+}
+
+function renderDetailTab(tab) {
+  const eventId = window._detailEventId;
+  const ev      = state.events.find(e=>e.id===eventId);
+  if (!ev) return;
+
   const evItems = state.items.filter(x=>x.event_id===eventId);
   const evExp   = state.expenses.filter(x=>x.event_id===eventId);
+  const evPays  = (state.payments||[]).filter(x=>x.event_id===eventId);
   const omzet   = Number(ev.omzet)||0;
   const hpp     = evExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
   const ops     = evExp.filter(x=>x.kategori==='Operasional').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
@@ -1357,66 +1447,177 @@ function showDetail(eventId) {
   const laba    = omzet - hpp - ops - ovh;
   const margin  = omzet>0?(laba/omzet*100).toFixed(1):0;
   const isrun   = omzet * 0.1;
+  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const sisa      = omzet - totalPaid;
+  const paidPct   = omzet>0?Math.min(100,(totalPaid/omzet*100)).toFixed(0):0;
 
-  const profitClass = laba >= 0 ? 'profit' : 'loss';
-  const profitLabel = laba >= 0 ? '✅ Profit' : '❌ Rugi';
+  const statusLabel = {booking:'📅 Booking',dp:'💰 DP',lunas:'✅ Lunas',
+    follow:'📞 Follow Up',pending:'⏳ Pending',batal:'❌ Batal'};
 
-  document.getElementById('detailBody').innerHTML = `
-    <div style="margin-bottom:12px;">
-      <div style="font-size:11px;color:var(--text2);">${fmtDate(ev.tanggal)} · ${ev.status}</div>
-      <div style="font-size:18px;font-weight:600;color:var(--cream);margin:4px 0;">${ev.customer}</div>
-      <div style="font-size:12px;color:var(--text2);">📍 ${ev.lokasi||'-'}</div>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-      <div class="detail-omzet">${rp(omzet)}</div>
-      <span class="detail-badge ${profitClass}">${profitLabel} ${Math.abs(margin)}%</span>
-    </div>
-
-    <div class="totals-card">
-      ${evItems.map(it=>`
-        <div class="breakdown-item">
-          <div><div>${it.menu}</div><div class="breakdown-cat">${it.qty} pcs × ${rp(it.harga_satuan)}</div></div>
-          <div style="color:var(--green)">${rp(it.total)}</div>
-        </div>`).join('')}
-      <div class="breakdown-item" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
-        <span style="color:var(--text2);font-size:11px;">HPP Bahan</span><span style="color:var(--blue)">${rp(hpp)}</span>
-      </div>
-      <div class="breakdown-item">
-        <span style="color:var(--text2);font-size:11px;">Ops (fee, transport)</span><span style="color:var(--orange)">${rp(ops)}</span>
-      </div>
-      <div class="breakdown-item">
-        <span style="color:var(--text2);font-size:11px;">Overhead</span><span style="color:var(--text2)">${rp(ovh)}</span>
-      </div>
-      <div class="breakdown-item" style="font-weight:600;">
-        <span>Laba Bersih</span>
-        <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)}</span>
-      </div>
-      <div class="breakdown-item">
-        <span style="font-size:11px;color:var(--text2);">Isrun 10%</span>
-        <span style="color:var(--gold)">${rp(isrun)}</span>
+  const tabHtml = `
+    <div style="padding:14px 16px 0;">
+      <div style="font-size:11px;color:var(--text2);">${fmtDate(ev.tanggal)} · <span style="color:var(--gold)">${statusLabel[ev.status]||ev.status}</span></div>
+      <div style="font-size:17px;font-weight:600;color:var(--cream);margin:3px 0;">${ev.customer}</div>
+      <div style="font-size:11px;color:var(--text2);">📍 ${ev.lokasi||'-'}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+        <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);">${rp(omzet)}</div>
+        <span class="detail-badge ${laba>=0?'profit':'loss'}">${laba>=0?'✅':'❌'} ${Math.abs(margin)}%</span>
       </div>
     </div>
+    <div class="payment-tabs" style="margin-top:12px;">
+      <div class="payment-tab ${tab==='info'?'active':''}" onclick="renderDetailTab('info')">📋 Info</div>
+      <div class="payment-tab ${tab==='payment'?'active':''}" onclick="renderDetailTab('payment')">💳 Bayar</div>
+      <div class="payment-tab ${tab==='invoice'?'active':''}" onclick="renderDetailTab('invoice')">🧾 Invoice</div>
+    </div>`;
 
-    ${evExp.length ? `
-    <div class="form-section-title">Detail Pengeluaran</div>
-    ${evExp.map(x=>`
-      <div class="breakdown-item">
-        <div>
-          <div style="font-size:12px;">${x.keterangan}</div>
-          <div class="breakdown-cat">${x.kategori} · ${x.toko||''}</div>
+  let bodyHtml = '';
+
+  if (tab === 'info') {
+    bodyHtml = `
+      <div style="padding:0 16px 16px;">
+        <div class="totals-card">
+          ${evItems.map(it=>`
+            <div class="breakdown-item">
+              <div><div style="font-size:12px;">${it.menu}</div>
+              <div class="breakdown-cat">${it.qty} pcs × ${rp(it.harga_satuan)}</div></div>
+              <div style="color:var(--green)">${rp(it.total)}</div>
+            </div>`).join('')}
+          <div class="breakdown-item" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
+            <span style="color:var(--text2);font-size:11px;">HPP</span><span style="color:var(--blue)">${rp(hpp)}</span>
+          </div>
+          <div class="breakdown-item">
+            <span style="color:var(--text2);font-size:11px;">Operasional</span><span style="color:var(--orange)">${rp(ops)}</span>
+          </div>
+          <div class="breakdown-item">
+            <span style="color:var(--text2);font-size:11px;">Overhead</span><span style="color:var(--text2)">${rp(ovh)}</span>
+          </div>
+          <div class="breakdown-item" style="font-weight:600;">
+            <span>Laba Bersih</span>
+            <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)}</span>
+          </div>
+          <div class="breakdown-item">
+            <span style="font-size:11px;color:var(--text2);">Isrun 10%</span>
+            <span style="color:var(--gold)">${rp(isrun)}</span>
+          </div>
         </div>
-        <div style="color:var(--red);font-size:12px;">${rp(x.jumlah)}</div>
-      </div>`).join('')}
-    ` : ''}
+        ${ev.catatan?`<div style="padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);margin-bottom:10px;">📝 ${ev.catatan}</div>`:''}
+        <button class="btn-submit" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
+        <button class="btn-outline" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
+      </div>`;
 
-    ${ev.catatan ? `<div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);">📝 ${ev.catatan}</div>` : ''}
+  } else if (tab === 'payment') {
+    const steps = [
+      { key:'booking', label:'Booking Fee', amount:100000, icon:'📅', desc:'Tanda jadi' },
+      { key:'dp',      label:'DP 50%',      amount:omzet*0.5, icon:'💰', desc:'H-7 sebelum acara' },
+      { key:'pelunasan', label:'Pelunasan',  amount:omzet - Math.min(totalPaid, omzet), icon:'✅', desc:'H-1 sebelum acara' },
+    ];
+    const paidByType = {};
+    evPays.forEach(p => { paidByType[p.jenis] = (paidByType[p.jenis]||0) + Number(p.jumlah); });
 
-    <button class="btn-submit" style="margin-top:16px;" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
-    <button class="btn-outline" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
-  `;
+    bodyHtml = `<div style="padding:0 16px 16px;">
+      <div class="payment-summary">
+        <div class="payment-summary-item">
+          <div class="payment-summary-label">Total</div>
+          <div class="payment-summary-val" style="color:var(--cream)">${rp(omzet)}</div>
+        </div>
+        <div class="payment-summary-item">
+          <div class="payment-summary-label">Dibayar</div>
+          <div class="payment-summary-val" style="color:var(--green)">${rp(totalPaid)}</div>
+        </div>
+        <div class="payment-summary-item">
+          <div class="payment-summary-label">Sisa</div>
+          <div class="payment-summary-val" style="color:${sisa>0?'var(--red)':'var(--green)'}">${rp(sisa)}</div>
+        </div>
+      </div>
+      <div class="payment-progress">
+        <div class="payment-progress-fill" style="width:${paidPct}%"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);text-align:right;margin-bottom:12px;">${paidPct}% terbayar</div>
 
-  openSheet('detailSheet');
+      ${steps.map(s => {
+        const paid = paidByType[s.key] || 0;
+        const isDone = paid >= s.amount * 0.9;
+        return `<div class="payment-step">
+          <div class="payment-step-icon ${isDone?'done':'pend'}">${isDone?'✅':s.icon}</div>
+          <div class="payment-step-info">
+            <div class="payment-step-label">${s.label}</div>
+            <div class="payment-step-amount">${rpFull(s.amount)}</div>
+            <div class="payment-step-date">${s.desc}${paid>0?' · Dibayar: '+rp(paid):''}</div>
+          </div>
+          ${!isDone?`<button class="payment-step-action" onclick="openPayment('${ev.id}','${s.key}',${s.amount})">Bayar</button>`:'<span style="font-size:11px;color:var(--green)">✓ Lunas</span>'}
+        </div>`;
+      }).join('')}
+
+      ${evPays.length ? `
+        <div class="form-section-title" style="margin-top:14px;">Riwayat Pembayaran</div>
+        ${evPays.map(p=>`
+          <div class="trans-item" style="margin-bottom:6px;">
+            <div class="trans-icon in">💳</div>
+            <div class="trans-info">
+              <div class="trans-desc">${p.label||p.jenis} · ${p.metode||''}</div>
+              <div class="trans-meta">${fmtDate(p.tanggal)} ${p.note?'· '+p.note:''}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="trans-amount in">${rp(p.jumlah)}</div>
+              <div style="font-size:10px;color:var(--gold);cursor:pointer;" onclick="printBukti('${p.id}','${ev.id}')">🖨️ Bukti</div>
+            </div>
+          </div>`).join('')}
+      ` : '<div class="empty" style="padding:20px 0;"><div class="empty-icon">💳</div>Belum ada pembayaran</div>'}
+
+      <button class="btn-submit" style="margin-top:8px;" onclick="openPayment('${ev.id}','custom',${sisa})">+ Tambah Pembayaran</button>
+    </div>`;
+
+  } else if (tab === 'invoice') {
+    const invNo = 'INV/' + (ev.no_event||'000') + '/' + (ev.bulan||'').replace('-','') + '/' + ev.id.slice(-4).toUpperCase();
+    bodyHtml = `<div style="padding:0 16px 16px;">
+      <div class="totals-card" style="margin-bottom:12px;">
+        <div class="breakdown-item">
+          <span style="color:var(--text2);font-size:11px;">No. Invoice</span>
+          <span style="font-size:11px;color:var(--gold);">${invNo}</span>
+        </div>
+        <div class="breakdown-item">
+          <span style="color:var(--text2);font-size:11px;">Customer</span>
+          <span style="font-size:12px;">${ev.customer}</span>
+        </div>
+        <div class="breakdown-item">
+          <span style="color:var(--text2);font-size:11px;">Tanggal Event</span>
+          <span style="font-size:12px;">${fmtDate(ev.tanggal)}</span>
+        </div>
+        <div class="breakdown-item">
+          <span style="color:var(--text2);font-size:11px;">Lokasi</span>
+          <span style="font-size:12px;">${ev.lokasi||'-'}</span>
+        </div>
+      </div>
+
+      <div class="totals-card">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Item</div>
+        ${evItems.map(it=>`
+          <div class="breakdown-item">
+            <div><div style="font-size:12px;">${it.menu}</div>
+            <div class="breakdown-cat">${it.qty} pcs × ${rpFull(it.harga_satuan)}</div></div>
+            <div style="color:var(--green);font-size:12px;">${rpFull(it.total)}</div>
+          </div>`).join('')}
+        <div class="breakdown-item" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;font-weight:600;font-size:14px;">
+          <span>TOTAL</span><span style="color:var(--gold)">${rpFull(omzet)}</span>
+        </div>
+        <div class="breakdown-item">
+          <span style="color:var(--green);font-size:11px;">Terbayar</span>
+          <span style="color:var(--green)">${rpFull(totalPaid)}</span>
+        </div>
+        <div class="breakdown-item">
+          <span style="color:${sisa>0?'var(--red)':'var(--green)'};font-size:12px;font-weight:600;">
+            ${sisa>0?'Sisa Tagihan':'✅ LUNAS'}
+          </span>
+          <span style="color:${sisa>0?'var(--red)':'var(--green)'};font-weight:600;">${rpFull(Math.abs(sisa))}</span>
+        </div>
+      </div>
+
+      <button class="btn-submit" style="margin-top:12px;" onclick="printInvoice('${ev.id}')">🖨️ Print / Share Invoice</button>
+      <button class="btn-outline" onclick="printInvoice('${ev.id}', true)">📄 Bukti Terima Pembayaran</button>
+    </div>`;
+  }
+
+  document.getElementById('detailBody').innerHTML = tabHtml + bodyHtml;
 }
 
 // ============================================================
@@ -1837,15 +2038,53 @@ function saveApiUrl() {
 function openMonthPicker() { openSheet('monthSheet'); buildMonthGrid(); }
 
 function buildMonthGrid() {
-  const months = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    months.push(d.toISOString().slice(0,7));
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  const nextYear = thisYear + 1;
+
+  // Bulan yang punya data
+  const hasData = new Set();
+  [...state.events, ...state.tokba, ...state.rt].forEach(r => {
+    if (r.bulan && /^\d{4}-\d{2}$/.test(r.bulan)) hasData.add(r.bulan);
+  });
+
+  // Tentukan range tahun: dari tahun tertua di data s/d tahun depan
+  const years = [...hasData].map(m => parseInt(m.slice(0,4)));
+  const minYear = years.length ? Math.min(...years) : thisYear;
+  const maxYear = nextYear;
+
+  const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+  const nowStr = now.toISOString().slice(0,7);
+
+  let html = '';
+  // Tahun terbaru di atas
+  for (let y = maxYear; y >= minYear; y--) {
+    const evCount = [...hasData].filter(m => m.startsWith(y+'-')).length;
+    html += `<div class="month-year-group">
+      <div class="month-year-label">
+        <span>${y}</span>
+        <span class="month-year-badge">${evCount} bulan aktif</span>
+      </div>
+      <div class="month-grid">`;
+
+    for (let mo = 1; mo <= 12; mo++) {
+      const m = y + '-' + String(mo).padStart(2,'0');
+      const isFuture = m > nowStr;
+      const active = m === currentMonth ? 'active' : '';
+      const withData = hasData.has(m) ? 'has-data' : '';
+      const future = isFuture ? 'future' : '';
+      html += `<div class="month-btn ${active} ${withData} ${future}" onclick="selectMonth('${m}')">${MONTHS[mo-1]}</div>`;
+    }
+    html += `</div></div>`;
   }
-  document.getElementById('monthGrid').innerHTML = months.map(m=>
-    `<div class="month-btn ${m===currentMonth?'active':''}" onclick="selectMonth('${m}')">${monthName(m)}</div>`
-  ).join('');
+
+  document.getElementById('monthGrid').innerHTML = html;
+
+  // Scroll to current year
+  setTimeout(() => {
+    const active = document.querySelector('.month-btn.active');
+    if (active) active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 100);
 }
 
 function selectMonth(m) {
@@ -1897,48 +2136,269 @@ function exportMonth() {
 // INIT
 // ============================================================
 // ============================================================
-// THEME SYSTEM
+// PAYMENT SYSTEM
 // ============================================================
-const THEMES = [
-  { id:'navy',   name:'Navy',   bg:'#0a0f1e', bg2:'#0d1528', accent:'#4d9ef7' },
-  { id:'earthy', name:'Earthy', bg:'#0f0e0c', bg2:'#1a1814', accent:'#d4a843' },
-  { id:'forest', name:'Forest', bg:'#0a1208', bg2:'#0f1a0c', accent:'#5cb85c' },
-  { id:'purple', name:'Purple', bg:'#0e0a1e', bg2:'#150d28', accent:'#9b59b6' },
-  { id:'rose',   name:'Rose',   bg:'#1a0a0e', bg2:'#280d15', accent:'#e05c8a' },
-  { id:'light',  name:'Light',  bg:'#f0f4ff', bg2:'#e8eef8', accent:'#2563eb' },
-];
+function openPayment(eventId, jenis, amount) {
+  const ev = state.events.find(e=>e.id===eventId);
+  if (!ev) return;
+  const evPays = (state.payments||[]).filter(x=>x.event_id===eventId);
+  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const sisa = (Number(ev.omzet)||0) - totalPaid;
 
-function applyTheme(id) {
-  document.documentElement.setAttribute('data-theme', id);
-  localStorage.setItem('gubukan_theme', id);
-  // Update active state
-  document.querySelectorAll('.theme-card').forEach(c => {
-    c.classList.toggle('active', c.dataset.theme === id);
-  });
+  document.getElementById('payEventId').value = eventId;
+  document.getElementById('payJenis').value   = jenis;
+  document.getElementById('payTgl').value     = new Date().toISOString().slice(0,10);
+  document.getElementById('payNote').value    = '';
+
+  // Set jumlah default
+  const defaults = { booking:100000, dp: Math.round((Number(ev.omzet)||0)*0.5), pelunasan: sisa, custom: sisa };
+  document.getElementById('payJumlah').value = defaults[jenis] || amount || 0;
+
+  document.getElementById('payTotal').textContent    = rpFull(Number(ev.omzet)||0);
+  document.getElementById('payDibayar').textContent  = rpFull(totalPaid);
+  document.getElementById('paySisa').textContent     = rpFull(sisa);
+
+  closeSheet('detailSheet');
+  setTimeout(() => openSheet('paymentSheet'), 300);
 }
 
-function buildThemeGrid() {
-  const current = localStorage.getItem('gubukan_theme') || 'navy';
-  const grid = document.getElementById('themeGrid');
-  if (!grid) return;
-  grid.innerHTML = THEMES.map(t => `
-    <div class="theme-card ${t.id===current?'active':''}" 
-         data-theme="${t.id}" onclick="applyTheme('${t.id}')">
-      <div class="theme-preview" style="background:${t.bg};">
-        <div class="theme-preview-bar" style="background:${t.accent};width:80%;"></div>
-        <div class="theme-preview-bar" style="background:${t.bg2};width:60%;"></div>
-        <div class="theme-preview-bar" style="background:${t.accent};width:40%;opacity:0.5;"></div>
-      </div>
-      <div class="theme-name">${t.name}</div>
-    </div>`).join('');
+function calcSisaBayar() {
+  const eventId = document.getElementById('payEventId').value;
+  const ev = state.events.find(e=>e.id===eventId);
+  if (!ev) return;
+  const evPays = (state.payments||[]).filter(x=>x.event_id===eventId);
+  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const jumlah = Number(document.getElementById('payJumlah').value)||0;
+  const sisa = (Number(ev.omzet)||0) - totalPaid - jumlah;
+  document.getElementById('paySisa').textContent = rpFull(Math.max(0, sisa));
+}
+
+async function savePayment(printAfter=true) {
+  const eventId = document.getElementById('payEventId').value;
+  const jenis   = document.getElementById('payJenis').value;
+  const jumlah  = Number(document.getElementById('payJumlah').value)||0;
+  const tanggal = document.getElementById('payTgl').value;
+  const metode  = document.getElementById('payMetode').value;
+  const note    = document.getElementById('payNote').value;
+
+  if (!jumlah) { toast('⚠️ Isi jumlah pembayaran!'); return; }
+
+  const labelMap = { booking:'Booking Fee', dp:'DP 50%', pelunasan:'Pelunasan', custom:'Pembayaran' };
+  const data = {
+    id: 'pay_' + Date.now(),
+    event_id: eventId,
+    bulan: tanggal.slice(0,7),
+    tanggal, jenis,
+    label: labelMap[jenis]||jenis,
+    jumlah, metode, note,
+    created_at: new Date().toISOString(),
+  };
+
+  // Save to local state (payments not in Google Sheets yet - future enhancement)
+  if (!state.payments) state.payments = [];
+  state.payments.push(data);
+  cacheState();
+
+  // Update event status automatically
+  const ev = state.events.find(e=>e.id===eventId);
+  if (ev) {
+    const totalPaid = state.payments.filter(p=>p.event_id===eventId).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+    const omzet = Number(ev.omzet)||0;
+    let newStatus = ev.status;
+    if (totalPaid >= omzet) newStatus = 'lunas';
+    else if (totalPaid >= omzet * 0.5) newStatus = 'dp';
+    else if (totalPaid >= 100000) newStatus = 'booking';
+
+    if (newStatus !== ev.status) {
+      ev.status = newStatus;
+      try { await apiWrite('update','events',{status:newStatus},eventId); } catch(e){}
+    }
+  }
+
+  closeSheet('paymentSheet');
+  toast('✅ Pembayaran disimpan!');
+
+  if (printAfter) {
+    setTimeout(() => printBukti(data.id, eventId), 500);
+  } else {
+    setTimeout(() => { showDetail(eventId); renderDetailTab('payment'); }, 300);
+  }
+}
+
+function printBukti(payId, eventId) {
+  const ev  = state.events.find(e=>e.id===eventId);
+  const pay = (state.payments||[]).find(p=>p.id===payId);
+  if (!ev || !pay) { toast('Data tidak ditemukan'); return; }
+  const evItems = state.items.filter(x=>x.event_id===eventId);
+  const totalPaid = (state.payments||[]).filter(p=>p.event_id===eventId).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const sisa = (Number(ev.omzet)||0) - totalPaid;
+
+  const html = generateBuktiHTML(ev, pay, evItems, totalPaid, sisa);
+  openPrintWindow(html);
+}
+
+function printInvoice(eventId, isBukti=false) {
+  const ev = state.events.find(e=>e.id===eventId);
+  if (!ev) return;
+  const evItems = state.items.filter(x=>x.event_id===eventId);
+  const evPays  = (state.payments||[]).filter(p=>p.event_id===eventId);
+  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const sisa = (Number(ev.omzet)||0) - totalPaid;
+
+  const html = isBukti
+    ? generateBuktiHTML(ev, evPays[evPays.length-1]||{jumlah:totalPaid,metode:'-',tanggal:new Date().toISOString().slice(0,10),label:'Total Pembayaran'}, evItems, totalPaid, sisa)
+    : generateInvoiceHTML(ev, evItems, evPays, totalPaid, sisa);
+  openPrintWindow(html);
+}
+
+function openPrintWindow(html) {
+  const w = window.open('','_blank','width=420,height=700');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 500);
+}
+
+function generateBuktiHTML(ev, pay, evItems, totalPaid, sisa) {
+  const no = 'BKT/' + (ev.no_event||'000') + '/' + new Date().getTime().toString().slice(-6);
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Bukti Pembayaran</title>
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    body { font-family:Arial,sans-serif; font-size:12px; color:#222; padding:16px; max-width:380px; margin:0 auto; }
+    .logo { text-align:center; margin-bottom:12px; }
+    .logo h1 { font-size:20px; color:#1a3a6b; font-weight:900; letter-spacing:1px; }
+    .logo .tagline { font-size:10px; color:#666; }
+    .divider { border-top:2px solid #1a3a6b; margin:8px 0; }
+    .divider2 { border-top:1px dashed #999; margin:8px 0; }
+    .title { text-align:center; font-size:13px; font-weight:bold; margin:8px 0; color:#1a3a6b; }
+    .row { display:flex; justify-content:space-between; padding:3px 0; }
+    .label { color:#666; }
+    .value { font-weight:500; text-align:right; }
+    .total-box { background:#f0f4ff; border:1px solid #1a3a6b; border-radius:6px; padding:10px; margin:10px 0; text-align:center; }
+    .total-box .amount { font-size:22px; font-weight:900; color:#1a3a6b; }
+    .total-box .label { font-size:10px; color:#666; }
+    .sisa { text-align:center; padding:8px; background:${sisa>0?'#fff0f0':'#f0fff4'}; border-radius:6px; margin-top:8px; }
+    .sisa-label { font-size:10px; color:#666; }
+    .sisa-val { font-size:16px; font-weight:700; color:${sisa>0?'#c0392b':'#27ae60'}; }
+    .footer { text-align:center; margin-top:14px; font-size:10px; color:#999; }
+    .stamp { border:2px solid #27ae60; border-radius:50%; width:70px; height:70px; margin:10px auto; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#27ae60; font-weight:bold; font-size:10px; text-align:center; }
+  </style></head><body>
+  <div class="logo">
+    <h1>🍲 Gubukan Krasti</h1>
+    <div class="tagline">Catering & Event Food Service</div>
+  </div>
+  <div class="divider"></div>
+  <div class="title">BUKTI PENERIMAAN PEMBAYARAN</div>
+  <div class="divider2"></div>
+  <div class="row"><span class="label">No. Bukti</span><span class="value">${no}</span></div>
+  <div class="row"><span class="label">Tanggal</span><span class="value">${pay.tanggal||new Date().toISOString().slice(0,10)}</span></div>
+  <div class="row"><span class="label">Customer</span><span class="value">${ev.customer}</span></div>
+  <div class="row"><span class="label">Lokasi</span><span class="value">${ev.lokasi||'-'}</span></div>
+  <div class="row"><span class="label">Tgl Event</span><span class="value">${ev.tanggal||'-'}</span></div>
+  <div class="divider2"></div>
+  <div class="row"><span class="label">Jenis</span><span class="value">${pay.label||pay.jenis||'-'}</span></div>
+  <div class="row"><span class="label">Metode</span><span class="value">${pay.metode||'-'}</span></div>
+  <div class="total-box">
+    <div class="label">DITERIMA SEBESAR</div>
+    <div class="amount">Rp ${Number(pay.jumlah||0).toLocaleString('id-ID')}</div>
+  </div>
+  <div class="row"><span class="label">Total Tagihan</span><span class="value">Rp ${Number(ev.omzet||0).toLocaleString('id-ID')}</span></div>
+  <div class="row"><span class="label">Total Dibayar</span><span class="value" style="color:#27ae60">Rp ${Number(totalPaid).toLocaleString('id-ID')}</span></div>
+  <div class="sisa">
+    <div class="sisa-label">${sisa>0?'SISA TAGIHAN':'STATUS'}</div>
+    <div class="sisa-val">${sisa>0?'Rp '+Number(sisa).toLocaleString('id-ID'):'✅ LUNAS'}</div>
+  </div>
+  ${pay.note?`<div style="margin-top:8px;padding:6px;background:#f9f9f9;border-radius:4px;font-size:11px;">Ket: ${pay.note}</div>`:''}
+  <div style="text-align:center;margin-top:14px;">
+    <div class="stamp">TERIMA<br>KASIH</div>
+  </div>
+  <div class="footer">
+    Bukti ini sah tanpa tanda tangan<br>
+    Gubukan Krasti · gubukan.krasti@gmail.com<br>
+    Dicetak: ${new Date().toLocaleString('id-ID')}
+  </div>
+  </body></html>`;
+}
+
+function generateInvoiceHTML(ev, evItems, evPays, totalPaid, sisa) {
+  const invNo = 'INV/' + (ev.no_event||'000') + '/' + (ev.bulan||'').replace('-','') + '/' + ev.id.slice(-4).toUpperCase();
+  const itemRows = evItems.map(it =>
+    `<tr><td>${it.menu}</td><td style="text-align:center">${it.qty}</td>
+     <td style="text-align:right">Rp ${Number(it.harga_satuan||0).toLocaleString('id-ID')}</td>
+     <td style="text-align:right">Rp ${Number(it.total||0).toLocaleString('id-ID')}</td></tr>`
+  ).join('');
+  const payRows = evPays.map(p =>
+    `<tr><td>${fmtDate(p.tanggal)}</td><td>${p.label||p.jenis}</td><td>${p.metode||'-'}</td>
+     <td style="text-align:right;color:green">Rp ${Number(p.jumlah).toLocaleString('id-ID')}</td></tr>`
+  ).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Invoice ${invNo}</title>
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    body { font-family:Arial,sans-serif;font-size:12px;color:#222;padding:20px;max-width:420px;margin:0 auto; }
+    .header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px; }
+    .brand h1 { font-size:18px;color:#1a3a6b;font-weight:900; }
+    .brand p { font-size:10px;color:#666; }
+    .inv-info { text-align:right; }
+    .inv-info .inv-no { font-size:13px;font-weight:bold;color:#1a3a6b; }
+    .divider { border-top:2px solid #1a3a6b;margin:10px 0; }
+    .divider2 { border-top:1px dashed #ccc;margin:8px 0; }
+    .to-section { background:#f5f8ff;padding:10px;border-radius:6px;margin-bottom:12px; }
+    .to-section .to-label { font-size:10px;color:#666;text-transform:uppercase; }
+    .to-section .to-name { font-size:14px;font-weight:bold;color:#1a3a6b;margin-top:2px; }
+    table { width:100%;border-collapse:collapse;margin:10px 0; }
+    th { background:#1a3a6b;color:#fff;padding:6px 8px;font-size:11px;text-align:left; }
+    td { padding:6px 8px;border-bottom:1px solid #eee;font-size:11px; }
+    .total-row td { font-weight:bold;font-size:13px;border-bottom:none;padding-top:10px; }
+    .status-box { text-align:center;padding:10px;border-radius:6px;margin:10px 0;
+      background:${sisa>0?'#fff0f0':'#f0fff4'};border:1px solid ${sisa>0?'#e74c3c':'#27ae60'}; }
+    .status-box .st { font-size:16px;font-weight:bold;color:${sisa>0?'#e74c3c':'#27ae60'}; }
+    .footer { text-align:center;margin-top:16px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:10px; }
+  </style></head><body>
+  <div class="header">
+    <div class="brand"><h1>🍲 Gubukan Krasti</h1><p>Catering & Event Food Service</p></div>
+    <div class="inv-info">
+      <div class="inv-no">${invNo}</div>
+      <div style="font-size:10px;color:#666;margin-top:2px;">Tgl: ${new Date().toLocaleDateString('id-ID')}</div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="to-section">
+    <div class="to-label">Tagihan Kepada</div>
+    <div class="to-name">${ev.customer}</div>
+    <div style="font-size:11px;color:#555;margin-top:3px;">📍 ${ev.lokasi||'-'} · 📅 ${ev.tanggal||'-'}</div>
+  </div>
+  <table>
+    <tr><th>Item</th><th>Qty</th><th>Harga</th><th>Total</th></tr>
+    ${itemRows}
+    <tr class="total-row">
+      <td colspan="3">TOTAL</td>
+      <td style="text-align:right;color:#1a3a6b">Rp ${Number(ev.omzet||0).toLocaleString('id-ID')}</td>
+    </tr>
+  </table>
+  ${evPays.length ? `
+  <div class="divider2"></div>
+  <div style="font-size:11px;font-weight:bold;margin-bottom:6px;color:#1a3a6b;">Riwayat Pembayaran</div>
+  <table>
+    <tr><th>Tgl</th><th>Jenis</th><th>Metode</th><th>Jumlah</th></tr>
+    ${payRows}
+  </table>` : ''}
+  <div class="status-box">
+    <div style="font-size:11px;color:#666;">${sisa>0?'Sisa yang harus dibayar':'Status Pembayaran'}</div>
+    <div class="st">${sisa>0?'Rp '+Number(sisa).toLocaleString('id-ID'):'✅ LUNAS'}</div>
+  </div>
+  <div class="footer">
+    Terima kasih atas kepercayaan Anda 🙏<br>
+    Gubukan Krasti · Info: gubukan.krasti@gmail.com<br>
+    Invoice dibuat: ${new Date().toLocaleString('id-ID')}
+  </div>
+  </body></html>`;
 }
 
 
 function init() {
-  // Apply saved theme
-  const savedTheme = localStorage.getItem('gubukan_theme') || 'navy';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  buildThemeGrid();
   // Load API URL into settings
   if (API_URL) document.getElementById('apiUrlInput').value = API_URL;
 
