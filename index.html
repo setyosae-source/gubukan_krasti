@@ -841,8 +841,9 @@ body {
 /* Header tidak ditampilkan — diganti baris summary per tanggal */
 .kas-table thead { display: none; }
 .kas-date-row { background: var(--bg3); cursor: pointer; }
-.kas-date-toggle { float:right; margin-left:6px; display:inline-block; transition:transform 0.2s; }
-.kas-date-toggle.collapsed { transform: rotate(-90deg); }
+.kas-date-toggle { display:inline-block; transition:transform 0.2s; font-size:10px; color:var(--ink3); }
+.kas-date-toggle.collapsed { transform: rotate(0deg); }
+.kas-date-toggle:not(.collapsed) { transform: rotate(90deg); }
 .kas-date-row td {
   padding: 8px 12px;
   font-size: 11px;
@@ -1761,6 +1762,37 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
       <div class="sheet-close" onclick="closeSheet('eventFormSheet')">✕</div>
     </div>
     <div class="sheet-body" id="eventFormBody"></div>
+  </div>
+</div>
+
+<!-- ===== KAS EDIT SHEET ===== -->
+<div class="overlay" id="kasEditSheet" onclick="overlayClose(event,'kasEditSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">Edit Transaksi</div>
+      <div class="sheet-close" onclick="closeSheet('kasEditSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="keId">
+      <input type="hidden" id="keTable">
+      <div class="form-group">
+        <label class="form-label">Tanggal</label>
+        <input class="form-input" type="date" id="keTanggal">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <input class="form-input" type="text" id="keKet" placeholder="Keterangan">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jumlah (Rp)</label>
+        <input class="form-input" type="number" id="keJumlah" min="0">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn btn-danger" style="flex:1;" onclick="deleteKasItem()">🗑️ Hapus</button>
+        <button class="btn btn-primary" style="flex:2;" onclick="saveKasEdit()">💾 Simpan</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3073,26 +3105,34 @@ function renderKasTable(data, totalIn, totalOut, saldoAwal, saldoAkhir) {
     const dateIn  = items.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
     const dateOut = items.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
     const gid = 'dg_'+date.replace(/-/g,'');
+    // Header tanggal: 3 kolom — toggle+tanggal | ringkasan nominal (colspan=2)
     rows += `<tr class="kas-date-row" onclick="toggleKasGroup('${gid}')">
-      <td colspan="4" style="font-size:11px;font-weight:600;color:var(--ink3);">
-        📅 ${fmtDate(date)||date}
-        <span style="float:right;font-size:10px;color:var(--ink4);">
-          ${dateIn>0?'<span style=color:var(--green)>+'+rp(dateIn)+'</span>':''}
-          ${dateOut>0?'<span style=color:var(--red);margin-left:6px>-'+rp(dateOut)+'</span>':''}
-        </span>
-        <span class="kas-date-toggle collapsed" id="tog_${gid}">▼</span>
+      <td style="width:24px;padding:8px 4px 8px 12px;">
+        <span class="kas-date-toggle collapsed" id="tog_${gid}" style="float:none;margin:0;">▶</span>
+      </td>
+      <td style="font-size:11px;font-weight:600;color:var(--ink2);padding:8px 4px;">
+        ${fmtDate(date)||date}
+      </td>
+      <td style="text-align:right;padding:8px 12px 8px 4px;white-space:nowrap;">
+        ${dateIn>0?`<span style="font-size:11px;color:var(--green);font-weight:600;">+${rp(dateIn)}</span>`:''}
+        ${dateOut>0?`<span style="font-size:11px;color:var(--red);font-weight:600;margin-left:4px;">-${rp(dateOut)}</span>`:''}
       </td>
     </tr>`;
     items.forEach((j,idx) => {
       const isIn = j.dir === 'in';
-      rows += `<tr class="kas-data-row collapsed-row" data-group="${gid}">
-        <td class="td-icon">${j.icon}</td>
+      // Hanya data yg bisa diedit: expenses, penerimaan, tokba, pengeluaran
+      const canEdit = ['biaya','terima','tokba'].includes(j.type) && j.id;
+      rows += `<tr class="kas-data-row collapsed-row" data-group="${gid}" ${canEdit?`onclick="openKasEdit(${JSON.stringify(JSON.stringify(j))})" style="cursor:pointer;"`:''}>
+        <td class="td-icon" style="padding-left:12px;">${j.icon}</td>
         <td class="td-desc">
           <div class="td-desc-main">${j.label}</div>
-          <div class="td-desc-meta">${j.meta}</div>
+          <div class="td-desc-meta">${j.meta||''}</div>
         </td>
         <td class="td-nominal">
-          <div><span class="td-nominal-label ${isIn?'in':'out'}">${isIn?'Debit':'Kredit'}</span></div>
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+            <span class="td-nominal-label ${isIn?'in':'out'}">${isIn?'Debit':'Kredit'}</span>
+            ${canEdit?'<span style="font-size:10px;color:var(--ink4);">✏️</span>':''}
+          </div>
           <div class="${isIn?'td-nominal-in':'td-nominal-out'}">${rp(j.amount)}</div>
         </td>
       </tr>`;
@@ -3102,28 +3142,22 @@ function renderKasTable(data, totalIn, totalOut, saldoAwal, saldoAkhir) {
   el.innerHTML = `
     <div class="kas-table-wrap">
       <table class="kas-table">
-        <thead>
-          <tr>
-            <th style="width:28px;"></th>
-            <th>Deskripsi</th>
-            <th style="width:120px;text-align:right;">Nominal</th>
-          </tr>
-        </thead>
         <tbody>${rows}</tbody>
         <tfoot>
           <tr>
-            <td colspan="2" style="color:var(--ink3);font-size:11px;">
-              <span style="color:var(--green);">▲ Masuk: ${rp(totalIn)}</span>
-              &nbsp;·&nbsp;
-              <span style="color:var(--red);">▼ Keluar: ${rp(totalOut)}</span>
-            </td>
-            <td style="text-align:right;color:var(--ink3);font-size:10px;">
-              Awal: ${rp(saldoAwal)}
+            <td colspan="3" style="padding:10px 12px;background:var(--bg3);border-top:1px solid var(--border2);">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink3);">
+                <span>Saldo Awal: <b style="color:var(--ink2);">${rp(saldoAwal)}</b></span>
+                <span>
+                  <span style="color:var(--green);">+${rp(totalIn)}</span>
+                  &nbsp;<span style="color:var(--red);">-${rp(totalOut)}</span>
+                </span>
+              </div>
             </td>
           </tr>
           <tr>
-            <td colspan="2" style="color:var(--ink);font-size:13px;font-weight:700;">Saldo Akhir</td>
-            <td style="text-align:right;font-size:15px;font-weight:800;
+            <td colspan="2" style="padding:10px 12px;background:var(--bg3);font-weight:700;font-size:13px;">Saldo Akhir</td>
+            <td style="padding:10px 12px;background:var(--bg3);text-align:right;font-size:16px;font-weight:800;
               color:${saldoAkhir>=0?'var(--green)':'var(--red)'};">${rp(saldoAkhir)}</td>
           </tr>
         </tfoot>
@@ -3163,7 +3197,7 @@ function buildKasJournalByRange(from, to) {
     (state.events||[]).filter(r=>inRange(r.tanggal)).forEach(ev=>{
       if ((Number(ev.omzet)||0) > 0) {
         allSources.push({type:'terima',dir:'in',amount:Number(ev.omzet)||0,tanggal:ev.tanggal,icon:'💰',
-          label:(ev.no_event?'Ev '+ev.no_event+' · ':'')+String(ev.customer||'-'),meta:ev.lokasi||'Event Catering'});
+          label:(ev.no_event?'Ev '+ev.no_event+' · ':'')+String(ev.customer||'-'),meta:ev.lokasi||'Event Catering',id:ev.id,table:'events'});
       }
     });
   }
@@ -3214,14 +3248,14 @@ function buildKasJournal() {
     f.events.forEach(ev=>{
       if((Number(ev.omzet)||0)>0)
         allSources.push({type:'terima',dir:'in',amount:Number(ev.omzet)||0,tanggal:ev.tanggal,icon:'💰',
-          label:(ev.no_event?'Ev '+ev.no_event+' · ':'')+String(ev.customer||'-'),meta:ev.lokasi||'Event Catering'});
+          label:(ev.no_event?'Ev '+ev.no_event+' · ':'')+String(ev.customer||'-'),meta:ev.lokasi||'Event Catering',id:ev.id,table:'events'});
     });
   }
 
   // MASUK & KELUAR: tokba
   f.tokba.forEach(r=>{
-    if(Number(r.masuk)>0)  allSources.push({type:'tokba',dir:'in', amount:Number(r.masuk), tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
-    if(Number(r.keluar)>0) allSources.push({type:'tokba',dir:'out',amount:Number(r.keluar),tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
+    if(Number(r.masuk)>0)  allSources.push({type:'tokba',dir:'in', amount:Number(r.masuk), tanggal:r.tanggal,icon:'🛒',id:r.id,table:'tokba',label:r.keterangan,meta:'Toko Online'});
+    if(Number(r.keluar)>0) allSources.push({type:'tokba',dir:'out',amount:Number(r.keluar),tanggal:r.tanggal,icon:'🛒',id:r.id,table:'tokba',label:r.keterangan,meta:'Toko Online'});
   });
 
   // KELUAR: pengeluaran atau fallback expenses
@@ -3233,7 +3267,7 @@ function buildKasJournal() {
     });
   } else {
     f.expenses.forEach(r=>{
-      allSources.push({type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💸',
+      allSources.push({type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💸',id:r.id,table:'expenses',
         label:r.keterangan,meta:r.kategori+(r.toko?' · '+r.toko:'')});
     });
   }
@@ -4126,6 +4160,9 @@ function renderLaporan() {
   const labaBersih  = totalOmzet - totalBiaya;
   const margin      = totalOmzet>0?(labaBersih/totalOmzet*100).toFixed(1):0;
   const isrun       = labaBersih>0 ? labaBersih*0.1 : 0;
+
+  // ---- PENERIMAAN KAS (dari tabel penerimaan) ----
+  const terima = mTerima.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
 
   // ---- KAT LABELS ----
   const katLabel = {
@@ -5051,6 +5088,73 @@ function init() {
 
 init();
 
+
+
+// ============================================================
+// KAS EDIT
+// ============================================================
+function openKasEdit(jStr) {
+  let j;
+  try { j = JSON.parse(jStr); } catch(e) { return; }
+  document.getElementById('keId').value     = j.id || '';
+  document.getElementById('keTable').value  = j.table || '';
+  document.getElementById('keTanggal').value= j.tanggal || '';
+  document.getElementById('keKet').value    = j.label || '';
+  document.getElementById('keJumlah').value = j.amount || 0;
+  openSheet('kasEditSheet');
+}
+
+async function saveKasEdit() {
+  const id     = document.getElementById('keId').value;
+  const table  = document.getElementById('keTable').value;
+  const tgl    = document.getElementById('keTanggal').value;
+  const ket    = document.getElementById('keKet').value;
+  const jumlah = Number(document.getElementById('keJumlah').value)||0;
+  if (!id || !table) return toast('❌ Data tidak valid');
+
+  try {
+    const data = table === 'expenses'
+      ? { tanggal:tgl, keterangan:ket, jumlah }
+      : table === 'tokba'
+      ? { tanggal:tgl, keterangan:ket }
+      : { tanggal:tgl };
+
+    await apiWrite('update', table, data, id);
+
+    // Update state
+    if (table === 'expenses') {
+      state.expenses = state.expenses.map(r => r.id===id ? {...r,...data} : r);
+    } else if (table === 'tokba') {
+      state.tokba = state.tokba.map(r => r.id===id ? {...r,...data} : r);
+    }
+    cacheState();
+    closeSheet('kasEditSheet');
+    filterKas(window._kasFilter||'all');
+    toast('✅ Transaksi diperbarui');
+  } catch(e) {
+    toast('❌ ' + e.message);
+  }
+}
+
+async function deleteKasItem() {
+  const id    = document.getElementById('keId').value;
+  const table = document.getElementById('keTable').value;
+  const ket   = document.getElementById('keKet').value;
+  if (!id || !table) return;
+  if (!confirm('Hapus transaksi "' + ket + '"?')) return;
+
+  try {
+    await apiWrite('delete', table, {}, id);
+    if (table === 'expenses') state.expenses = state.expenses.filter(r=>r.id!==id);
+    else if (table === 'tokba') state.tokba = state.tokba.filter(r=>r.id!==id);
+    cacheState();
+    closeSheet('kasEditSheet');
+    filterKas(window._kasFilter||'all');
+    toast('🗑️ Transaksi dihapus');
+  } catch(e) {
+    toast('❌ ' + e.message);
+  }
+}
 
 // ============================================================
 // PULL TO REFRESH
