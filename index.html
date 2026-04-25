@@ -1777,7 +1777,8 @@ function selectMonth(m) {
   currentMonth = m;
   localStorage.setItem('gubukan_month', m);
   closeSheet('monthSheet');
-  renderPage(currentPage);
+  localStorage.removeItem('gubukan_cache');
+  syncData();
 }
 
 // ============================================================
