@@ -3568,18 +3568,19 @@ function renderLaporan() {
   const mRT      = (state.rt||[]).filter(r => r.bulan === currentMonth);
 
   // ---- PENERIMAAN ----
-  const omzetEvent  = mEvents.reduce((s,e) => s+(Number(e.omzet)||0), 0);
-  const terima      = mTerima.reduce((s,r) => s+(Number(r.jumlah)||0), 0);
-  const tokbaIn     = mTokba.reduce((s,r) => s+(Number(r.masuk)||0), 0);
-  const rtMasuk     = mRT.reduce((s,r) => s+(Number(r.masuk)||0), 0);
+  const omzetEvent = mEvents.reduce((s,e) => s+(Number(e.omzet)||0), 0);
+  const tokbaIn    = mTokba.reduce((s,r) => s+(Number(r.masuk)||0), 0);
+  const tokbaOut   = mTokba.reduce((s,r) => s+(Number(r.keluar)||0), 0);
+  const totalOmzet = omzetEvent + tokbaIn;
 
   // ---- PENGELUARAN ----
-  // HPP: prioritas stok_keluar, fallback expenses
-  const hppStok   = mSK.reduce((s,r) => s+(Number(r.total_hpp)||0), 0);
-  const hppExp    = mExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const hppTotal  = hppStok > 0 ? hppStok : hppExp;
+  // HPP: dari stok_masuk (beli stok), fallback expenses
+  const hppStok  = (state.stok_masuk||[]).filter(r=>r.bulan===currentMonth)
+                    .reduce((s,r)=>s+(Number(r.total_nilai)||0),0);
+  const hppExp   = mExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const hppTotal = hppStok > 0 ? hppStok : hppExp;
 
-  // Ops: grouping
+  // Ops grouping
   const opsMap = {};
   mPeng.forEach(r => {
     const kat = r.kategori||'lainnya';
@@ -3587,7 +3588,6 @@ function renderLaporan() {
     opsMap[kat].total += Number(r.jumlah)||0;
     opsMap[kat].items.push(r);
   });
-  // Fallback dari expenses
   const opsExpMap = {};
   mExp.filter(x=>x.kategori==='Operasional').forEach(r => {
     const kat = r.sub_kategori||r.keterangan?.split(' ')[0]||'ops';
@@ -3597,16 +3597,12 @@ function renderLaporan() {
   });
   const useOpsMap = Object.keys(opsMap).length > 0 ? opsMap : opsExpMap;
   const opsTotal  = Object.values(useOpsMap).reduce((s,v)=>s+v.total, 0);
-
   const ovhTotal  = mExp.filter(x=>x.kategori==='Overhead').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const tokbaOut  = mTokba.reduce((s,r) => s+(Number(r.keluar)||0), 0);
-  const rtKeluar  = mRT.reduce((s,r) => s+(Number(r.rutin)||0)+(Number(r.jajan)||0)+(Number(r.extraordinary)||0), 0);
 
-  const totalPenerimaan = omzetEvent + tokbaIn;
-  const totalPengeluaran = hppTotal + opsTotal + ovhTotal + tokbaOut;
-  const labaBersih = omzetEvent - hppTotal - opsTotal - ovhTotal;
-  const margin = omzetEvent>0?(labaBersih/omzetEvent*100).toFixed(1):0;
-  const isrun = omzetEvent * 0.1;
+  const totalBiaya  = hppTotal + opsTotal + ovhTotal;
+  const labaBersih  = totalOmzet - totalBiaya;
+  const margin      = totalOmzet>0?(labaBersih/totalOmzet*100).toFixed(1):0;
+  const isrun       = labaBersih>0 ? labaBersih*0.1 : 0;
 
   // ---- KAT LABELS ----
   const katLabel = {
@@ -3625,11 +3621,20 @@ function renderLaporan() {
         📊 Ringkasan Eksekutif — ${monthName(currentMonth)}
       </div>
       <div class="laporan-summary-row">
-        <span style="color:var(--text2)">Total Omzet Event</span>
-        <span style="color:var(--green);font-weight:600">${rpFull(omzetEvent)}</span>
+        <span style="color:var(--text2)">Omzet Gubukan (Event)</span>
+        <span style="color:var(--green)">${rpFull(omzetEvent)}</span>
       </div>
+      ${tokbaIn>0?`<div class="laporan-summary-row">
+        <span style="color:var(--text2)">Omzet Toko Online</span>
+        <span style="color:var(--green)">${rpFull(tokbaIn)}</span>
+      </div>`:''}
+      <div class="laporan-summary-row" style="font-weight:600;">
+        <span style="color:var(--cream)">Total Omzet</span>
+        <span style="color:var(--green);font-size:14px">${rpFull(totalOmzet)}</span>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:6px 0;"></div>
       <div class="laporan-summary-row">
-        <span style="color:var(--text2)">HPP Bahan Baku</span>
+        <span style="color:var(--text2)">HPP (Beli Stok)</span>
         <span style="color:var(--blue)">(${rpFull(hppTotal)})</span>
       </div>
       <div class="laporan-summary-row">
@@ -3640,29 +3645,19 @@ function renderLaporan() {
         <span style="color:var(--text2)">Overhead</span>
         <span style="color:var(--text2)">(${rpFull(ovhTotal)})</span>
       </div>`:''}
+      <div style="border-top:1px solid var(--border);margin:6px 0;"></div>
       <div class="laporan-summary-row total">
-        <span style="color:var(--cream)">Laba Bersih Gubukan</span>
+        <span>Laba Bersih Usaha</span>
         <span style="color:${labaBersih>=0?'var(--green)':'var(--red)'}">${rpFull(labaBersih)}</span>
       </div>
-      <div class="laporan-summary-row" style="font-size:11px;">
-        <span style="color:var(--text3)">Margin</span>
-        <span style="color:var(--gold)">${margin}%</span>
+      <div class="laporan-summary-row" style="font-size:12px;">
+        <span style="color:var(--text3)">Margin %</span>
+        <span style="color:var(--gold);font-weight:600">${margin}%</span>
       </div>
-      <div class="laporan-summary-row" style="font-size:11px;">
-        <span style="color:var(--text3)">Isrun 10%</span>
+      <div class="laporan-summary-row" style="font-size:12px;">
+        <span style="color:var(--text3)">Isrun 10% dari Laba</span>
         <span style="color:var(--gold)">${rpFull(isrun)}</span>
       </div>
-      ${tokbaIn>0||tokbaOut>0?`
-      <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
-        <div class="laporan-summary-row" style="font-size:11px;">
-          <span style="color:var(--text3)">Toko Online (masuk)</span>
-          <span style="color:var(--green)">${rpFull(tokbaIn)}</span>
-        </div>
-        <div class="laporan-summary-row" style="font-size:11px;">
-          <span style="color:var(--text3)">Toko Online (keluar)</span>
-          <span style="color:var(--red)">(${rpFull(tokbaOut)})</span>
-        </div>
-      </div>`:''}
     </div>
 
     <!-- PENERIMAAN EVENT -->
