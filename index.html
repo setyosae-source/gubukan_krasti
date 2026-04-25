@@ -757,6 +757,67 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   --text:#1e3a5f; --text2:#4a6fa5; --text3:#8fa8c8;
 }
 
+
+/* ---- LAPORAN ---- */
+.laporan-section {
+  margin: 0 14px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.laporan-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.laporan-section-title {
+  font-size: 13px; font-weight: 600; color: var(--cream);
+  display: flex; align-items: center; gap: 8px;
+}
+.laporan-section-total {
+  font-size: 13px; font-weight: 700;
+}
+.laporan-section-body { padding: 8px 0; }
+.laporan-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.laporan-row:last-child { border-bottom: none; }
+.laporan-row-label { color: var(--text2); flex: 1; }
+.laporan-row-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.laporan-row-val { font-weight: 600; text-align: right; }
+.laporan-row-val.in  { color: var(--green); }
+.laporan-row-val.out { color: var(--red); }
+.laporan-row-val.neutral { color: var(--gold); }
+
+.laporan-summary-card {
+  margin: 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.laporan-summary-row {
+  display: flex; justify-content: space-between;
+  padding: 5px 0; font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.laporan-summary-row:last-child { border-bottom: none; }
+.laporan-summary-row.total {
+  font-size: 16px; font-weight: 700;
+  padding-top: 10px; margin-top: 4px;
+}
+.laporan-cat-badge {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 10px; font-size: 10px;
+  margin-right: 4px;
+}
+
 </style>
 </head>
 <body>
@@ -991,6 +1052,21 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 
 </div><!-- end main -->
 
+<!-- LAPORAN PAGE -->
+<div class="page" id="page-laporan">
+  <div class="dash-header">
+    <div class="dash-greeting">Laporan Keuangan Bulanan</div>
+    <div class="dash-title" id="laporanTitle">—</div>
+    <div class="dash-period" id="laporanPeriod">—</div>
+  </div>
+  <div id="laporanContent">
+    <div class="loading"><div class="spinner"></div>Memuat laporan...</div>
+  </div>
+  <div style="padding:0 14px 14px;">
+    <button class="btn-submit" onclick="printLaporan()">🖨️ Print / Share Laporan</button>
+  </div>
+</div>
+
 <!-- ==================== BOTTOM NAV ==================== -->
 <nav class="nav">
   <button class="nav-item active" onclick="gotoPage('dash')" data-page="dash">
@@ -1002,8 +1078,8 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   <button class="nav-item" onclick="gotoPage('kas')" data-page="kas">
     <span class="nav-icon">💰</span>Kas
   </button>
-  <button class="nav-item" onclick="gotoPage('rt')" data-page="rt">
-    <span class="nav-icon">🏠</span>RT
+  <button class="nav-item" onclick="gotoPage('laporan')" data-page="laporan">
+    <span class="nav-icon">📋</span>Laporan
   </button>
   <button class="nav-item" onclick="gotoPage('settings')" data-page="settings">
     <span class="nav-icon">⚙️</span>Setting
@@ -1483,7 +1559,7 @@ function gotoPage(page) {
 
   // FAB visibility
   const fab = document.getElementById('fabBtn');
-  fab.style.display = ['dash','settings'].includes(page) ? 'none' : 'flex';
+  fab.style.display = ['dash','settings','laporan'].includes(page) ? 'none' : 'flex';
 
   renderPage(page);
 }
@@ -1493,6 +1569,7 @@ function renderPage(page) {
   if (page === 'events')   renderEvents();
   if (page === 'kas')      renderKas();
   if (page === 'rt')       renderRT();
+  if (page === 'laporan')  renderLaporan();
 }
 
 // ============================================================
@@ -3062,6 +3139,456 @@ function initBackHandler() {
 
 // Override openSheet to push history state
 const _origOpenSheet = window.openSheet;
+
+
+// ============================================================
+// LAPORAN BULANAN
+// ============================================================
+function renderLaporan() {
+  document.getElementById('laporanTitle').textContent = monthName(currentMonth);
+  document.getElementById('laporanPeriod').textContent = 'Laporan Keuangan Bulanan';
+
+  const mEvents  = state.events.filter(e => e.bulan === currentMonth);
+  const mSK      = (state.stok_keluar||[]).filter(r => r.bulan === currentMonth);
+  const mPeng    = (state.pengeluaran||[]).filter(r => r.bulan === currentMonth);
+  const mTerima  = (state.penerimaan||[]).filter(r => r.bulan === currentMonth);
+  const mExp     = (state.expenses||[]).filter(r => r.bulan === currentMonth);
+  const mTokba   = (state.tokba||[]).filter(r => r.bulan === currentMonth);
+  const mRT      = (state.rt||[]).filter(r => r.bulan === currentMonth);
+
+  // ---- PENERIMAAN ----
+  const omzetEvent  = mEvents.reduce((s,e) => s+(Number(e.omzet)||0), 0);
+  const terima      = mTerima.reduce((s,r) => s+(Number(r.jumlah)||0), 0);
+  const tokbaIn     = mTokba.reduce((s,r) => s+(Number(r.masuk)||0), 0);
+  const rtMasuk     = mRT.reduce((s,r) => s+(Number(r.masuk)||0), 0);
+
+  // ---- PENGELUARAN ----
+  // HPP: prioritas stok_keluar, fallback expenses
+  const hppStok   = mSK.reduce((s,r) => s+(Number(r.total_hpp)||0), 0);
+  const hppExp    = mExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const hppTotal  = hppStok > 0 ? hppStok : hppExp;
+
+  // Ops: grouping
+  const opsMap = {};
+  mPeng.forEach(r => {
+    const kat = r.kategori||'lainnya';
+    if (!opsMap[kat]) opsMap[kat] = { total:0, items:[] };
+    opsMap[kat].total += Number(r.jumlah)||0;
+    opsMap[kat].items.push(r);
+  });
+  // Fallback dari expenses
+  const opsExpMap = {};
+  mExp.filter(x=>x.kategori==='Operasional').forEach(r => {
+    const kat = r.sub_kategori||r.keterangan?.split(' ')[0]||'ops';
+    if (!opsExpMap[kat]) opsExpMap[kat] = { total:0, items:[] };
+    opsExpMap[kat].total += Number(r.jumlah)||0;
+    opsExpMap[kat].items.push(r);
+  });
+  const useOpsMap = Object.keys(opsMap).length > 0 ? opsMap : opsExpMap;
+  const opsTotal  = Object.values(useOpsMap).reduce((s,v)=>s+v.total, 0);
+
+  const ovhTotal  = mExp.filter(x=>x.kategori==='Overhead').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const tokbaOut  = mTokba.reduce((s,r) => s+(Number(r.keluar)||0), 0);
+  const rtKeluar  = mRT.reduce((s,r) => s+(Number(r.rutin)||0)+(Number(r.jajan)||0)+(Number(r.extraordinary)||0), 0);
+
+  const totalPenerimaan = omzetEvent + tokbaIn;
+  const totalPengeluaran = hppTotal + opsTotal + ovhTotal + tokbaOut;
+  const labaBersih = omzetEvent - hppTotal - opsTotal - ovhTotal;
+  const margin = omzetEvent>0?(labaBersih/omzetEvent*100).toFixed(1):0;
+  const isrun = omzetEvent * 0.1;
+
+  // ---- KAT LABELS ----
+  const katLabel = {
+    transport:'🚗 Transport', tol:'🛣️ Tol & Parkir',
+    fee_waitress:'👩 Fee Waitress', fee_vendor:'🤝 Fee Vendor',
+    bensin:'⛽ Bensin', listrik:'💡 Listrik',
+    iklan:'📢 Iklan', lainnya:'📋 Lainnya', ops:'📋 Ops'
+  };
+
+  const el = document.getElementById('laporanContent');
+  el.innerHTML = `
+
+    <!-- RINGKASAN EKSEKUTIF -->
+    <div class="laporan-summary-card">
+      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
+        📊 Ringkasan Eksekutif — ${monthName(currentMonth)}
+      </div>
+      <div class="laporan-summary-row">
+        <span style="color:var(--text2)">Total Omzet Event</span>
+        <span style="color:var(--green);font-weight:600">${rpFull(omzetEvent)}</span>
+      </div>
+      <div class="laporan-summary-row">
+        <span style="color:var(--text2)">HPP Bahan Baku</span>
+        <span style="color:var(--blue)">(${rpFull(hppTotal)})</span>
+      </div>
+      <div class="laporan-summary-row">
+        <span style="color:var(--text2)">Biaya Operasional</span>
+        <span style="color:var(--orange)">(${rpFull(opsTotal)})</span>
+      </div>
+      ${ovhTotal>0?`<div class="laporan-summary-row">
+        <span style="color:var(--text2)">Overhead</span>
+        <span style="color:var(--text2)">(${rpFull(ovhTotal)})</span>
+      </div>`:''}
+      <div class="laporan-summary-row total">
+        <span style="color:var(--cream)">Laba Bersih Gubukan</span>
+        <span style="color:${labaBersih>=0?'var(--green)':'var(--red)'}">${rpFull(labaBersih)}</span>
+      </div>
+      <div class="laporan-summary-row" style="font-size:11px;">
+        <span style="color:var(--text3)">Margin</span>
+        <span style="color:var(--gold)">${margin}%</span>
+      </div>
+      <div class="laporan-summary-row" style="font-size:11px;">
+        <span style="color:var(--text3)">Isrun 10%</span>
+        <span style="color:var(--gold)">${rpFull(isrun)}</span>
+      </div>
+      ${tokbaIn>0||tokbaOut>0?`
+      <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
+        <div class="laporan-summary-row" style="font-size:11px;">
+          <span style="color:var(--text3)">Toko Online (masuk)</span>
+          <span style="color:var(--green)">${rpFull(tokbaIn)}</span>
+        </div>
+        <div class="laporan-summary-row" style="font-size:11px;">
+          <span style="color:var(--text3)">Toko Online (keluar)</span>
+          <span style="color:var(--red)">(${rpFull(tokbaOut)})</span>
+        </div>
+      </div>`:''}
+    </div>
+
+    <!-- PENERIMAAN EVENT -->
+    <div class="laporan-section">
+      <div class="laporan-section-header" onclick="toggleLapSection('secPenerima')">
+        <div class="laporan-section-title">💰 Penerimaan Event <span style="font-size:10px;color:var(--text3)">(${mEvents.length} event)</span></div>
+        <div class="laporan-section-total" style="color:var(--green)">${rp(omzetEvent)}</div>
+      </div>
+      <div class="laporan-section-body" id="secPenerima">
+        ${mEvents.length ? mEvents.sort((a,b)=>new Date(a.tanggal)-new Date(b.tanggal)).map(ev => {
+          const evPays = (state.penerimaan||[]).filter(p=>p.event_id===ev.id);
+          const paid   = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+          const omz    = Number(ev.omzet)||0;
+          const statusColor = {lunas:'var(--green)',dp:'var(--orange)',booking:'var(--blue)',follow:'var(--red)',pending:'var(--orange)',batal:'var(--red)'};
+          return `<div class="laporan-row" onclick="showDetail('${ev.id}');closeSheet('dummy')">
+            <div style="flex:1;">
+              <div class="laporan-row-label">${ev.no_event||'#'}. ${ev.customer}</div>
+              <div class="laporan-row-sub">📍${ev.lokasi||'-'} · ${fmtDate(ev.tanggal)}</div>
+              ${paid>0&&paid<omz?`<div class="laporan-row-sub" style="color:var(--orange)">Terima: ${rp(paid)} · Sisa: ${rp(omz-paid)}</div>`:''}
+            </div>
+            <div style="text-align:right;">
+              <div class="laporan-row-val in">${rp(omz)}</div>
+              <div style="font-size:10px;color:${statusColor[ev.status]||'var(--text3)'}">● ${ev.status}</div>
+            </div>
+          </div>`;
+        }).join('')
+        : '<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px;">Belum ada event</div>'}
+        <div class="laporan-row" style="background:var(--bg3);">
+          <span style="font-weight:600;color:var(--cream)">TOTAL OMZET</span>
+          <span class="laporan-row-val in">${rpFull(omzetEvent)}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENERIMAAN PEMBAYARAN -->
+    ${mTerima.length?`
+    <div class="laporan-section">
+      <div class="laporan-section-header" onclick="toggleLapSection('secTerima')">
+        <div class="laporan-section-title">📥 Penerimaan Kas <span style="font-size:10px;color:var(--text3)">(${mTerima.length} transaksi)</span></div>
+        <div class="laporan-section-total" style="color:var(--green)">${rp(terima)}</div>
+      </div>
+      <div class="laporan-section-body" id="secTerima">
+        ${mTerima.map(r=>{
+          const ev = state.events.find(e=>e.id===r.event_id);
+          return `<div class="laporan-row">
+            <div style="flex:1;">
+              <div class="laporan-row-label">${r.label||r.jenis}</div>
+              <div class="laporan-row-sub">${fmtDate(r.tanggal)} · ${r.metode||''} ${ev?' · '+ev.customer:''}</div>
+            </div>
+            <div class="laporan-row-val in">${rp(r.jumlah)}</div>
+          </div>`;
+        }).join('')}
+        <div class="laporan-row" style="background:var(--bg3);">
+          <span style="font-weight:600;color:var(--cream)">TOTAL TERIMA</span>
+          <span class="laporan-row-val in">${rpFull(terima)}</span>
+        </div>
+      </div>
+    </div>`:''}
+
+    <!-- HPP BAHAN BAKU -->
+    <div class="laporan-section">
+      <div class="laporan-section-header" onclick="toggleLapSection('secHPP')">
+        <div class="laporan-section-title">📦 HPP Bahan Baku</div>
+        <div class="laporan-section-total" style="color:var(--blue)">(${rp(hppTotal)})</div>
+      </div>
+      <div class="laporan-section-body" id="secHPP">
+        ${mSK.length ? (() => {
+          // Group by nama bahan
+          const byBahan = {};
+          mSK.forEach(r => {
+            if (!byBahan[r.nama]) byBahan[r.nama] = {qty:0,total:0,satuan:r.satuan};
+            byBahan[r.nama].qty   += Number(r.qty)||0;
+            byBahan[r.nama].total += Number(r.total_hpp)||0;
+          });
+          return Object.entries(byBahan).map(([nama,v])=>`
+            <div class="laporan-row">
+              <div style="flex:1;">
+                <div class="laporan-row-label">${nama}</div>
+                <div class="laporan-row-sub">${v.qty.toFixed(1)} ${v.satuan}</div>
+              </div>
+              <div class="laporan-row-val out">${rp(v.total)}</div>
+            </div>`).join('');
+        })()
+        : mExp.filter(x=>x.kategori==='HPP').map(x=>`
+          <div class="laporan-row">
+            <div style="flex:1;">
+              <div class="laporan-row-label">${x.keterangan}</div>
+              <div class="laporan-row-sub">${x.toko||''}</div>
+            </div>
+            <div class="laporan-row-val out">${rp(x.jumlah)}</div>
+          </div>`).join('')}
+        <div class="laporan-row" style="background:var(--bg3);">
+          <span style="font-weight:600;color:var(--cream)">TOTAL HPP</span>
+          <span class="laporan-row-val out">${rpFull(hppTotal)}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIAYA OPERASIONAL -->
+    <div class="laporan-section">
+      <div class="laporan-section-header" onclick="toggleLapSection('secOps')">
+        <div class="laporan-section-title">🚗 Biaya Operasional</div>
+        <div class="laporan-section-total" style="color:var(--orange)">(${rp(opsTotal)})</div>
+      </div>
+      <div class="laporan-section-body" id="secOps">
+        ${Object.entries(useOpsMap).map(([kat,v])=>`
+          <div class="laporan-row" style="background:rgba(224,138,60,0.05);">
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:600;color:var(--cream)">${katLabel[kat]||kat}</div>
+            </div>
+            <div class="laporan-row-val out">${rp(v.total)}</div>
+          </div>
+          ${v.items.map(r=>`
+          <div class="laporan-row" style="padding-left:24px;">
+            <div style="flex:1;">
+              <div class="laporan-row-label">${r.keterangan}</div>
+              <div class="laporan-row-sub">${fmtDate(r.tanggal)} ${r.toko?'· '+r.toko:''} ${r.event_id?'· '+( state.events.find(e=>e.id===r.event_id)?.customer||''):'· Umum'}</div>
+            </div>
+            <div class="laporan-row-val out">${rp(r.jumlah)}</div>
+          </div>`).join('')}
+        `).join('')}
+        ${Object.keys(useOpsMap).length===0?'<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px;">Belum ada biaya operasional</div>':''}
+        <div class="laporan-row" style="background:var(--bg3);">
+          <span style="font-weight:600;color:var(--cream)">TOTAL OPERASIONAL</span>
+          <span class="laporan-row-val out">${rpFull(opsTotal)}</span>
+        </div>
+      </div>
+    </div>
+
+    ${ovhTotal>0?`
+    <!-- OVERHEAD -->
+    <div class="laporan-section">
+      <div class="laporan-section-header" onclick="toggleLapSection('secOvh')">
+        <div class="laporan-section-title">💡 Overhead</div>
+        <div class="laporan-section-total" style="color:var(--text2)">(${rp(ovhTotal)})</div>
+      </div>
+      <div class="laporan-section-body" id="secOvh">
+        ${mExp.filter(x=>x.kategori==='Overhead').map(x=>`
+          <div class="laporan-row">
+            <div class="laporan-row-label">${x.keterangan}</div>
+            <div class="laporan-row-val out">${rp(x.jumlah)}</div>
+          </div>`).join('')}
+        <div class="laporan-row" style="background:var(--bg3);">
+          <span style="font-weight:600;color:var(--cream)">TOTAL OVERHEAD</span>
+          <span class="laporan-row-val out">${rpFull(ovhTotal)}</span>
+        </div>
+      </div>
+    </div>`:''}
+
+    ${tokbaIn>0||tokbaOut>0?`
+    <!-- TOKO ONLINE -->
+    <div class="laporan-section">
+      <div class="laporan-section-header" onclick="toggleLapSection('secTokba')">
+        <div class="laporan-section-title">🛒 Toko Online</div>
+        <div class="laporan-section-total" style="color:${tokbaIn-tokbaOut>=0?'var(--green)':'var(--red)'}">${rp(tokbaIn-tokbaOut)}</div>
+      </div>
+      <div class="laporan-section-body" id="secTokba">
+        ${mTokba.map(r=>`
+          <div class="laporan-row">
+            <div style="flex:1;">
+              <div class="laporan-row-label">${r.keterangan}</div>
+              <div class="laporan-row-sub">${fmtDate(r.tanggal)}</div>
+            </div>
+            <div class="laporan-row-val ${Number(r.masuk)>0?'in':'out'}">
+              ${Number(r.masuk)>0?'+'+rp(r.masuk):'-'+rp(r.keluar)}
+            </div>
+          </div>`).join('')}
+        <div class="laporan-row" style="background:var(--bg3);display:flex;gap:16px;justify-content:flex-end;">
+          <span style="font-size:11px;color:var(--green)">Masuk: ${rpFull(tokbaIn)}</span>
+          <span style="font-size:11px;color:var(--red)">Keluar: ${rpFull(tokbaOut)}</span>
+        </div>
+      </div>
+    </div>`:''}
+
+    <!-- TOTAL AKHIR -->
+    <div class="laporan-summary-card" style="margin-top:14px;border-color:var(--gold)">
+      <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
+        📊 Neraca Bulan ${monthName(currentMonth)}
+      </div>
+      <div class="laporan-summary-row">
+        <span style="color:var(--text2)">Total Penerimaan Bisnis</span>
+        <span style="color:var(--green);font-weight:600">${rpFull(totalPenerimaan)}</span>
+      </div>
+      <div class="laporan-summary-row">
+        <span style="color:var(--text2)">Total Pengeluaran Bisnis</span>
+        <span style="color:var(--red)">(${rpFull(totalPengeluaran)})</span>
+      </div>
+      <div class="laporan-summary-row total">
+        <span>Laba Bersih</span>
+        <span style="color:${labaBersih>=0?'var(--green)':'var(--red)'}">${rpFull(labaBersih)}</span>
+      </div>
+      <div class="laporan-summary-row" style="font-size:12px;">
+        <span style="color:var(--text3)">Margin Bisnis</span>
+        <span style="color:var(--gold);font-weight:600">${margin}%</span>
+      </div>
+      <div class="laporan-summary-row" style="font-size:12px;">
+        <span style="color:var(--text3)">Isrun 10%</span>
+        <span style="color:var(--gold)">${rpFull(isrun)}</span>
+      </div>
+    </div>
+
+    <div style="height:8px;"></div>
+  `;
+}
+
+function toggleLapSection(id) {
+  const body = document.getElementById(id);
+  if (!body) return;
+  const isHidden = body.style.display === 'none';
+  body.style.display = isHidden ? 'block' : 'none';
+}
+
+function printLaporan() {
+  const mEvents  = state.events.filter(e => e.bulan === currentMonth);
+  const mSK      = (state.stok_keluar||[]).filter(r => r.bulan === currentMonth);
+  const mPeng    = (state.pengeluaran||[]).filter(r => r.bulan === currentMonth);
+  const mTerima  = (state.penerimaan||[]).filter(r => r.bulan === currentMonth);
+  const mExp     = (state.expenses||[]).filter(r => r.bulan === currentMonth);
+  const mTokba   = (state.tokba||[]).filter(r => r.bulan === currentMonth);
+
+  const omzetEvent = mEvents.reduce((s,e)=>s+(Number(e.omzet)||0),0);
+  const hppStok    = mSK.reduce((s,r)=>s+(Number(r.total_hpp)||0),0);
+  const hppExp     = mExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const hppTotal   = hppStok>0?hppStok:hppExp;
+  const opsTotal   = mPeng.reduce((s,r)=>s+(Number(r.jumlah)||0),0) ||
+                     mExp.filter(x=>x.kategori==='Operasional').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const ovhTotal   = mExp.filter(x=>x.kategori==='Overhead').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const labaBersih = omzetEvent - hppTotal - opsTotal - ovhTotal;
+  const margin     = omzetEvent>0?(labaBersih/omzetEvent*100).toFixed(1):0;
+  const isrun      = omzetEvent*0.1;
+  const tokbaIn    = mTokba.reduce((s,r)=>s+(Number(r.masuk)||0),0);
+  const tokbaOut   = mTokba.reduce((s,r)=>s+(Number(r.keluar)||0),0);
+
+  const eventRows = mEvents.map(ev=>`
+    <tr>
+      <td>${ev.no_event||'-'}</td>
+      <td>${ev.customer}</td>
+      <td>${ev.lokasi||'-'}</td>
+      <td>${fmtDate(ev.tanggal)}</td>
+      <td style="text-align:right">Rp ${Number(ev.omzet||0).toLocaleString('id-ID')}</td>
+      <td style="text-align:center">${ev.status}</td>
+    </tr>`).join('');
+
+  const opsRows = mPeng.length
+    ? mPeng.map(r=>`<tr><td>${r.kategori}</td><td>${r.keterangan}</td><td>${fmtDate(r.tanggal)}</td><td>${state.events.find(e=>e.id===r.event_id)?.customer||'Umum'}</td><td style="text-align:right">Rp ${Number(r.jumlah).toLocaleString('id-ID')}</td></tr>`).join('')
+    : mExp.filter(x=>x.kategori==='Operasional').map(x=>`<tr><td>Operasional</td><td>${x.keterangan}</td><td>${fmtDate(x.tanggal)}</td><td>${x.toko||'-'}</td><td style="text-align:right">Rp ${Number(x.jumlah).toLocaleString('id-ID')}</td></tr>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan ${monthName(currentMonth)}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;font-size:11px;color:#222;padding:20px;max-width:680px;margin:0 auto}
+    .kop{text-align:center;margin-bottom:16px;border-bottom:3px solid #1a3a6b;padding-bottom:12px}
+    .kop h1{font-size:20px;color:#1a3a6b;font-weight:900}
+    .kop h2{font-size:13px;color:#444;margin-top:4px}
+    .kop p{font-size:10px;color:#666;margin-top:2px}
+    h3{font-size:12px;color:#1a3a6b;margin:14px 0 6px;border-bottom:1px solid #ddd;padding-bottom:4px}
+    table{width:100%;border-collapse:collapse;margin-bottom:12px}
+    th{background:#1a3a6b;color:#fff;padding:5px 8px;text-align:left;font-size:10px}
+    td{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}
+    tr:nth-child(even){background:#f9f9f9}
+    .summary{background:#f0f4ff;border:1px solid #1a3a6b;border-radius:6px;padding:12px;margin-top:14px}
+    .sum-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #ddd}
+    .sum-row:last-child{border-bottom:none;font-weight:bold;font-size:13px;padding-top:8px}
+    .green{color:#27ae60}.red{color:#e74c3c}.gold{color:#d4a843}
+    .footer{text-align:center;margin-top:16px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:8px}
+    @media print{.no-print{display:none}}
+  </style></head><body>
+  <div class="kop">
+    <h1>🍲 GUBUKAN KRASTI</h1>
+    <h2>LAPORAN KEUANGAN BULANAN</h2>
+    <p>Periode: ${monthName(currentMonth)} | Dicetak: ${new Date().toLocaleDateString('id-ID')}</p>
+  </div>
+
+  <h3>A. REKAPITULASI EVENT (${mEvents.length} Event)</h3>
+  <table>
+    <tr><th>No</th><th>Customer</th><th>Lokasi</th><th>Tanggal</th><th>Omzet</th><th>Status</th></tr>
+    ${eventRows}
+    <tr style="font-weight:bold;background:#e8f0ff">
+      <td colspan="4">TOTAL OMZET</td>
+      <td style="text-align:right" class="green">Rp ${omzetEvent.toLocaleString('id-ID')}</td>
+      <td></td>
+    </tr>
+  </table>
+
+  ${mTerima.length?`
+  <h3>B. PENERIMAAN KAS</h3>
+  <table>
+    <tr><th>Tanggal</th><th>Jenis</th><th>Metode</th><th>Customer</th><th>Jumlah</th></tr>
+    ${mTerima.map(r=>{const ev=state.events.find(e=>e.id===r.event_id);return`<tr><td>${fmtDate(r.tanggal)}</td><td>${r.label||r.jenis}</td><td>${r.metode||'-'}</td><td>${ev?.customer||'-'}</td><td style="text-align:right" class="green">Rp ${Number(r.jumlah).toLocaleString('id-ID')}</td></tr>`}).join('')}
+  </table>`:''}
+
+  <h3>C. HPP BAHAN BAKU</h3>
+  <table>
+    <tr><th>Bahan</th><th>Qty</th><th>Satuan</th><th>Total HPP</th></tr>
+    ${mSK.length
+      ? (() => {
+          const byBahan={};
+          mSK.forEach(r=>{if(!byBahan[r.nama])byBahan[r.nama]={qty:0,total:0,satuan:r.satuan};byBahan[r.nama].qty+=Number(r.qty)||0;byBahan[r.nama].total+=Number(r.total_hpp)||0;});
+          return Object.entries(byBahan).map(([nama,v])=>`<tr><td>${nama}</td><td>${v.qty.toFixed(1)}</td><td>${v.satuan}</td><td style="text-align:right" class="red">Rp ${v.total.toLocaleString('id-ID')}</td></tr>`).join('');
+        })()
+      : mExp.filter(x=>x.kategori==='HPP').map(x=>`<tr><td>${x.keterangan}</td><td>-</td><td>-</td><td style="text-align:right" class="red">Rp ${Number(x.jumlah).toLocaleString('id-ID')}</td></tr>`).join('')
+    }
+    <tr style="font-weight:bold;background:#e8f0ff"><td colspan="3">TOTAL HPP</td><td style="text-align:right" class="red">Rp ${hppTotal.toLocaleString('id-ID')}</td></tr>
+  </table>
+
+  <h3>D. BIAYA OPERASIONAL</h3>
+  <table>
+    <tr><th>Kategori</th><th>Keterangan</th><th>Tanggal</th><th>Ref Event</th><th>Jumlah</th></tr>
+    ${opsRows||'<tr><td colspan="5" style="text-align:center;color:#999">Tidak ada data</td></tr>'}
+    <tr style="font-weight:bold;background:#e8f0ff"><td colspan="4">TOTAL OPERASIONAL</td><td style="text-align:right" class="red">Rp ${opsTotal.toLocaleString('id-ID')}</td></tr>
+  </table>
+
+  ${tokbaIn>0||tokbaOut>0?`
+  <h3>E. TOKO ONLINE</h3>
+  <table>
+    <tr><th>Tanggal</th><th>Keterangan</th><th>Masuk</th><th>Keluar</th></tr>
+    ${mTokba.filter(r=>Number(r.masuk)>0||Number(r.keluar)>0).map(r=>`<tr><td>${fmtDate(r.tanggal)}</td><td>${r.keterangan}</td><td class="green">${Number(r.masuk)>0?'Rp '+Number(r.masuk).toLocaleString('id-ID'):'-'}</td><td class="red">${Number(r.keluar)>0?'Rp '+Number(r.keluar).toLocaleString('id-ID'):'-'}</td></tr>`).join('')}
+  </table>`:''}
+
+  <div class="summary">
+    <div style="font-weight:bold;color:#1a3a6b;margin-bottom:8px;font-size:12px">📊 NERACA ${monthName(currentMonth).toUpperCase()}</div>
+    <div class="sum-row"><span>Total Omzet Event</span><span class="green">Rp ${omzetEvent.toLocaleString('id-ID')}</span></div>
+    <div class="sum-row"><span>HPP Bahan Baku</span><span class="red">(Rp ${hppTotal.toLocaleString('id-ID')})</span></div>
+    <div class="sum-row"><span>Biaya Operasional</span><span class="red">(Rp ${opsTotal.toLocaleString('id-ID')})</span></div>
+    ${ovhTotal>0?`<div class="sum-row"><span>Overhead</span><span class="red">(Rp ${ovhTotal.toLocaleString('id-ID')})</span></div>`:''}
+    <div class="sum-row"><span>LABA BERSIH</span><span class="${labaBersih>=0?'green':'red'}">Rp ${labaBersih.toLocaleString('id-ID')}</span></div>
+    <div class="sum-row" style="font-size:11px;font-weight:normal"><span>Margin</span><span class="gold">${margin}%</span></div>
+    <div class="sum-row" style="font-size:11px;font-weight:normal"><span>Isrun 10%</span><span class="gold">Rp ${isrun.toLocaleString('id-ID')}</span></div>
+  </div>
+
+  <div class="footer">Laporan ini dibuat otomatis oleh Gubukan App · ${new Date().toLocaleString('id-ID')}</div>
+  </body></html>`;
+
+  const w = window.open('','_blank','width=720,height=850');
+  w.document.write(html); w.document.close(); w.focus();
+  setTimeout(()=>w.print(),700);
+}
 
 
 function init() {
