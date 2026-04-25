@@ -1,929 +1,551 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Gubukan App</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Gubukan Krasti</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   GUBUKAN APP — Warm Earthy Batik-inspired UI
+   DESIGN TOKENS
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
-
 :root {
-  --bg:        #0f0e0c;
-  --bg2:       #1a1814;
-  --bg3:       #252218;
-  --card:      #1e1c16;
-  --border:    #2e2b20;
-  --gold:      #d4a843;
-  --gold2:     #f0c96a;
-  --cream:     #f5edd8;
-  --green:     #4caf82;
-  --red:       #e05c5c;
-  --blue:      #5c9ee0;
-  --orange:    #e08a3c;
-  --text:      #e8dfc8;
-  --text2:     #a09880;
-  --text3:     #6b6352;
-  --shadow:    0 4px 24px rgba(0,0,0,0.5);
-  --radius:    14px;
-  --radius-sm: 8px;
+  --bg:        #0c0d10;
+  --bg2:       #111318;
+  --bg3:       #181a20;
+  --surface:   #1e2028;
+  --surface2:  #252830;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+
+  --ink:       #f0f1f5;
+  --ink2:      #9a9dab;
+  --ink3:      #5a5d6b;
+  --ink4:      #3a3d4a;
+
+  --gold:      #e8b84b;
+  --gold2:     #f5d07a;
+  --gold-dim:  rgba(232,184,75,0.12);
+  --green:     #4ade80;
+  --green-dim: rgba(74,222,128,0.1);
+  --red:       #f87171;
+  --red-dim:   rgba(248,113,113,0.1);
+  --blue:      #60a5fa;
+  --blue-dim:  rgba(96,165,250,0.1);
+  --orange:    #fb923c;
+  --orange-dim:rgba(251,146,60,0.1);
+
+  --radius:    10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --font:      'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-disp: 'Playfair Display', serif;
+
+  --nav-h:     64px;
+  --topbar-h:  56px;
+  --sidebar-w: 220px;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+[data-theme="light"] {
+  --bg:       #f5f5f7;
+  --bg2:      #ffffff;
+  --bg3:      #ebebed;
+  --surface:  #ffffff;
+  --surface2: #f0f0f2;
+  --border:   rgba(0,0,0,0.08);
+  --border2:  rgba(0,0,0,0.14);
+  --ink:      #1a1a2e;
+  --ink2:     #555668;
+  --ink3:     #888a99;
+  --ink4:     #c0c2cc;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; overscroll-behavior: none; }
 
 body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font);
   background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* ---- TOP BAR ---- */
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Top bar */
 .topbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  flex-shrink: 0;
+  height: var(--topbar-h);
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
-  padding: 12px 16px;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  z-index: 100;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
 }
 .topbar-logo {
-  font-family: 'Playfair Display', serif;
-  font-size: 20px;
-  color: var(--gold);
-  letter-spacing: 1px;
-}
-.topbar-month {
-  font-size: 12px; color: var(--text2);
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 4px 12px;
-  cursor: pointer;
-}
-.topbar-sync {
   width: 32px; height: 32px;
-  background: var(--bg3);
+  background: var(--gold);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.topbar-name {
+  font-family: var(--font-disp);
+  font-size: 17px;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+.topbar-sub {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-top: -2px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+}
+.topbar-period {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+.topbar-period:hover { border-color: var(--gold); }
+.topbar-period-label { font-size: 13px; font-weight: 500; color: var(--ink); }
+.topbar-period-date  { font-size: 10px; color: var(--ink3); font-family: var(--font-mono); }
+.topbar-sync {
+  width: 36px; height: 36px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 50%;
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 14px;
-  transition: transform 0.3s;
+  transition: border-color 0.2s, transform 0.3s;
+  flex-shrink: 0;
 }
+.topbar-sync:hover { border-color: var(--gold); }
 .topbar-sync.spinning { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ---- NAV TABS ---- */
-.nav {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
+/* Body layout */
+.app-body {
+  flex: 1;
   display: flex;
-  padding: 6px 0;
-}
-.nav-item {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 3px;
-  padding: 6px 0;
-  cursor: pointer; border: none; background: none;
-  color: var(--text3); font-size: 10px;
-  transition: color 0.2s;
-}
-.nav-item.active { color: var(--gold); }
-.nav-icon { font-size: 20px; line-height: 1; }
-
-/* ---- MAIN CONTENT ---- */
-.main {
-  padding-top: 58px;
-  padding-bottom: 62px;
-  min-height: 100vh;
-}
-
-@media (min-width: 480px) and (max-width: 767px) {
-  .main { max-width: 480px; margin: 0 auto; }
-}
-
-.page { display: none; min-height: 100%; }
-.page.active { display: block; }
-
-/* ---- DASHBOARD ---- */
-.dash-header {
-  padding: 16px 0;
-  background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
-  border-bottom: 1px solid var(--border);
-}
-.dash-greeting, .dash-title, .dash-period {
-  padding-left: 16px; padding-right: 16px;
-}
-.dash-greeting { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
-.dash-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--cream); }
-.dash-period { font-size: 12px; color: var(--gold); margin-top: 2px; }
-
-.summary-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 10px; padding: 14px;
-}
-.summary-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-  position: relative; overflow: hidden;
-}
-.summary-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  border-radius: var(--radius) var(--radius) 0 0;
-}
-.summary-card.green::before { background: var(--green); }
-.summary-card.red::before   { background: var(--red); }
-.summary-card.gold::before  { background: var(--gold); }
-.summary-card.blue::before  { background: var(--blue); }
-.summary-card.orange::before { background: var(--orange); }
-
-.sc-label { font-size: 10px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-.sc-value { font-size: 18px; font-weight: 600; color: var(--cream); line-height: 1; }
-.sc-value.green { color: var(--green); }
-.sc-value.red   { color: var(--red); }
-.sc-value.gold  { color: var(--gold); }
-.sc-sub { font-size: 10px; color: var(--text3); margin-top: 4px; }
-
-.summary-card-wide {
-  grid-column: 1 / -1;
-}
-
-/* Progress Bar */
-.progress-bar {
-  height: 6px; background: var(--border);
-  border-radius: 3px; margin-top: 8px; overflow: hidden;
-}
-.progress-fill {
-  height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, var(--gold), var(--gold2));
-  transition: width 0.8s ease;
-}
-
-/* Section Header */
-.section-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 14px 8px;
-}
-.section-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 16px; color: var(--cream);
-}
-.section-action {
-  font-size: 11px; color: var(--gold);
-  cursor: pointer; padding: 4px 10px;
-  border: 1px solid var(--gold);
-  border-radius: 20px;
-  background: none;
-}
-
-/* Recent Events List */
-.event-list { padding: 0 14px; display: flex; flex-direction: column; gap: 8px; }
-
-.event-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  display: flex; align-items: center; gap: 12px;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-.event-card:active { border-color: var(--gold); }
-
-.event-dot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-}
-.event-dot.green  { background: var(--green); }
-.event-dot.orange { background: var(--orange); }
-.event-dot.red    { background: var(--red); }
-
-.event-info { flex: 1; min-width: 0; }
-.event-customer { font-size: 13px; font-weight: 600; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.event-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
-.event-omzet { text-align: right; }
-.event-omzet-val { font-size: 13px; font-weight: 600; color: var(--green); }
-.event-margin { font-size: 10px; color: var(--text2); }
-
-/* ---- CHART AREA ---- */
-.chart-wrap {
-  margin: 0 14px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-}
-.chart-title { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
-.bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
-.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.bar-wrap { width: 100%; display: flex; gap: 2px; align-items: flex-end; height: 65px; }
-.bar {
-  flex: 1; border-radius: 3px 3px 0 0;
-  min-height: 4px;
-  transition: height 0.6s ease;
-}
-.bar.income { background: var(--green); }
-.bar.expense { background: var(--red); }
-.bar-label { font-size: 9px; color: var(--text3); }
-
-/* ---- EVENTS PAGE ---- */
-.filter-row {
-  display: flex; gap: 8px; padding: 12px 14px;
-  overflow-x: auto; scrollbar-width: none;
-}
-.filter-row::-webkit-scrollbar { display: none; }
-.filter-chip {
-  flex-shrink: 0;
-  padding: 5px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg3);
-  color: var(--text2);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.filter-chip.active {
-  border-color: var(--gold);
-  background: rgba(212,168,67,0.15);
-  color: var(--gold);
-}
-
-.fab {
-  position: fixed; bottom: 80px; right: 16px;
-  width: 52px; height: 52px;
-  background: var(--gold);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px; color: var(--bg);
-  box-shadow: 0 4px 20px rgba(212,168,67,0.4);
-  cursor: pointer; border: none;
-  z-index: 50;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.fab:active { transform: scale(0.94); }
-
-/* ---- MODAL / BOTTOM SHEET ---- */
-.overlay {
-  position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.7);
-  display: none; align-items: flex-end;
-  backdrop-filter: blur(4px);
-}
-.overlay.open { display: flex; }
-
-.sheet {
-  width: 100%;
-  background: var(--bg2);
-  border-radius: 20px 20px 0 0;
-  border-top: 1px solid var(--border);
-  padding: 0 0 env(safe-area-inset-bottom);
-  max-height: 92vh;
-  overflow-y: auto;
-  animation: slideUp 0.3s ease;
-}
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-
-.sheet-handle {
-  width: 36px; height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  margin: 12px auto 0;
-}
-
-.sheet-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.sheet-title { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--cream); }
-.sheet-close {
-  width: 30px; height: 30px;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 14px; color: var(--text2);
-}
-
-.sheet-body { padding: 16px; }
-
-/* ---- FORM ---- */
-.form-group { margin-bottom: 14px; }
-.form-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
-.form-control {
-  width: 100%;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  padding: 10px 12px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.form-control:focus { border-color: var(--gold); }
-.form-control::placeholder { color: var(--text3); }
-select.form-control { appearance: none; cursor: pointer; }
-textarea.form-control { resize: vertical; min-height: 70px; }
-
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-.form-section-title {
-  font-size: 12px; color: var(--gold);
-  text-transform: uppercase; letter-spacing: 1px;
-  margin: 16px 0 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
-}
-
-/* Item rows in form */
-.item-row {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  margin-bottom: 8px;
-  display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  gap: 8px;
-  align-items: center;
-}
-.item-row input {
-  background: none; border: none;
-  color: var(--text); font-family: 'DM Sans', sans-serif;
-  font-size: 13px; outline: none; width: 100%;
-}
-.item-row .item-qty { width: 50px; text-align: center; }
-.item-row .item-price { width: 80px; text-align: right; }
-.item-row .item-del {
-  color: var(--red); cursor: pointer;
-  font-size: 16px; padding: 0 4px;
-  background: none; border: none;
-}
-
-.add-item-btn {
-  width: 100%;
-  padding: 8px;
-  background: none;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text3);
-  font-size: 12px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-}
-
-/* Expense rows */
-.expense-row {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  margin-bottom: 8px;
-}
-.expense-row-top {
-  display: grid; grid-template-columns: 1fr auto auto;
-  gap: 8px; align-items: center;
-}
-.expense-row-top input {
-  background: none; border: none;
-  color: var(--text); font-family: 'DM Sans', sans-serif;
-  font-size: 13px; outline: none; width: 100%;
-}
-.expense-cat {
-  font-size: 10px; padding: 2px 8px;
-  border-radius: 10px; border: none;
-  cursor: pointer; font-family: 'DM Sans', sans-serif;
-}
-.expense-cat.HPP { background: rgba(92,158,224,0.2); color: var(--blue); }
-.expense-cat.Operasional { background: rgba(224,138,60,0.2); color: var(--orange); }
-.expense-cat.Overhead { background: rgba(160,152,128,0.2); color: var(--text2); }
-
-/* Totals card */
-.totals-card {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px; margin: 12px 0;
-}
-.total-row {
-  display: flex; justify-content: space-between;
-  font-size: 12px; padding: 3px 0;
-  color: var(--text2);
-}
-.total-row.highlight { font-weight: 600; font-size: 14px; color: var(--cream); }
-.total-row.profit { color: var(--green); font-weight: 600; }
-.total-row.loss   { color: var(--red);   font-weight: 600; }
-
-/* Submit button */
-.btn-submit {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, var(--gold), var(--gold2));
-  border: none; border-radius: var(--radius-sm);
-  color: var(--bg); font-weight: 700;
-  font-size: 15px; cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  margin-top: 8px;
-  transition: opacity 0.2s;
-}
-.btn-submit:active { opacity: 0.85; }
-
-.btn-outline {
-  width: 100%; padding: 12px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text2); font-size: 13px;
-  cursor: pointer; font-family: 'DM Sans', sans-serif;
-  margin-top: 6px;
-}
-
-/* ---- KAS PAGE ---- */
-.kas-tabs {
-  display: flex; border-bottom: 1px solid var(--border);
-}
-.kas-tab {
-  flex: 1; padding: 12px;
-  text-align: center; font-size: 12px;
-  cursor: pointer; color: var(--text2);
-  border-bottom: 2px solid transparent;
-  transition: color 0.2s;
-}
-.kas-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-
-.kas-content { display: none; }
-.kas-content.active { display: block; }
-
-/* Trans list */
-.trans-list { padding: 0 14px; display: flex; flex-direction: column; gap: 6px; }
-.trans-item {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  display: flex; align-items: center; gap: 10px;
-}
-.trans-icon {
-  width: 32px; height: 32px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; flex-shrink: 0;
-}
-.trans-icon.in  { background: rgba(76,175,130,0.15); }
-.trans-icon.out { background: rgba(224,92,92,0.15); }
-.trans-info { flex: 1; min-width: 0; }
-.trans-desc { font-size: 13px; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.trans-meta { font-size: 10px; color: var(--text3); margin-top: 1px; }
-.trans-amount { font-size: 13px; font-weight: 600; }
-.trans-amount.in  { color: var(--green); }
-.trans-amount.out { color: var(--red); }
-
-/* ---- RT PAGE ---- */
-.rt-summary {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 8px; padding: 14px;
-}
-.rt-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px; text-align: center;
-}
-.rt-card-label { font-size: 9px; color: var(--text3); text-transform: uppercase; margin-bottom: 4px; }
-.rt-card-val { font-size: 13px; font-weight: 600; }
-
-/* ---- SETTINGS PAGE ---- */
-.settings-list { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
-.settings-item {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  display: flex; align-items: center; gap: 12px;
-  cursor: pointer;
-}
-.settings-icon { font-size: 20px; width: 32px; text-align: center; }
-.settings-info { flex: 1; }
-.settings-title { font-size: 13px; color: var(--cream); }
-.settings-desc  { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.settings-arrow { color: var(--text3); font-size: 14px; }
-
-.url-input-wrap {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px; margin: 0 14px;
-}
-.url-status { font-size: 11px; margin-top: 8px; }
-.url-status.ok  { color: var(--green); }
-.url-status.err { color: var(--red); }
-
-/* ---- TOAST ---- */
-.toast {
-  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 8px 20px;
-  font-size: 13px; color: var(--text);
-  z-index: 999;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
-  white-space: nowrap;
-}
-.toast.show { opacity: 1; }
-
-/* ---- LOADING ---- */
-.loading {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 40px; gap: 12px;
-  color: var(--text2); font-size: 13px;
-}
-.spinner {
-  width: 28px; height: 28px;
-  border: 2px solid var(--border);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-/* ---- EMPTY STATE ---- */
-.empty {
-  text-align: center; padding: 40px 20px;
-  color: var(--text3); font-size: 13px;
-}
-.empty-icon { font-size: 40px; margin-bottom: 10px; }
-
-/* ---- MONTH PICKER ---- */
-.month-picker-scroll { padding: 8px 14px 16px; overflow-y: auto; max-height: 72vh; }
-.month-year-group { margin-bottom: 12px; }
-.month-year-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 0; margin-bottom: 6px;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-}
-.month-year-label {
-  font-family: 'Playfair Display', serif;
-  font-size: 15px; color: var(--gold);
-}
-.month-year-toggle { font-size: 12px; color: var(--text3); transition: transform 0.2s; }
-.month-year-toggle.collapsed { transform: rotate(-90deg); }
-.month-year-body { overflow: hidden; transition: max-height 0.3s ease; }
-.month-year-body.collapsed { max-height: 0 !important; }
-.month-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 6px; padding-bottom: 4px;
-}
-.month-btn {
-  padding: 8px 4px; text-align: center;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer; font-size: 11px; color: var(--text2);
-  position: relative; transition: all 0.15s;
-}
-.month-btn:active { transform: scale(0.95); }
-.month-btn.active {
-  border-color: var(--gold);
-  background: rgba(77,158,247,0.15);
-  color: var(--gold); font-weight: 600;
-}
-.month-btn.has-data::after {
-  content: ''; position: absolute;
-  top: 3px; right: 3px;
-  width: 5px; height: 5px;
-  border-radius: 50%; background: var(--green);
-}
-.month-btn.future { opacity: 0.45; }
-
-/* Theme picker */
-.theme-grid {
-  display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 10px; padding: 4px 0 12px;
-}
-.theme-card {
-  border-radius: var(--radius-sm);
-  border: 2px solid transparent;
-  overflow: hidden; cursor: pointer;
-  transition: border-color 0.2s, transform 0.15s;
-}
-.theme-card:active { transform: scale(0.96); }
-.theme-card.active { border-color: var(--gold); }
-.theme-preview {
-  height: 48px; padding: 7px 8px;
-  display: flex; flex-direction: column; gap: 4px;
-}
-.theme-preview-bar { height: 6px; border-radius: 3px; }
-.theme-name {
-  text-align: center; font-size: 11px;
-  color: var(--text2); padding: 4px 0;
-  background: var(--card);
-}
-
-/* ---- EVENT DETAIL SHEET ---- */
-.detail-omzet {
-  font-family: 'Playfair Display', serif;
-  font-size: 28px; color: var(--gold);
-  margin: 4px 0;
-}
-.detail-badge {
-  display: inline-block;
-  padding: 3px 10px; border-radius: 10px;
-  font-size: 11px; font-weight: 600;
-}
-.detail-badge.profit { background: rgba(76,175,130,0.2); color: var(--green); }
-.detail-badge.loss   { background: rgba(224,92,92,0.2);  color: var(--red); }
-
-.breakdown-item {
-  display: flex; justify-content: space-between;
-  padding: 8px 0; border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
-.breakdown-item:last-child { border-bottom: none; }
-.breakdown-cat { font-size: 10px; color: var(--text3); }
-
-/* Responsive tweaks */
-@media (min-width: 480px) and (max-width: 767px) {
-  .topbar, .nav { max-width: 480px; left: 50%; transform: translateX(-50%); }
-  .overlay .sheet { max-width: 480px; margin: 0 auto; }
-  .fab { right: calc(50% - 240px + 16px); }
-  .toast { max-width: 400px; }
-}
-
-/* ---- STOK & BIAYA SYSTEM ---- */
-.quick-btns {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 12px; padding: 14px;
-}
-.quick-btn {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px 12px;
-  cursor: pointer; text-align: center;
-  transition: border-color 0.2s, transform 0.15s;
-  display: flex; flex-direction: column;
-  align-items: center; gap: 6px;
-}
-.quick-btn:active { transform: scale(0.97); }
-.quick-btn.keluar { border-top: 3px solid var(--red); }
-.quick-btn.masuk  { border-top: 3px solid var(--green); }
-.quick-btn-icon { font-size: 24px; }
-.quick-btn-label { font-size: 12px; font-weight: 600; color: var(--cream); }
-.quick-btn-desc { font-size: 10px; color: var(--text3); }
-
-.stok-item {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 6px;
-}
-.stok-icon { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
-.stok-info { flex: 1; min-width: 0; }
-.stok-nama { font-size: 13px; font-weight: 600; color: var(--cream); }
-.stok-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
-.stok-right { text-align: right; }
-.stok-qty { font-size: 13px; font-weight: 600; color: var(--gold); }
-.stok-harga { font-size: 10px; color: var(--text2); }
-.stok-low { border-left: 3px solid var(--red); }
-
-.badge {
-  display: inline-block; padding: 2px 8px;
-  border-radius: 10px; font-size: 10px; font-weight: 600;
-}
-.badge-hpp   { background: rgba(92,158,224,0.2);  color: var(--blue); }
-.badge-ops   { background: rgba(224,138,60,0.2);  color: var(--orange); }
-.badge-terima{ background: rgba(76,175,130,0.2);  color: var(--green); }
-.badge-stok  { background: rgba(212,168,67,0.2);  color: var(--gold); }
-
-/* Stok keluar rows in event form */
-.stok-pick-row {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 10px;
-  margin-bottom: 8px;
-}
-.stok-pick-top {
-  display: grid; grid-template-columns: 1fr auto auto auto;
-  gap: 8px; align-items: center;
-}
-
-/* Dashboard stats row */
-.stat-row {
-  display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 8px; padding: 0 14px 12px;
-}
-.stat-mini {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 10px;
-  text-align: center;
-}
-.stat-mini-label { font-size: 9px; color: var(--text3); text-transform: uppercase; margin-bottom: 3px; }
-.stat-mini-val { font-size: 13px; font-weight: 600; }
-
-
-/* ---- THEMES ---- */
-[data-theme="earthy"] {
-  --bg:#0f0e0c; --bg2:#1a1814; --bg3:#252218; --card:#1e1c16;
-  --border:#2e2b20; --gold:#d4a843; --gold2:#f0c96a; --cream:#f5edd8;
-  --text:#e8dfc8; --text2:#a09880; --text3:#6b6352;
-}
-[data-theme="navy"] {
-  --bg:#0a0f1e; --bg2:#0d1528; --bg3:#111d35; --card:#0f1a30;
-  --border:#1e2d4a; --gold:#4d9ef7; --gold2:#7bb8ff; --cream:#e8f0ff;
-  --text:#d0dff5; --text2:#7a9bc4; --text3:#3d5a80;
-}
-[data-theme="forest"] {
-  --bg:#0a1208; --bg2:#0f1a0c; --bg3:#152410; --card:#111e0e;
-  --border:#1e3018; --gold:#5cb85c; --gold2:#7dd87d; --cream:#e8f5e8;
-  --text:#d0f0d0; --text2:#7ab87a; --text3:#3d6b3d;
-}
-[data-theme="purple"] {
-  --bg:#0e0a1e; --bg2:#150d28; --bg3:#1c1235; --card:#130f30;
-  --border:#251a4a; --gold:#9b59b6; --gold2:#c39bd3; --cream:#f0e8ff;
-  --text:#e0d0ff; --text2:#9b7ac4; --text3:#5a3d80;
-}
-[data-theme="rose"] {
-  --bg:#1a0a0e; --bg2:#280d15; --bg3:#35111c; --card:#300f1a;
-  --border:#4a1a28; --gold:#e05c8a; --gold2:#f07aa0; --cream:#ffe8f0;
-  --text:#f5d0dd; --text2:#c47a95; --text3:#803d55;
-}
-[data-theme="light"] {
-  --bg:#f0f4ff; --bg2:#e8eef8; --bg3:#dde5f5; --card:#edf1fb;
-  --border:#c8d5ea; --gold:#2563eb; --gold2:#3b82f6; --cream:#1e3a5f;
-  --green:#16a34a; --red:#dc2626; --orange:#ea580c;
-  --text:#1e3a5f; --text2:#4a6fa5; --text3:#8fa8c8;
-}
-
-
-/* ---- LAPORAN ---- */
-.laporan-section {
-  margin: 0 14px 14px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
   overflow: hidden;
 }
-.laporan-section-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px;
-  background: var(--bg3);
-  border-bottom: 1px solid var(--border);
+
+/* Sidebar (desktop) */
+.sidebar {
+  flex-shrink: 0;
+  width: var(--sidebar-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: none;
+  flex-direction: column;
+  padding: 12px 0;
+  overflow-y: auto;
+}
+@media (min-width: 768px) {
+  .sidebar { display: flex; }
+}
+.nav-section {
+  padding: 0 10px;
+  margin-bottom: 4px;
+}
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 6px 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
   cursor: pointer;
+  color: var(--ink3);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+  border: none; background: none; width: 100%; text-align: left;
 }
-.laporan-section-title {
-  font-size: 13px; font-weight: 600; color: var(--cream);
-  display: flex; align-items: center; gap: 8px;
-}
-.laporan-section-total {
-  font-size: 13px; font-weight: 700;
-}
-.laporan-section-body { padding: 8px 0; }
-.laporan-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 7px 14px;
-  border-bottom: 1px solid var(--border);
-  font-size: 12px;
-}
-.laporan-row:last-child { border-bottom: none; }
-.laporan-row-label { color: var(--text2); flex: 1; }
-.laporan-row-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
-.laporan-row-val { font-weight: 600; text-align: right; }
-.laporan-row-val.in  { color: var(--green); }
-.laporan-row-val.out { color: var(--red); }
-.laporan-row-val.neutral { color: var(--gold); }
+.nav-item:hover { background: var(--surface); color: var(--ink); }
+.nav-item.active { background: var(--gold-dim); color: var(--gold); }
+.nav-item.active .nav-icon { color: var(--gold); }
+.nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-divider { height: 1px; background: var(--border); margin: 8px 10px; }
 
-.laporan-summary-card {
-  margin: 14px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-}
-.laporan-summary-row {
-  display: flex; justify-content: space-between;
-  padding: 5px 0; font-size: 13px;
-  border-bottom: 1px solid var(--border);
-}
-.laporan-summary-row:last-child { border-bottom: none; }
-.laporan-summary-row.total {
-  font-size: 16px; font-weight: 700;
-  padding-top: 10px; margin-top: 4px;
-}
-.laporan-cat-badge {
-  display: inline-block; padding: 2px 8px;
-  border-radius: 10px; font-size: 10px;
-  margin-right: 4px;
+/* Main content */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
 }
 
+/* Bottom nav (mobile) */
+.bottom-nav {
+  flex-shrink: 0;
+  display: flex;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 4px 0 env(safe-area-inset-bottom);
+}
+@media (min-width: 768px) {
+  .bottom-nav { display: none; }
+}
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0;
+  cursor: pointer;
+  color: var(--ink3);
+  font-size: 10px;
+  font-weight: 500;
+  border: none; background: none;
+  transition: color 0.15s;
+}
+.bottom-nav-item.active { color: var(--gold); }
+.bottom-nav-item .nav-icon { font-size: 20px; line-height: 1; }
+
+/* Pages */
+.page { display: none; }
+.page.active { display: block; }
 
 /* ============================================================
-   PC / DESKTOP LAYOUT (min-width: 768px)
-   Sidebar nav kiri, konten kanan, header full width
+   SHARED COMPONENTS
    ============================================================ */
-@media (min-width: 768px) {
 
-  /* Topbar full width */
-  .topbar {
-    max-width: 100%;
-    left: 0; right: 0;
-    transform: none;
-    padding: 12px 24px;
-  }
-
-  /* Sidebar nav */
-  .nav {
-    top: 57px; bottom: 0;
-    left: 0; right: auto;
-    width: 200px;
-    flex-direction: column;
-    border-top: none;
-    border-right: 1px solid var(--border);
-    padding: 16px 0;
-    justify-content: flex-start;
-    transform: none;
-    max-width: none;
-  }
-  .nav-item {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 10px;
-    padding: 12px 20px;
-    font-size: 13px;
-    border-bottom: none;
-    border-left: 3px solid transparent;
-    width: 100%;
-  }
-  .nav-item.active {
-    border-left-color: var(--gold);
-    background: rgba(77,158,247,0.08);
-  }
-  .nav-icon { font-size: 18px; width: 22px; text-align: center; }
-
-  /* Main content — shift right of sidebar */
-  .main {
-    padding-top: 58px;
-    padding-bottom: 20px;
-    padding-left: 200px;
-    max-width: 100%;
-    margin: 0;
-  }
-
-  /* Content max width for readability */
-  .page { max-width: 100%; }
-
-  /* FAB position */
-  .fab { right: 24px; bottom: 24px; }
-
-  /* Sheet/overlay centered */
-  .overlay .sheet { max-width: 520px; margin: 0 auto; }
-  .toast { max-width: 400px; }
-
-  /* Header full width no side padding issue */
-  .dash-header { padding: 20px 24px; }
-  .dash-greeting, .dash-title, .dash-period {
-    padding-left: 0; padding-right: 0;
-  }
-
-  /* Summary grid wider on PC */
-  .summary-grid { grid-template-columns: repeat(4, 1fr); }
-  .summary-card-wide { grid-column: 1 / -1; }
-
-  /* Event list 2 columns on PC */
-  .event-list { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 8px;
-    padding: 0 14px;
-  }
+/* Page header */
+.page-header {
+  padding: 20px 20px 0;
+  margin-bottom: 20px;
+}
+.page-title {
+  font-family: var(--font-disp);
+  font-size: 22px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.page-subtitle {
+  font-size: 12px;
+  color: var(--ink3);
+  margin-top: 4px;
+  font-family: var(--font-mono);
 }
 
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.card-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.card-action {
+  font-size: 12px;
+  color: var(--gold);
+  cursor: pointer;
+  background: none; border: none;
+  font-family: var(--font);
+  font-weight: 500;
+}
 
-/* ---- KAS TABLE ---- */
+/* Stat cards */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+@media (min-width: 768px) {
+  .stat-grid { grid-template-columns: repeat(4, 1fr); }
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.stat-card.green::before  { background: var(--green); }
+.stat-card.gold::before   { background: var(--gold); }
+.stat-card.red::before    { background: var(--red); }
+.stat-card.blue::before   { background: var(--blue); }
+.stat-card.orange::before { background: var(--orange); }
+.stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-family: var(--font-mono);
+}
+.stat-value.green  { color: var(--green); }
+.stat-value.gold   { color: var(--gold); }
+.stat-value.red    { color: var(--red); }
+.stat-value.blue   { color: var(--blue); }
+.stat-meta {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-top: 6px;
+}
+.stat-progress {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.stat-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--green);
+  transition: width 0.8s cubic-bezier(.4,0,.2,1);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+  width: 100%;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--gold); color: #000; }
+.btn-secondary { background: var(--surface2); color: var(--ink); border: 1px solid var(--border2); }
+.btn-ghost { background: transparent; color: var(--ink2); border: 1px solid var(--border); }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+.btn-sm { padding: 6px 12px; font-size: 12px; width: auto; }
+
+/* Action buttons grid */
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+.action-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+.action-card:hover { border-color: var(--border2); background: var(--surface2); }
+.action-card.red   { border-top: 2px solid var(--red); }
+.action-card.green { border-top: 2px solid var(--green); }
+.action-icon { font-size: 22px; }
+.action-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+.action-desc  { font-size: 11px; color: var(--ink3); }
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 0 16px; }
+
+/* Section header */
+.section-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 10px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink2);
+}
+
+/* ============================================================
+   EVENT LIST
+   ============================================================ */
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 16px;
+}
+.event-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.event-item:hover { border-color: var(--border2); background: var(--surface2); }
+.event-status {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.event-status.lunas   { background: var(--green); }
+.event-status.dp      { background: var(--gold); }
+.event-status.booking { background: var(--blue); }
+.event-status.follow  { background: var(--orange); }
+.event-status.pending { background: var(--ink3); }
+.event-status.batal   { background: var(--red); }
+.event-info { flex: 1; min-width: 0; }
+.event-customer {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.event-meta { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+.event-right { text-align: right; flex-shrink: 0; }
+.event-omzet {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green);
+  font-family: var(--font-mono);
+}
+.event-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-top: 3px;
+  display: inline-block;
+  font-weight: 600;
+}
+.event-badge.lunas   { background: var(--green-dim); color: var(--green); }
+.event-badge.dp      { background: var(--gold-dim); color: var(--gold); }
+.event-badge.booking { background: var(--blue-dim); color: var(--blue); }
+.event-badge.follow  { background: var(--orange-dim); color: var(--orange); }
+.event-badge.pending { background: var(--surface2); color: var(--ink3); }
+.event-badge.batal   { background: var(--red-dim); color: var(--red); }
+
+/* Filter chips */
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-bar::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink3);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--border2); color: var(--ink); }
+.chip.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+
+/* ============================================================
+   KAS TABLE
+   ============================================================ */
 .kas-table-wrap { overflow-x: auto; }
 .kas-table {
-  width: 100%; border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
   font-size: 12px;
 }
 .kas-table th {
   background: var(--bg3);
-  color: var(--text2);
-  padding: 8px 10px;
+  color: var(--ink3);
+  padding: 10px 12px;
   text-align: left;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-  border-bottom: 2px solid var(--border);
+  letter-spacing: 0.07em;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
@@ -933,472 +555,823 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 .kas-table th.sort-desc::after { content: ' ↓'; color: var(--gold); }
 .kas-table th.debit  { text-align: right; color: var(--green); }
 .kas-table th.kredit { text-align: right; color: var(--red); }
-
-.kas-date-row {
-  background: var(--bg2);
-  cursor: pointer;
-}
+.kas-date-row { background: var(--bg3); cursor: pointer; }
 .kas-date-row td {
-  padding: 7px 10px;
+  padding: 8px 12px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--text2);
+  color: var(--ink3);
   border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
 }
-.kas-date-toggle {
-  float: right; color: var(--text3);
-  transition: transform 0.2s;
-}
-.kas-date-toggle.collapsed { transform: rotate(-90deg); }
-
 .kas-table td {
-  padding: 7px 10px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
-.kas-table tr.kas-data-row:hover { background: var(--bg3); }
+.kas-table tr.kas-data-row:hover { background: var(--surface); }
 .kas-table tr.kas-data-row.collapsed-row { display: none; }
-.kas-table .td-icon { width: 28px; font-size: 14px; }
-.kas-table .td-desc { max-width: 180px; }
-.kas-table .td-desc-main { color: var(--cream); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kas-table .td-desc-meta { font-size: 10px; color: var(--text3); }
-.kas-table .td-debit  { text-align: right; color: var(--green); font-weight: 600; white-space: nowrap; }
-.kas-table .td-kredit { text-align: right; color: var(--red);   font-weight: 600; white-space: nowrap; }
-.kas-table .td-empty  { text-align: right; color: var(--text3); }
+.td-desc-main { color: var(--ink); font-size: 12px; }
+.td-desc-meta { font-size: 10px; color: var(--ink3); margin-top: 1px; }
+.td-debit  { text-align: right; color: var(--green); font-weight: 600; font-family: var(--font-mono); white-space: nowrap; }
+.td-kredit { text-align: right; color: var(--red);   font-weight: 600; font-family: var(--font-mono); white-space: nowrap; }
+.td-empty  { text-align: right; color: var(--ink4); }
 .kas-table tfoot td {
-  padding: 9px 10px;
+  padding: 10px 12px;
   background: var(--bg3);
   font-weight: 700;
-  border-top: 2px solid var(--border);
+  border-top: 2px solid var(--border2);
   white-space: nowrap;
+  font-family: var(--font-mono);
 }
 
+/* ============================================================
+   FORMS
+   ============================================================ */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.form-control {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.form-control:focus { border-color: var(--gold); }
+.form-control::placeholder { color: var(--ink4); }
+select.form-control option { background: var(--bg3); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 14px 0 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+/* Info box */
+.info-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.info-row:last-child { border-bottom: none; }
+.info-row .lbl { color: var(--ink3); }
+.info-row .val { font-weight: 600; font-family: var(--font-mono); }
+.info-row.highlight .val { color: var(--gold); font-size: 14px; }
+
+/* Progress bar */
+.progress-wrap {
+  background: var(--border);
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--green), var(--gold));
+  transition: width 0.6s cubic-bezier(.4,0,.2,1);
+}
+
+/* ============================================================
+   OVERLAYS & SHEETS
+   ============================================================ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+}
+.overlay.open { display: flex; }
+@media (min-width: 768px) {
+  .overlay { align-items: center; justify-content: center; }
+}
+.sheet {
+  background: var(--bg2);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 100%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(.4,0,.2,1);
+}
+@media (min-width: 768px) {
+  .sheet {
+    border-radius: var(--radius-xl);
+    max-width: 500px;
+    max-height: 85vh;
+  }
+}
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) { .sheet-handle { display: none; } }
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sheet-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+.sheet-close {
+  width: 28px; height: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 12px; color: var(--ink2);
+  transition: background 0.15s;
+}
+.sheet-close:hover { background: var(--surface2); }
+.sheet-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.sheet-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ============================================================
+   DETAIL TABS
+   ============================================================ */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  background: none; border-top: none; border-left: none; border-right: none;
+  font-family: var(--font);
+  position: relative;
+  bottom: -1px;
+}
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* ============================================================
+   LAPORAN
+   ============================================================ */
+.laporan-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin: 0 16px 12px;
+}
+.laporan-section-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.laporan-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.laporan-section-val {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+.laporan-row {
+  display: flex;
+  align-items: center;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  cursor: pointer;
+}
+.laporan-row:last-child { border-bottom: none; }
+.laporan-row:hover { background: var(--bg3); }
+.laporan-row-info { flex: 1; min-width: 0; }
+.laporan-row-main { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.laporan-row-sub  { font-size: 10px; color: var(--ink3); margin-top: 1px; }
+.laporan-row-amount { font-family: var(--font-mono); font-weight: 600; text-align: right; flex-shrink: 0; }
+.laporan-row-amount.in  { color: var(--green); }
+.laporan-row-amount.out { color: var(--red); }
+
+/* Summary card */
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin: 0 16px 12px;
+}
+.summary-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-row .lbl { color: var(--ink3); }
+.summary-row .val { font-family: var(--font-mono); font-weight: 600; }
+.summary-row.total { font-size: 15px; font-weight: 700; padding-top: 12px; }
+.summary-row.total .lbl { color: var(--ink); }
+
+/* ============================================================
+   CHART
+   ============================================================ */
+.chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin: 0 16px 16px;
+}
+.chart-title { font-size: 11px; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px; }
+.bar-chart {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 80px;
+}
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bar-wrap { width: 100%; display: flex; gap: 2px; align-items: flex-end; flex: 1; }
+.bar {
+  flex: 1;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.6s cubic-bezier(.4,0,.2,1);
+  min-height: 2px;
+}
+.bar.income { background: var(--green); opacity: 0.8; }
+.bar.expense { background: var(--red); opacity: 0.7; }
+.bar-label { font-size: 9px; color: var(--ink4); font-family: var(--font-mono); }
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0 16px 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.settings-item:hover { border-color: var(--border2); }
+.settings-icon {
+  width: 36px; height: 36px;
+  background: var(--surface2);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.settings-info { flex: 1; }
+.settings-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+.settings-desc  { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+.settings-arrow { color: var(--ink4); font-size: 16px; }
+
+/* Theme grid */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 0 0 8px;
+}
+.theme-card {
+  border-radius: 10px;
+  border: 2px solid transparent;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.theme-card:active { transform: scale(0.96); }
+.theme-card.active { border-color: var(--gold); }
+.theme-preview {
+  height: 44px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.theme-preview-bar { height: 5px; border-radius: 3px; }
+.theme-name { text-align: center; font-size: 11px; color: var(--ink2); padding: 5px 0; background: var(--surface); }
+
+/* ============================================================
+   PERIOD PICKER
+   ============================================================ */
+.period-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.period-btn {
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink2);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.period-btn:hover { border-color: var(--border2); color: var(--ink); }
+.period-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+.period-btn.full { grid-column: 1 / -1; }
+
+/* Month picker */
+.month-picker-scroll { overflow-y: auto; max-height: 260px; padding-bottom: 8px; }
+.month-year-group { margin-bottom: 8px; }
+.month-year-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.month-year-label { font-size: 14px; font-weight: 600; color: var(--gold); font-family: var(--font-disp); }
+.month-year-toggle { font-size: 11px; color: var(--ink3); transition: transform 0.2s; }
+.month-year-toggle.collapsed { transform: rotate(-90deg); }
+.month-year-body { overflow: hidden; transition: max-height 0.3s ease; }
+.month-year-body.collapsed { max-height: 0 !important; }
+.month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding-bottom: 4px; }
+.month-btn {
+  padding: 8px 4px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--ink3);
+  transition: all 0.15s;
+  position: relative;
+}
+.month-btn:hover { border-color: var(--border2); color: var(--ink); }
+.month-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); font-weight: 600; }
+.month-btn.has-data::after { content: ''; position: absolute; top: 3px; right: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
+.month-btn.future { opacity: 0.4; }
+
+/* ============================================================
+   TOAST & MISC
+   ============================================================ */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--ink);
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s;
+  white-space: nowrap;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (min-width: 768px) { .toast { bottom: 24px; } }
+
+.fab {
+  position: fixed;
+  bottom: 76px;
+  right: 16px;
+  width: 48px; height: 48px;
+  background: var(--gold);
+  color: #000;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(232,184,75,0.35);
+  z-index: 50;
+  border: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.fab:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(232,184,75,0.45); }
+.fab:active { transform: scale(0.97); }
+@media (min-width: 768px) { .fab { bottom: 24px; right: 24px; } }
+
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ink3);
+  font-size: 13px;
+}
+.empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: var(--ink3);
+  font-size: 13px;
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Input type styles */
+input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+
+/* Stok cards */
+.stok-select-row {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================ */
+@media (min-width: 768px) {
+  .page-header { padding: 24px 24px 0; margin-bottom: 24px; }
+  .stat-grid { padding: 0 24px; }
+  .action-grid { padding: 0 24px; }
+  .event-list { padding: 0 24px; }
+  .filter-bar { padding: 0 24px 12px; }
+  .section-hd { padding: 16px 24px 10px; }
+  .chart-wrap { margin: 0 24px 16px; }
+  .laporan-section { margin: 0 24px 12px; }
+  .summary-card { margin: 0 24px 12px; }
+  .settings-item { margin: 0 24px 8px; }
+}
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-logo">🍲 Gubukan</div>
-  <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-    <div class="topbar-month" id="monthLabel" onclick="openMonthPicker()">Loading...</div>
-    <div id="todayLabel" style="font-size:10px;color:var(--text3);"></div>
+<div class="app">
+
+  <!-- ===== TOPBAR ===== -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">🍲</div>
+      <div>
+        <div class="topbar-name">Gubukan</div>
+        <div class="topbar-sub" id="todayLabel">KRASTI · CATERING</div>
+      </div>
+    </div>
+    <button class="topbar-sync" id="syncBtn" onclick="syncData()" title="Sync data">🔄</button>
+  </header>
+
+  <div class="app-body">
+
+    <!-- ===== SIDEBAR (desktop) ===== -->
+    <nav class="sidebar">
+      <div class="nav-section">
+        <div class="nav-section-label">Overview</div>
+        <button class="nav-item active" onclick="gotoPage('dash')" data-page="dash">
+          <span class="nav-icon">📊</span> Dashboard
+        </button>
+        <button class="nav-item" onclick="gotoPage('laporan')" data-page="laporan">
+          <span class="nav-icon">📋</span> Laporan
+        </button>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-section-label">Transaksi</div>
+        <button class="nav-item" onclick="gotoPage('events')" data-page="events">
+          <span class="nav-icon">🗓️</span> Event
+        </button>
+        <button class="nav-item" onclick="gotoPage('kas')" data-page="kas">
+          <span class="nav-icon">💰</span> Kas & Jurnal
+        </button>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-section-label">Sistem</div>
+        <button class="nav-item" onclick="gotoPage('settings')" data-page="settings">
+          <span class="nav-icon">⚙️</span> Settings
+        </button>
+      </div>
+      <div style="flex:1"></div>
+      <div style="padding:12px 16px;font-size:10px;color:var(--ink4);font-family:var(--font-mono);">
+        Gubukan App v2.0<br>Powered by Supabase
+      </div>
+    </nav>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main">
+
+      <!-- ==================== DASHBOARD ==================== -->
+      <div class="page active" id="page-dash">
+        <div class="page-header">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+              <div class="page-title" id="dashTitle">Dashboard</div>
+              <div class="page-subtitle" id="dashPeriod">—</div>
+            </div>
+            <div class="topbar-period" onclick="openMonthPicker()" style="flex-shrink:0;margin-top:4px;">
+              <div>
+                <div class="topbar-period-label" id="monthLabel">Loading...</div>
+              </div>
+              <span style="color:var(--ink3);font-size:10px;margin-left:4px;">▾</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card green">
+            <div class="stat-label">Omzet</div>
+            <div class="stat-value" id="dOmzet">Rp 0</div>
+            <div class="stat-meta" id="dEventCount">0 event</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="stat-label">Laba Bersih</div>
+            <div class="stat-value gold" id="dLaba">Rp 0</div>
+            <div class="stat-meta" id="dMargin">margin 0%</div>
+            <div class="stat-progress"><div class="stat-progress-fill" id="dMarginBar" style="width:0%"></div></div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">HPP</div>
+            <div class="stat-value" style="color:var(--blue)" id="dHPP">Rp 0</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-label">Operasional</div>
+            <div class="stat-value" style="color:var(--orange)" id="dOps">Rp 0</div>
+          </div>
+        </div>
+
+        <div class="action-grid">
+          <div class="action-card red" onclick="openSheet('kasInputSheet')">
+            <div class="action-icon">📤</div>
+            <div class="action-title">Input Biaya</div>
+            <div class="action-desc">Stok bahan · Ops · Transport</div>
+          </div>
+          <div class="action-card green" onclick="openSheet('inputTerimaSheet')">
+            <div class="action-icon">📥</div>
+            <div class="action-title">Input Terima</div>
+            <div class="action-desc">Booking · DP · Pelunasan</div>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <div class="chart-title">📈 Trend 6 Bulan Terakhir</div>
+          <div class="bar-chart" id="barChart"></div>
+        </div>
+
+        <div class="section-hd">
+          <div class="section-title">📅 Event Mendatang</div>
+          <button class="btn btn-sm btn-ghost" onclick="gotoPage('events')">Lihat Semua</button>
+        </div>
+        <div class="event-list" id="recentEvents">
+          <div class="loading"><div class="spinner"></div>Memuat data...</div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- ==================== EVENTS ==================== -->
+      <div class="page" id="page-events">
+        <div class="page-header">
+          <div class="page-title">Event</div>
+          <div class="page-subtitle" id="eventsCount">—</div>
+        </div>
+        <div class="filter-bar" id="eventFilterBar">
+          <div class="chip active" data-evfilter="all" onclick="filterEvents('all')">Semua</div>
+          <div class="chip" data-evfilter="booking" onclick="filterEvents('booking')">📅 Booking</div>
+          <div class="chip" data-evfilter="dp" onclick="filterEvents('dp')">💰 DP</div>
+          <div class="chip" data-evfilter="lunas" onclick="filterEvents('lunas')">✅ Lunas</div>
+          <div class="chip" data-evfilter="follow" onclick="filterEvents('follow')">📞 Follow Up</div>
+          <div class="chip" data-evfilter="pending" onclick="filterEvents('pending')">⏳ Pending</div>
+        </div>
+        <div class="event-list" id="eventList">
+          <div class="loading"><div class="spinner"></div>Memuat...</div>
+        </div>
+        <div style="height:80px"></div>
+      </div>
+
+      <!-- ==================== KAS ==================== -->
+      <div class="page" id="page-kas">
+        <div class="page-header">
+          <div class="page-title" id="kasTitle">Kas</div>
+          <div class="page-subtitle" id="kasPeriod">Jurnal Keuangan Bulanan</div>
+        </div>
+
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="stat-card">
+            <div class="stat-label">Saldo Awal</div>
+            <div class="stat-value" style="font-size:15px;" id="kasSaldoAwal">Rp 0</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="stat-label">Saldo Akhir</div>
+            <div class="stat-value gold" id="kasSaldo" style="font-size:15px;">Rp 0</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Terima</div>
+            <div class="stat-value green" style="font-size:15px;" id="kasIn">Rp 0</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Keluar</div>
+            <div class="stat-value red" style="font-size:15px;" id="kasOut">Rp 0</div>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="chip active" data-kasfilter="all" onclick="filterKas('all')">Semua</div>
+          <div class="chip" data-kasfilter="terima" onclick="filterKas('terima')">📥 Terima</div>
+          <div class="chip" data-kasfilter="biaya" onclick="filterKas('biaya')">📤 Biaya</div>
+          <div class="chip" data-kasfilter="stok" onclick="filterKas('stok')">📦 Stok</div>
+          <div class="chip" data-kasfilter="tokba" onclick="filterKas('tokba')">🛒 Tokba</div>
+        </div>
+
+        <div style="padding:0 16px 80px;" id="kasJurnalList">
+          <div class="loading"><div class="spinner"></div>Memuat...</div>
+        </div>
+      </div>
+
+      <!-- ==================== LAPORAN ==================== -->
+      <div class="page" id="page-laporan">
+        <div class="page-header">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+              <div class="page-title" id="laporanTitle">Laporan</div>
+              <div class="page-subtitle" id="laporanPeriod">—</div>
+            </div>
+            <div class="topbar-period" onclick="openMonthPicker()" style="flex-shrink:0;margin-top:4px;">
+              <div class="topbar-period-label" id="monthLabelLap">—</div>
+              <span style="color:var(--ink3);font-size:10px;margin-left:4px;">▾</span>
+            </div>
+          </div>
+        </div>
+        <div id="laporanContent">
+          <div class="loading"><div class="spinner"></div>Memuat laporan...</div>
+        </div>
+      </div>
+
+      <!-- ==================== SETTINGS ==================== -->
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <div class="page-title">Settings</div>
+          <div class="page-subtitle">Konfigurasi & Preferensi</div>
+        </div>
+
+        <!-- DB Info -->
+        <div class="settings-item" style="cursor:default;margin-bottom:8px;">
+          <div class="settings-icon">🗄️</div>
+          <div class="settings-info">
+            <div class="settings-title">Supabase · Warung UBNB</div>
+            <div class="settings-desc">skltbmcrqutevmtcxqxj.supabase.co</div>
+          </div>
+          <button class="btn btn-sm btn-ghost" onclick="testSupabase()" style="flex-shrink:0;">Test</button>
+        </div>
+        <div id="apiTestResult" style="padding:0 16px 8px;font-size:12px;"></div>
+
+        <div class="settings-item" onclick="syncData()">
+          <div class="settings-icon">🔄</div>
+          <div class="settings-info">
+            <div class="settings-title">Sync Data</div>
+            <div class="settings-desc">Tarik data terbaru dari Supabase</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </div>
+        <div class="settings-item" onclick="openSheet('vendorSheet')">
+          <div class="settings-icon">👥</div>
+          <div class="settings-info">
+            <div class="settings-title">Master Vendor</div>
+            <div class="settings-desc">Kelola daftar vendor</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </div>
+        <div class="settings-item" onclick="exportMonth()">
+          <div class="settings-icon">📤</div>
+          <div class="settings-info">
+            <div class="settings-title">Export Laporan</div>
+            <div class="settings-desc">Print laporan bulan ini</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </div>
+
+        <!-- Theme picker -->
+        <div style="padding:16px 16px 8px;">
+          <div class="form-section-title" style="padding-top:0;">🎨 Tema Warna</div>
+          <div class="theme-grid" id="themeGrid"></div>
+        </div>
+
+        <div style="height:20px"></div>
+      </div>
+
+    </main>
   </div>
-  <div class="topbar-sync" id="syncBtn" onclick="syncData()">🔄</div>
+
+  <!-- ===== BOTTOM NAV (mobile) ===== -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item active" onclick="gotoPage('dash')" data-page="dash">
+      <span class="nav-icon">📊</span>Dashboard
+    </button>
+    <button class="bottom-nav-item" onclick="gotoPage('events')" data-page="events">
+      <span class="nav-icon">🗓️</span>Event
+    </button>
+    <button class="bottom-nav-item" onclick="gotoPage('kas')" data-page="kas">
+      <span class="nav-icon">💰</span>Kas
+    </button>
+    <button class="bottom-nav-item" onclick="gotoPage('laporan')" data-page="laporan">
+      <span class="nav-icon">📋</span>Laporan
+    </button>
+    <button class="bottom-nav-item" onclick="gotoPage('settings')" data-page="settings">
+      <span class="nav-icon">⚙️</span>Setting
+    </button>
+  </nav>
 </div>
 
-<!-- MAIN -->
-<div class="main">
+<!-- ===== FAB ===== -->
+<button class="fab" id="fabBtn" onclick="openAddSheet()" title="Tambah">＋</button>
 
-  <!-- ==================== DASHBOARD ==================== -->
-  <div class="page active" id="page-dash">
-    <div class="dash-header">
-      <div class="dash-greeting">Selamat datang, Mas Tiy 👋</div>
-      <div class="dash-title" id="dashTitle">Dashboard</div>
-      <div class="dash-period" id="dashPeriod">—</div>
-    </div>
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toastEl"></div>
 
-    <!-- Stats Row -->
-    <div class="summary-grid">
-      <div class="summary-card green">
-        <div class="sc-label">Omzet</div>
-        <div class="sc-value green" id="dOmzet">Rp 0</div>
-        <div class="sc-sub" id="dEventCount">0 event</div>
-      </div>
-      <div class="summary-card gold">
-        <div class="sc-label">Laba Bersih</div>
-        <div class="sc-value gold" id="dLaba">Rp 0</div>
-        <div class="sc-sub" id="dMargin">margin 0%</div>
-        <div class="progress-bar"><div class="progress-fill" id="dMarginBar" style="width:0%"></div></div>
-      </div>
-    </div>
-
-    <!-- Mini stats -->
-    <div class="stat-row">
-      <div class="stat-mini">
-        <div class="stat-mini-label">HPP</div>
-        <div class="stat-mini-val" style="color:var(--blue)" id="dHPP">Rp 0</div>
-      </div>
-      <div class="stat-mini">
-        <div class="stat-mini-label">Ops</div>
-        <div class="stat-mini-val" style="color:var(--orange)" id="dOps">Rp 0</div>
-      </div>
-      <div class="stat-mini">
-        <div class="stat-mini-label">Terima</div>
-        <div class="stat-mini-val" style="color:var(--green)" id="dTerima">Rp 0</div>
-      </div>
-    </div>
-
-    <!-- Quick Action Buttons -->
-    <div class="quick-btns">
-      <div class="quick-btn keluar" onclick="openSheet('inputBiayaSheet')">
-        <div class="quick-btn-icon">📤</div>
-        <div class="quick-btn-label">Input Biaya</div>
-        <div class="quick-btn-desc">Stok bahan · Ops · Transport</div>
-      </div>
-      <div class="quick-btn masuk" onclick="openSheet('inputTerimaSheet')">
-        <div class="quick-btn-icon">📥</div>
-        <div class="quick-btn-label">Input Terima</div>
-        <div class="quick-btn-desc">Booking · DP · Pelunasan</div>
-      </div>
-    </div>
-
-    <div id="chartSection" class="chart-wrap" style="margin-bottom:14px;">
-      <div class="chart-title">📊 Trend 6 Bulan Terakhir</div>
-      <div class="bar-chart" id="barChart"></div>
-    </div>
-
-    <div class="section-header">
-      <div class="section-title">📅 Event Mendatang</div>
-      <button class="section-action" onclick="gotoPage('events')">Lihat Semua</button>
-    </div>
-    <div class="event-list" id="recentEvents">
-      <div class="loading"><div class="spinner"></div>Memuat data...</div>
-    </div>
-  </div>
-
-  <!-- ==================== EVENTS ==================== -->
-  <div class="page" id="page-events">
-    <div class="filter-row" id="eventFilters">
-      <div class="filter-chip active" data-filter="all">Semua</div>
-      <div class="filter-chip" data-filter="lunas">✅ Lunas</div>
-      <div class="filter-chip" data-filter="dp">💰 DP</div>
-      <div class="filter-chip" data-filter="follow">📞 Follow Up</div>
-    </div>
-    <div class="event-list" id="eventsList">
-      <div class="loading"><div class="spinner"></div>Memuat...</div>
-    </div>
-  </div>
-
-  <!-- ==================== KAS ==================== -->
-  <div class="page" id="page-kas">
-    <div class="dash-header">
-      <div class="dash-greeting">Jurnal Keuangan</div>
-      <div class="dash-title" id="kasTitle">Kas</div>
-      <div class="dash-period" id="kasPeriod">—</div>
-    </div>
-
-    <!-- Summary strip -->
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px 14px 0;">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Saldo Awal</div>
-        <div style="font-size:12px;font-weight:600;color:var(--text2)" id="kasSaldoAwal">Rp 0</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Saldo Akhir</div>
-        <div style="font-size:12px;font-weight:600;color:var(--gold)" id="kasSaldo">Rp 0</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Terima</div>
-        <div style="font-size:12px;font-weight:600;color:var(--green)" id="kasIn">Rp 0</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Keluar</div>
-        <div style="font-size:12px;font-weight:600;color:var(--red)" id="kasOut">Rp 0</div>
-      </div>
-    </div>
-
-    <!-- Filter chips -->
-    <div style="display:flex;gap:6px;padding:10px 14px;overflow-x:auto;scrollbar-width:none;">
-      <div class="filter-chip active" data-kasfilter="all" onclick="filterKas('all')">Semua</div>
-      <div class="filter-chip" data-kasfilter="terima" onclick="filterKas('terima')">📥 Terima</div>
-      <div class="filter-chip" data-kasfilter="biaya" onclick="filterKas('biaya')">📤 Biaya</div>
-      <div class="filter-chip" data-kasfilter="stok" onclick="filterKas('stok')">📦 Stok</div>
-      <div class="filter-chip" data-kasfilter="tokba" onclick="filterKas('tokba')">🛒 Tokba</div>
-    </div>
-
-    <!-- Journal table -->
-    <div id="kasJurnalList" style="padding:0 14px 80px;">
-      <div class="loading"><div class="spinner"></div>Memuat...</div>
-    </div>
-  </div>
-  <!-- ==================== RT ==================== -->
-  <div class="page" id="page-rt">
-    <div class="rt-summary">
-      <div class="rt-card">
-        <div class="rt-card-label">Masuk</div>
-        <div class="rt-card-val" style="color:var(--green)" id="rtIn">0</div>
-      </div>
-      <div class="rt-card">
-        <div class="rt-card-label">Keluar</div>
-        <div class="rt-card-val" style="color:var(--red)" id="rtOut">0</div>
-      </div>
-      <div class="rt-card">
-        <div class="rt-card-label">Saldo</div>
-        <div class="rt-card-val" style="color:var(--gold)" id="rtSaldo">0</div>
-      </div>
-    </div>
-
-    <div class="summary-grid" style="padding-top:0;">
-      <div class="summary-card">
-        <div class="sc-label">Rutin</div>
-        <div class="sc-value" id="rtRutin">Rp 0</div>
-      </div>
-      <div class="summary-card">
-        <div class="sc-label">Jajan</div>
-        <div class="sc-value" id="rtJajan">Rp 0</div>
-      </div>
-      <div class="summary-card-wide summary-card">
-        <div class="sc-label">Extraordinary</div>
-        <div class="sc-value" id="rtExtra">Rp 0</div>
-      </div>
-    </div>
-
-    <div class="section-header">
-      <div class="section-title">Catatan RT</div>
-      <button class="section-action" onclick="openSheet('rtSheet')">+ Tambah</button>
-    </div>
-    <div class="trans-list" id="rtList">
-      <div class="loading"><div class="spinner"></div>Memuat...</div>
-    </div>
-  </div>
-
-  <!-- ==================== SETTINGS ==================== -->
-  <div class="page" id="page-settings">
-    <div class="settings-list">
-      <div style="padding:14px 0 8px;">
-        <div class="form-label">URL Google Apps Script</div>
-        <div class="url-input-wrap">
-          <input type="url" class="form-control" id="apiUrlInput"
-            placeholder="https://script.google.com/macros/s/..." style="margin-bottom:8px;">
-          <button class="btn-submit" onclick="saveApiUrl()" style="margin:0;">Simpan & Test Koneksi</button>
-          <div class="url-status" id="urlStatus"></div>
-        </div>
-      </div>
-      <div class="settings-item" onclick="syncData()">
-        <div class="settings-icon">🔄</div>
-        <div class="settings-info">
-          <div class="settings-title">Sync Data</div>
-          <div class="settings-desc">Tarik data terbaru dari Google Sheets</div>
-        </div>
-        <div class="settings-arrow">›</div>
-      </div>
-      <div class="settings-item" onclick="openSheet('vendorSheet')">
-        <div class="settings-icon">👥</div>
-        <div class="settings-info">
-          <div class="settings-title">Master Vendor</div>
-          <div class="settings-desc">Pak Arifin, Mba Ika, Bu Dewi, dll</div>
-        </div>
-        <div class="settings-arrow">›</div>
-      </div>
-      <div class="settings-item" onclick="exportMonth()">
-        <div class="settings-icon">📤</div>
-        <div class="settings-info">
-          <div class="settings-title">Export Bulan Ini</div>
-          <div class="settings-desc">Ringkasan PDF / print</div>
-        </div>
-        <div class="settings-arrow">›</div>
-      </div>
-
-      <div style="padding:4px 0 4px;">
-        <div style="padding:10px 0 8px;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">🎨 Tema Warna</div>
-        <div class="theme-grid" id="themeGrid"></div>
-      </div>
-    </div>
-
-    <div style="padding:14px;color:var(--text3);font-size:11px;text-align:center;">
-      Gubukan App v1.0 · Data tersimpan di Google Sheets
-    </div>
-  </div>
-
-  <!-- ==================== LAPORAN ==================== -->
-  <div class="page" id="page-laporan">
-    <div class="dash-header">
-      <div class="dash-greeting">Laporan Keuangan Bulanan</div>
-      <div class="dash-title" id="laporanTitle">—</div>
-      <div class="dash-period" id="laporanPeriod">—</div>
-    </div>
-    <div id="laporanContent">
-      <div class="loading"><div class="spinner"></div>Memuat laporan...</div>
-    </div>
-  </div>
-
-</div><!-- end main -->
-
-<!-- ==================== BOTTOM NAV ==================== -->
-<nav class="nav">
-  <button class="nav-item active" onclick="gotoPage('dash')" data-page="dash">
-    <span class="nav-icon">📊</span>Dashboard
-  </button>
-  <button class="nav-item" onclick="gotoPage('events')" data-page="events">
-    <span class="nav-icon">🗓️</span>Event
-  </button>
-  <button class="nav-item" onclick="gotoPage('kas')" data-page="kas">
-    <span class="nav-icon">💰</span>Kas
-  </button>
-  <button class="nav-item" onclick="gotoPage('laporan')" data-page="laporan">
-    <span class="nav-icon">📋</span>Laporan
-  </button>
-  <button class="nav-item" onclick="gotoPage('settings')" data-page="settings">
-    <span class="nav-icon">⚙️</span>Setting
-  </button>
-</nav>
-
-<!-- FAB -->
-<button class="fab" id="fabBtn" onclick="openAddSheet()">+</button>
-
-<!-- ==================== OVERLAYS ==================== -->
-
-<!-- Add Event Sheet -->
-<div class="overlay" id="eventSheet" onclick="overlayClose(event,'eventSheet')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header">
-      <div class="sheet-title" id="eventSheetTitle">Tambah Event</div>
-      <div class="sheet-close" onclick="closeSheet('eventSheet')">✕</div>
-    </div>
-    <div class="sheet-body">
-      <input type="hidden" id="editEventId">
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Tanggal</label>
-          <input type="date" class="form-control" id="fDate">
-        </div>
-        <div class="form-group">
-          <label class="form-label">No. Event</label>
-          <input type="text" class="form-control" id="fEventNo" placeholder="101">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Customer / EO</label>
-        <input type="text" class="form-control" id="fCustomer" placeholder="Nama customer / EO">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Lokasi</label>
-        <input type="text" class="form-control" id="fLocation" placeholder="Nama gedung / lokasi">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Status</label>
-        <select class="form-control" id="fStatus">
-          <option value="lunas">✅ Lunas</option>
-          <option value="dp">💰 DP</option>
-          <option value="follow">📞 Follow Up</option>
-          <option value="batal">❌ Batal</option>
-        </select>
-      </div>
-
-      <!-- MENU ITEMS -->
-      <div class="form-section-title">🍽️ Menu & Qty</div>
-      <div id="itemRows"></div>
-      <button class="add-item-btn" onclick="addItemRow()">＋ Tambah Menu</button>
-
-      <!-- BIAYA -->
-      <div class="form-section-title">💸 Biaya</div>
-      <div id="expenseRows"></div>
-      <button class="add-item-btn" onclick="addExpenseRow()">＋ Tambah Biaya</button>
-
-      <!-- TOTALS -->
-      <div class="totals-card" id="eventTotals">
-        <div class="total-row"><span>Omzet</span><span id="tOmzet">Rp 0</span></div>
-        <div class="total-row"><span>HPP</span><span id="tHPP">Rp 0</span></div>
-        <div class="total-row"><span>Operasional</span><span id="tOps">Rp 0</span></div>
-        <div class="total-row"><span>Overhead</span><span id="tOvh">Rp 0</span></div>
-        <div class="total-row highlight"><span>Laba Kotor</span><span id="tLabaKotor">Rp 0</span></div>
-        <div class="total-row profit" id="tLabaRow"><span>Laba Bersih</span><span id="tLaba">Rp 0</span></div>
-        <div class="total-row"><span>Margin</span><span id="tMargin">0%</span></div>
-        <div class="total-row"><span>Isrun (10%)</span><span id="tIsrun">Rp 0</span></div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Catatan</label>
-        <textarea class="form-control" id="fNote" placeholder="Catatan tambahan..."></textarea>
-      </div>
-
-      <button class="btn-submit" onclick="saveEvent()">💾 Simpan Event</button>
-      <button class="btn-outline" onclick="closeSheet('eventSheet')">Batal</button>
-    </div>
-  </div>
-</div>
-
-<!-- Tokba Sheet -->
-<div class="overlay" id="tokbaSheet" onclick="overlayClose(event,'tokbaSheet')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header">
-      <div class="sheet-title">Transaksi Toko Online</div>
-      <div class="sheet-close" onclick="closeSheet('tokbaSheet')">✕</div>
-    </div>
-    <div class="sheet-body">
-      <div class="form-group">
-        <label class="form-label">Tanggal</label>
-        <input type="date" class="form-control" id="tDate">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Keterangan</label>
-        <input type="text" class="form-control" id="tKet" placeholder="tarik shopee / beli mozza...">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Masuk (Rp)</label>
-          <input type="number" class="form-control" id="tMasuk" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Keluar (Rp)</label>
-          <input type="number" class="form-control" id="tKeluar" placeholder="0">
-        </div>
-      </div>
-      <button class="btn-submit" onclick="saveTokba()">💾 Simpan</button>
-    </div>
-  </div>
-</div>
-
-<!-- RT Sheet -->
-<div class="overlay" id="rtSheet" onclick="overlayClose(event,'rtSheet')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header">
-      <div class="sheet-title">Pengeluaran RT</div>
-      <div class="sheet-close" onclick="closeSheet('rtSheet')">✕</div>
-    </div>
-    <div class="sheet-body">
-      <div class="form-group">
-        <label class="form-label">Tanggal</label>
-        <input type="date" class="form-control" id="rDate">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Keterangan</label>
-        <input type="text" class="form-control" id="rItem" placeholder="Nama item / keperluan">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Kategori</label>
-        <select class="form-control" id="rKat">
-          <option value="masuk">💚 Uang Masuk</option>
-          <option value="rutin">🔵 Rutin (belanja, cicilan, sekolah)</option>
-          <option value="jajan">🟡 Jajan</option>
-          <option value="extraordinary">🔴 Extraordinary</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Jumlah (Rp)</label>
-        <input type="number" class="form-control" id="rJumlah" placeholder="0">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Catatan</label>
-        <input type="text" class="form-control" id="rNote" placeholder="Opsional">
-      </div>
-      <button class="btn-submit" onclick="saveRT()">💾 Simpan</button>
-    </div>
-  </div>
-</div>
-
-<!-- Event Detail Sheet -->
-<div class="overlay" id="detailSheet" onclick="overlayClose(event,'detailSheet')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header">
-      <div class="sheet-title">Detail Event</div>
-      <div class="sheet-close" onclick="closeSheet('detailSheet')">✕</div>
-    </div>
-    <div class="sheet-body" id="detailBody">
-    </div>
-  </div>
-</div>
-
-<!-- Period Picker Sheet -->
+<!-- ===== PERIOD PICKER SHEET ===== -->
 <div class="overlay" id="monthSheet" onclick="overlayClose(event,'monthSheet')">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -1406,25 +1379,20 @@ textarea.form-control { resize: vertical; min-height: 70px; }
       <div class="sheet-title">Filter Periode</div>
       <div class="sheet-close" onclick="closeSheet('monthSheet')">✕</div>
     </div>
-    <div style="padding:14px;">
-      <!-- Quick periods -->
-      <div class="form-section-title">Periode Cepat</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-        <div class="month-btn" id="pp_this_month"  onclick="setPeriod('this_month')">📅 Bulan Ini</div>
-        <div class="month-btn" id="pp_last_month"  onclick="setPeriod('last_month')">◀ Bulan Lalu</div>
-        <div class="month-btn" id="pp_last_3months" onclick="setPeriod('last_3months')">📊 3 Bulan</div>
-        <div class="month-btn" id="pp_last_6months" onclick="setPeriod('last_6months')">📊 6 Bulan</div>
-        <div class="month-btn" id="pp_this_year"   onclick="setPeriod('this_year')">📆 Tahun Ini</div>
-        <div class="month-btn" id="pp_last_year"   onclick="setPeriod('last_year')">📆 Tahun Lalu</div>
-        <div class="month-btn" style="grid-column:1/-1;" id="pp_all_time" onclick="setPeriod('all_time')">🗂️ All Time</div>
+    <div class="sheet-body">
+      <div class="form-section-title" style="padding-top:0;">Periode Cepat</div>
+      <div class="period-grid">
+        <div class="period-btn" id="pp_this_month"   onclick="setPeriod('this_month')">📅 Bulan Ini</div>
+        <div class="period-btn" id="pp_last_month"   onclick="setPeriod('last_month')">◀ Bulan Lalu</div>
+        <div class="period-btn" id="pp_last_3months" onclick="setPeriod('last_3months')">📊 3 Bulan</div>
+        <div class="period-btn" id="pp_last_6months" onclick="setPeriod('last_6months')">📊 6 Bulan</div>
+        <div class="period-btn" id="pp_this_year"    onclick="setPeriod('this_year')">📆 Tahun Ini</div>
+        <div class="period-btn" id="pp_last_year"    onclick="setPeriod('last_year')">📆 Tahun Lalu</div>
+        <div class="period-btn full" id="pp_all_time" onclick="setPeriod('all_time')">🗂️ All Time</div>
       </div>
-
-      <!-- Custom month -->
       <div class="form-section-title">Pilih Bulan Tertentu</div>
-      <div class="month-picker-scroll" id="monthGrid" style="max-height:220px;padding:0;margin-bottom:16px;"></div>
-
-      <!-- Custom range -->
-      <div class="form-section-title">Custom Range</div>
+      <div class="month-picker-scroll" id="monthGrid"></div>
+      <div class="form-section-title" style="margin-top:8px;">Custom Range</div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Dari</label>
@@ -1435,306 +1403,69 @@ textarea.form-control { resize: vertical; min-height: 70px; }
           <input type="date" class="form-control" id="customTo">
         </div>
       </div>
-      <button class="btn-submit" style="margin-top:4px;" onclick="applyCustomRange()">Terapkan Range</button>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-primary" onclick="applyCustomRange()">Terapkan Range</button>
     </div>
   </div>
 </div>
 
-
-<!-- ==================== INPUT BIAYA SHEET ==================== -->
-<div class="overlay" id="inputBiayaSheet" onclick="overlayClose(event,'inputBiayaSheet')">
+<!-- ===== EVENT DETAIL SHEET ===== -->
+<div class="overlay" id="detailSheet" onclick="overlayClose(event,'detailSheet')">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
-      <div class="sheet-title">📤 Input Biaya</div>
-      <div class="sheet-close" onclick="closeSheet('inputBiayaSheet')">✕</div>
+      <div class="sheet-title">Detail Event</div>
+      <div class="sheet-close" onclick="closeSheet('detailSheet')">✕</div>
     </div>
-    <div class="sheet-body">
-      <!-- Type Selector -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-        <div class="quick-btn keluar" id="biayaTypeStok" onclick="switchBiayaType('stok')" style="padding:10px;">
-          <div class="quick-btn-icon" style="font-size:18px;">📦</div>
-          <div class="quick-btn-label" style="font-size:11px;">Beli Stok</div>
-          <div class="quick-btn-desc">Bahan baku</div>
-        </div>
-        <div class="quick-btn" id="biayaTypeOps" onclick="switchBiayaType('ops')" style="padding:10px;">
-          <div class="quick-btn-icon" style="font-size:18px;">🚗</div>
-          <div class="quick-btn-label" style="font-size:11px;">Biaya Ops</div>
-          <div class="quick-btn-desc">Transport, fee, tol</div>
-        </div>
-      </div>
-
-      <!-- STOK FORM -->
-      <div id="formStok">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Tanggal</label>
-            <input type="date" class="form-control" id="stokTgl">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Kategori</label>
-            <select class="form-control" id="stokKat">
-              <option value="sayuran">🥕 Sayuran</option>
-              <option value="daging">🥩 Daging/Protein</option>
-              <option value="dairy">🧀 Dairy/Susu</option>
-              <option value="bumbu">🌶️ Bumbu</option>
-              <option value="tepung">🌾 Tepung/Baking</option>
-              <option value="packaging">📦 Packaging</option>
-              <option value="frozen">❄️ Frozen</option>
-              <option value="lainnya">📋 Lainnya</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nama Bahan</label>
-          <input type="text" class="form-control" id="stokNama" placeholder="Wortel, Mozarella, Pastry Edo..." list="stokNamaList">
-          <datalist id="stokNamaList"></datalist>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Qty Beli</label>
-            <input type="number" class="form-control" id="stokQty" placeholder="5" oninput="calcStokHarga()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Satuan Beli</label>
-            <select class="form-control" id="stokSatuan" onchange="updateSatuanKecil()">
-              <option value="kg">kg</option>
-              <option value="gram">gram</option>
-              <option value="liter">liter</option>
-              <option value="ml">ml</option>
-              <option value="pack">pack</option>
-              <option value="pcs">pcs</option>
-              <option value="lusin">lusin</option>
-              <option value="box">box</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Satuan Pakai</label>
-            <select class="form-control" id="stokSatuanKecil">
-              <option value="gram">gram</option>
-              <option value="ml">ml</option>
-              <option value="pcs">pcs</option>
-              <option value="kg">kg</option>
-              <option value="liter">liter</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Konversi (1 satuan beli = ? satuan pakai)</label>
-            <input type="number" class="form-control" id="stokKonversi" placeholder="1000" oninput="calcStokHarga()">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Harga Beli Total (Rp)</label>
-            <input type="number" class="form-control" id="stokHargaTotal" placeholder="50000" oninput="calcStokHarga()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Harga / Satuan Pakai</label>
-            <input type="text" class="form-control" id="stokHargaPerUnit" placeholder="otomatis" readonly style="opacity:0.7">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Toko / Supplier</label>
-          <input type="text" class="form-control" id="stokToko" placeholder="Hoktung Mart, Mba Evi...">
-        </div>
-        <div class="totals-card" style="margin-bottom:12px;" id="stokAvgCard">
-          <div class="total-row"><span>Harga beli ini</span><span id="stokAvgNew">Rp 0 / unit</span></div>
-          <div class="total-row"><span>Harga avg sebelumnya</span><span id="stokAvgOld">-</span></div>
-          <div class="total-row highlight"><span>Harga avg baru</span><span id="stokAvgResult" style="color:var(--gold)">-</span></div>
-        </div>
-        <button class="btn-submit" onclick="saveStokMasuk()">💾 Simpan Stok</button>
-      </div>
-
-      <!-- OPS FORM -->
-      <div id="formOps" style="display:none;">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Tanggal</label>
-            <input type="date" class="form-control" id="opsTgl">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Kategori</label>
-            <select class="form-control" id="opsKat">
-              <option value="transport">🚗 Transport</option>
-              <option value="tol">🛣️ Tol & Parkir</option>
-              <option value="fee_waitress">👩 Fee Waitress</option>
-              <option value="fee_vendor">🤝 Fee Vendor</option>
-              <option value="bensin">⛽ Bensin</option>
-              <option value="listrik">💡 Listrik</option>
-              <option value="iklan">📢 Iklan</option>
-              <option value="lainnya">📋 Lainnya</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Keterangan</label>
-          <input type="text" class="form-control" id="opsKet" placeholder="Transport ke GOR Tj.Priok, Fee Bu Dewi...">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Referensi Event (opsional)</label>
-          <select class="form-control" id="opsEventRef">
-            <option value="">— Biaya Umum —</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Jumlah (Rp)</label>
-            <input type="number" class="form-control" id="opsJumlah" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Metode Bayar</label>
-            <select class="form-control" id="opsMetode">
-              <option value="cash">💵 Cash</option>
-              <option value="transfer">🏦 Transfer</option>
-              <option value="qris">📱 QRIS</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Toko / Nama Penerima</label>
-          <input type="text" class="form-control" id="opsToko" placeholder="Pak Larjo, SPBU, dll">
-        </div>
-        <button class="btn-submit" onclick="savePengeluaran()">💾 Simpan Biaya</button>
-      </div>
+    <div class="sheet-body" id="detailBody" style="padding:0;">
+      <div class="loading"><div class="spinner"></div></div>
     </div>
   </div>
 </div>
 
-<!-- ==================== INPUT TERIMA SHEET ==================== -->
-<div class="overlay" id="inputTerimaSheet" onclick="overlayClose(event,'inputTerimaSheet')">
+<!-- ===== ADD/EDIT EVENT SHEET ===== -->
+<div class="overlay" id="eventFormSheet" onclick="overlayClose(event,'eventFormSheet')">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
-      <div class="sheet-title">📥 Input Penerimaan</div>
-      <div class="sheet-close" onclick="closeSheet('inputTerimaSheet')">✕</div>
+      <div class="sheet-title" id="eventFormTitle">Tambah Event</div>
+      <div class="sheet-close" onclick="closeSheet('eventFormSheet')">✕</div>
     </div>
-    <div class="sheet-body">
-      <div class="form-group">
-        <label class="form-label">Jenis Penerimaan</label>
-        <select class="form-control" id="terimaJenis" onchange="onTerimaJenisChange()">
-          <option value="booking">📅 Booking Fee</option>
-          <option value="dp">💰 DP Event</option>
-          <option value="pelunasan">✅ Pelunasan Event</option>
-          <option value="umum">💵 Penerimaan Umum</option>
-        </select>
-      </div>
-      <div class="form-group" id="terimaEventGroup">
-        <label class="form-label">Event</label>
-        <select class="form-control" id="terimaEventRef">
-          <option value="">— Pilih Event —</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Tanggal</label>
-          <input type="date" class="form-control" id="terimaTgl">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Jumlah (Rp)</label>
-          <input type="number" class="form-control" id="terimaJumlah" placeholder="0">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Metode</label>
-        <select class="form-control" id="terimaMetode">
-          <option value="transfer">🏦 Transfer Bank</option>
-          <option value="cash">💵 Cash</option>
-          <option value="qris">📱 QRIS</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Catatan</label>
-        <input type="text" class="form-control" id="terimaCatatan" placeholder="Nama pengirim, no. ref...">
-      </div>
-      <!-- Ringkasan event jika dipilih -->
-      <div id="terimaEventSummary" style="display:none;" class="totals-card">
-        <div class="total-row"><span>Total Tagihan</span><span id="tsTotal">-</span></div>
-        <div class="total-row"><span>Sudah Dibayar</span><span id="tsDibayar" style="color:var(--green)">-</span></div>
-        <div class="total-row highlight"><span>Sisa</span><span id="tsSisa" style="color:var(--red)">-</span></div>
-      </div>
-      <button class="btn-submit" onclick="savePenerimaan(true)">💾 Simpan & Cetak Bukti</button>
-      <button class="btn-outline" onclick="savePenerimaan(false)">💾 Simpan Saja</button>
-    </div>
+    <div class="sheet-body" id="eventFormBody"></div>
   </div>
 </div>
 
-<!-- ==================== STOK KELUAR SHEET ==================== -->
-<div class="overlay" id="stokKeluarSheet" onclick="overlayClose(event,'stokKeluarSheet')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header">
-      <div class="sheet-title">📦 Tarik Stok ke Event</div>
-      <div class="sheet-close" onclick="closeSheet('stokKeluarSheet')">✕</div>
-    </div>
-    <div class="sheet-body">
-      <input type="hidden" id="skEventId">
-      <div class="form-group">
-        <label class="form-label">Event</label>
-        <select class="form-control" id="skEvent"></select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Bahan Baku</label>
-        <select class="form-control" id="skBahan" onchange="onSkBahanChange()">
-          <option value="">— Pilih Bahan —</option>
-        </select>
-      </div>
-      <div class="totals-card" id="skStokInfo" style="display:none;">
-        <div class="total-row"><span>Stok tersedia</span><span id="skQtySisa">-</span></div>
-        <div class="total-row"><span>Harga avg</span><span id="skHargaAvg">-</span></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Qty Pakai</label>
-          <input type="number" class="form-control" id="skQty" placeholder="0" oninput="calcSkHPP()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Satuan</label>
-          <input type="text" class="form-control" id="skSatuan" readonly style="opacity:0.7">
-        </div>
-      </div>
-      <div class="totals-card">
-        <div class="total-row highlight"><span>HPP bahan ini</span><span id="skHPP" style="color:var(--blue)">Rp 0</span></div>
-      </div>
-      <button class="btn-submit" onclick="saveStokKeluar()">💾 Tarik ke Event</button>
-    </div>
-  </div>
-</div>
-
-
-
-<!-- KAS INPUT MODAL -->
+<!-- ===== KAS INPUT SHEET ===== -->
 <div class="overlay" id="kasInputSheet" onclick="overlayClose(event,'kasInputSheet')">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
-      <div class="sheet-title">+ Tambah Transaksi</div>
+      <div class="sheet-title">Tambah Transaksi</div>
       <div class="sheet-close" onclick="closeSheet('kasInputSheet')">✕</div>
     </div>
     <div class="sheet-body">
-      <!-- Type selector -->
-      <div class="form-section-title">Jenis Transaksi</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-        <div class="quick-btn keluar" id="ki_stok" onclick="setKasInputType('stok')" style="padding:10px;">
-          <div class="quick-btn-icon" style="font-size:18px;">📦</div>
-          <div class="quick-btn-label" style="font-size:11px;">Beli Stok</div>
-          <div class="quick-btn-desc">Bahan baku</div>
+      <div class="form-section-title" style="padding-top:0;">Jenis Transaksi</div>
+      <div class="action-grid" style="padding:0;margin-bottom:16px;">
+        <div class="action-card red" id="ki_stok" onclick="setKasInputType('stok')" style="padding:12px;">
+          <div class="action-icon" style="font-size:18px;">📦</div>
+          <div class="action-title" style="font-size:12px;">Beli Stok</div>
+          <div class="action-desc">Bahan baku</div>
         </div>
-        <div class="quick-btn" id="ki_ops" onclick="setKasInputType('ops')" style="padding:10px;">
-          <div class="quick-btn-icon" style="font-size:18px;">🚗</div>
-          <div class="quick-btn-label" style="font-size:11px;">Biaya Ops</div>
-          <div class="quick-btn-desc">Transport, fee, tol</div>
+        <div class="action-card" id="ki_ops" onclick="setKasInputType('ops')" style="padding:12px;">
+          <div class="action-icon" style="font-size:18px;">🚗</div>
+          <div class="action-title" style="font-size:12px;">Biaya Ops</div>
+          <div class="action-desc">Transport, fee, tol</div>
         </div>
-        <div class="quick-btn" id="ki_terima_event" onclick="setKasInputType('terima_event')" style="padding:10px;">
-          <div class="quick-btn-icon" style="font-size:18px;">🍲</div>
-          <div class="quick-btn-label" style="font-size:11px;">Terima Event</div>
-          <div class="quick-btn-desc">Booking, DP, Lunas</div>
+        <div class="action-card" id="ki_terima_event" onclick="setKasInputType('terima_event')" style="padding:12px;">
+          <div class="action-icon" style="font-size:18px;">🍲</div>
+          <div class="action-title" style="font-size:12px;">Terima Event</div>
+          <div class="action-desc">Booking, DP, Lunas</div>
         </div>
-        <div class="quick-btn" id="ki_terima_tokba" onclick="setKasInputType('terima_tokba')" style="padding:10px;">
-          <div class="quick-btn-icon" style="font-size:18px;">🛒</div>
-          <div class="quick-btn-label" style="font-size:11px;">Terima Tokba</div>
-          <div class="quick-btn-desc">Shopee, Tokped, dll</div>
+        <div class="action-card" id="ki_terima_tokba" onclick="setKasInputType('terima_tokba')" style="padding:12px;">
+          <div class="action-icon" style="font-size:18px;">🛒</div>
+          <div class="action-title" style="font-size:12px;">Terima Tokba</div>
+          <div class="action-desc">Shopee, Tokped</div>
         </div>
       </div>
 
@@ -1750,9 +1481,9 @@ textarea.form-control { resize: vertical; min-height: 70px; }
             <select class="form-control" id="ki_stok_kat">
               <option value="sayuran">🥕 Sayuran</option>
               <option value="daging">🥩 Daging/Protein</option>
-              <option value="dairy">🧀 Dairy/Susu</option>
+              <option value="dairy">🧀 Dairy</option>
               <option value="bumbu">🌶️ Bumbu</option>
-              <option value="tepung">🌾 Tepung/Baking</option>
+              <option value="tepung">🌾 Tepung</option>
               <option value="packaging">📦 Packaging</option>
               <option value="frozen">❄️ Frozen</option>
               <option value="lainnya">📋 Lainnya</option>
@@ -1762,6 +1493,7 @@ textarea.form-control { resize: vertical; min-height: 70px; }
         <div class="form-group">
           <label class="form-label">Nama Bahan</label>
           <input type="text" class="form-control" id="ki_stok_nama" placeholder="Wortel, Mozarella..." list="stokNamaList">
+          <datalist id="stokNamaList"></datalist>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -1771,14 +1503,10 @@ textarea.form-control { resize: vertical; min-height: 70px; }
           <div class="form-group">
             <label class="form-label">Satuan Beli</label>
             <select class="form-control" id="ki_stok_satuan" onchange="updateKiSatuanKecil()">
-              <option value="kg">kg</option>
-              <option value="gram">gram</option>
-              <option value="liter">liter</option>
-              <option value="ml">ml</option>
-              <option value="pack">pack</option>
-              <option value="pcs">pcs</option>
-              <option value="lusin">lusin</option>
-              <option value="box">box</option>
+              <option value="kg">kg</option><option value="gram">gram</option>
+              <option value="liter">liter</option><option value="ml">ml</option>
+              <option value="pack">pack</option><option value="pcs">pcs</option>
+              <option value="lusin">lusin</option><option value="box">box</option>
             </select>
           </div>
         </div>
@@ -1786,11 +1514,8 @@ textarea.form-control { resize: vertical; min-height: 70px; }
           <div class="form-group">
             <label class="form-label">Satuan Pakai</label>
             <select class="form-control" id="ki_stok_satuan_kecil">
-              <option value="gram">gram</option>
-              <option value="ml">ml</option>
-              <option value="pcs">pcs</option>
-              <option value="kg">kg</option>
-              <option value="liter">liter</option>
+              <option value="gram">gram</option><option value="ml">ml</option>
+              <option value="pcs">pcs</option><option value="kg">kg</option><option value="liter">liter</option>
             </select>
           </div>
           <div class="form-group">
@@ -1805,14 +1530,14 @@ textarea.form-control { resize: vertical; min-height: 70px; }
           </div>
           <div class="form-group">
             <label class="form-label">Harga/Sat Pakai</label>
-            <input type="text" class="form-control" id="ki_stok_per_unit" readonly style="opacity:0.7">
+            <input type="text" class="form-control" id="ki_stok_per_unit" readonly style="opacity:0.5;">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Toko / Supplier</label>
           <input type="text" class="form-control" id="ki_stok_toko" placeholder="Hoktung Mart...">
         </div>
-        <button class="btn-submit" onclick="kiSaveStok()">💾 Simpan Stok</button>
+        <button class="btn btn-primary" onclick="kiSaveStok()">💾 Simpan Stok</button>
       </div>
 
       <!-- OPS FORM -->
@@ -1842,9 +1567,7 @@ textarea.form-control { resize: vertical; min-height: 70px; }
         </div>
         <div class="form-group">
           <label class="form-label">Referensi Event</label>
-          <select class="form-control" id="ki_ops_event">
-            <option value="">— Biaya Umum —</option>
-          </select>
+          <select class="form-control" id="ki_ops_event"><option value="">— Biaya Umum —</option></select>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -1864,7 +1587,7 @@ textarea.form-control { resize: vertical; min-height: 70px; }
           <label class="form-label">Toko / Penerima</label>
           <input type="text" class="form-control" id="ki_ops_toko" placeholder="Pak Larjo, SPBU...">
         </div>
-        <button class="btn-submit" onclick="kiSaveOps()">💾 Simpan Biaya</button>
+        <button class="btn btn-primary" onclick="kiSaveOps()">💾 Simpan Biaya</button>
       </div>
 
       <!-- TERIMA EVENT FORM -->
@@ -1878,7 +1601,7 @@ textarea.form-control { resize: vertical; min-height: 70px; }
         <div class="form-group">
           <label class="form-label">Jenis</label>
           <select class="form-control" id="ki_te_jenis" onchange="kiUpdateTerimaSummary()">
-            <option value="booking">📅 Booking Fee (Rp 100.000)</option>
+            <option value="booking">📅 Booking Fee</option>
             <option value="dp">💰 DP 50%</option>
             <option value="pelunasan">✅ Pelunasan</option>
             <option value="custom">💵 Custom</option>
@@ -1894,10 +1617,10 @@ textarea.form-control { resize: vertical; min-height: 70px; }
             <input type="number" class="form-control" id="ki_te_jumlah" placeholder="0">
           </div>
         </div>
-        <div class="totals-card" id="ki_te_summary" style="display:none;">
-          <div class="total-row"><span>Total Tagihan</span><span id="ki_te_total">-</span></div>
-          <div class="total-row"><span>Sudah Dibayar</span><span id="ki_te_dibayar" style="color:var(--green)">-</span></div>
-          <div class="total-row highlight"><span>Sisa</span><span id="ki_te_sisa" style="color:var(--red)">-</span></div>
+        <div class="info-box" id="ki_te_summary" style="display:none;">
+          <div class="info-row"><span class="lbl">Total Tagihan</span><span class="val" id="ki_te_total">-</span></div>
+          <div class="info-row"><span class="lbl">Sudah Dibayar</span><span class="val" style="color:var(--green)" id="ki_te_dibayar">-</span></div>
+          <div class="info-row highlight"><span class="lbl">Sisa</span><span class="val" id="ki_te_sisa">-</span></div>
         </div>
         <div class="form-group">
           <label class="form-label">Metode</label>
@@ -1911,8 +1634,8 @@ textarea.form-control { resize: vertical; min-height: 70px; }
           <label class="form-label">Catatan</label>
           <input type="text" class="form-control" id="ki_te_catatan" placeholder="Nama pengirim...">
         </div>
-        <button class="btn-submit" onclick="kiSaveTerimaEvent(true)">💾 Simpan & Cetak Bukti</button>
-        <button class="btn-outline" onclick="kiSaveTerimaEvent(false)">💾 Simpan Saja</button>
+        <button class="btn btn-primary" style="margin-bottom:8px;" onclick="kiSaveTerimaEvent(true)">💾 Simpan & Cetak Bukti</button>
+        <button class="btn btn-secondary" onclick="kiSaveTerimaEvent(false)">💾 Simpan Saja</button>
       </div>
 
       <!-- TERIMA TOKBA FORM -->
@@ -1946,23 +1669,147 @@ textarea.form-control { resize: vertical; min-height: 70px; }
             <input type="number" class="form-control" id="ki_tt_keluar" placeholder="0">
           </div>
         </div>
-        <button class="btn-submit" onclick="kiSaveTokba(true)">💾 Simpan & Cetak</button>
-        <button class="btn-outline" onclick="kiSaveTokba(false)">💾 Simpan Saja</button>
+        <button class="btn btn-primary" style="margin-bottom:8px;" onclick="kiSaveTokba(true)">💾 Simpan & Cetak</button>
+        <button class="btn btn-secondary" onclick="kiSaveTokba(false)">💾 Simpan Saja</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ===== TERIMA EVENT (dashboard button) ===== -->
+<div class="overlay" id="inputTerimaSheet" onclick="overlayClose(event,'inputTerimaSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">📥 Input Penerimaan</div>
+      <div class="sheet-close" onclick="closeSheet('inputTerimaSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Jenis</label>
+        <select class="form-control" id="terimaJenis" onchange="onTerimaJenisChange()">
+          <option value="booking">📅 Booking Fee</option>
+          <option value="dp">💰 DP Event</option>
+          <option value="pelunasan">✅ Pelunasan</option>
+          <option value="umum">💵 Penerimaan Umum</option>
+        </select>
+      </div>
+      <div class="form-group" id="terimaEventGroup">
+        <label class="form-label">Event</label>
+        <select class="form-control" id="terimaEventRef" onchange="updateTerimaSummary()">
+          <option value="">— Pilih Event —</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="terimaTgl">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-control" id="terimaJumlah" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Metode</label>
+        <select class="form-control" id="terimaMetode">
+          <option value="transfer">🏦 Transfer Bank</option>
+          <option value="cash">💵 Cash</option>
+          <option value="qris">📱 QRIS</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input type="text" class="form-control" id="terimaCatatan" placeholder="Nama pengirim, no. ref...">
+      </div>
+      <div class="info-box" id="terimaEventSummary" style="display:none;">
+        <div class="info-row"><span class="lbl">Total Tagihan</span><span class="val" id="tsTotal">-</span></div>
+        <div class="info-row"><span class="lbl">Sudah Dibayar</span><span class="val" style="color:var(--green)" id="tsDibayar">-</span></div>
+        <div class="info-row highlight"><span class="lbl">Sisa</span><span class="val" id="tsSisa">-</span></div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-primary" onclick="savePenerimaan(true)">💾 Simpan & Cetak Bukti</button>
+      <button class="btn btn-secondary" onclick="savePenerimaan(false)">💾 Simpan Saja</button>
+    </div>
+  </div>
+</div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
+<!-- ===== STOK KELUAR SHEET ===== -->
+<div class="overlay" id="stokKeluarSheet" onclick="overlayClose(event,'stokKeluarSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">📦 Tarik Stok ke Event</div>
+      <div class="sheet-close" onclick="closeSheet('stokKeluarSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Event</label>
+        <select class="form-control" id="skEvent"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bahan Baku</label>
+        <select class="form-control" id="skBahan" onchange="onSkBahanChange()"><option value="">— Pilih Bahan —</option></select>
+      </div>
+      <div class="info-box" id="skStokInfo" style="display:none;">
+        <div class="info-row"><span class="lbl">Stok tersedia</span><span class="val" id="skQtySisa">-</span></div>
+        <div class="info-row"><span class="lbl">Harga avg</span><span class="val" id="skHargaAvg">-</span></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty Pakai</label>
+          <input type="number" class="form-control" id="skQty" placeholder="0" oninput="calcSkHPP()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Satuan</label>
+          <input type="text" class="form-control" id="skSatuan" readonly style="opacity:0.5;">
+        </div>
+      </div>
+      <div class="info-box">
+        <div class="info-row highlight"><span class="lbl">HPP bahan ini</span><span class="val" id="skHPP">Rp 0</span></div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-primary" onclick="saveStokKeluar()">💾 Tarik ke Event</button>
+    </div>
+  </div>
+</div>
 
-<!-- ==================== JAVASCRIPT ==================== -->
+<!-- ===== VENDOR SHEET ===== -->
+<div class="overlay" id="vendorSheet" onclick="overlayClose(event,'vendorSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">👥 Master Vendor</div>
+      <div class="sheet-close" onclick="closeSheet('vendorSheet')">✕</div>
+    </div>
+    <div class="sheet-body" id="vendorList">
+      <div class="loading"><div class="spinner"></div>Memuat...</div>
+    </div>
+  </div>
+</div>
+
 <script>
+
 // ============================================================
 // STATE
 // ============================================================
-let API_URL = localStorage.getItem('gubukan_api_url') || '';
+// ============================================================
+// SUPABASE CONFIG
+// ============================================================
+const SUPA_URL  = 'https://skltbmcrqutevmtcxqxj.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrbHRibWNycXV0ZXZtdGN4cXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzM5ODIsImV4cCI6MjA5MTI0OTk4Mn0._nogUZg5UylVyP45QTGYw69u76pNxGryj9hZORIfE_A';
+const SUPA_HEADERS = {
+  'apikey': SUPA_KEY,
+  'Authorization': 'Bearer ' + SUPA_KEY,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=representation',
+};
+const TABLE_MAP = {"events": "gubukan_events", "event_items": "gubukan_event_items", "expenses": "gubukan_expenses", "stok_masuk": "gubukan_stok_masuk", "stok_keluar": "gubukan_stok_keluar", "pengeluaran": "gubukan_pengeluaran", "penerimaan": "gubukan_penerimaan", "tokba": "gubukan_tokba", "rumah_tangga": "gubukan_rt", "vendors": "gubukan_vendors"};
+
+// Legacy - kept for settings UI compatibility
+let API_URL = SUPA_URL;
 let currentMonth = localStorage.getItem('gubukan_month') || getCurrentMonth();
 
 // Period filter system
@@ -1975,57 +1822,76 @@ let currentPeriod = JSON.parse(localStorage.getItem('gubukan_period') || 'null')
 
 function computePeriodRange(period) {
   const now = new Date();
-  const y = now.getFullYear(), m = now.getMonth();
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1; // 1-based: Jan=1, Apr=4
+
+  function firstDay(yr, mo) {
+    return yr + '-' + String(mo).padStart(2,'0') + '-01';
+  }
+  function lastDay(yr, mo) {
+    // Last day of month mo (1-based)
+    return new Date(yr, mo, 0).toLocaleDateString('sv-SE'); // sv-SE = YYYY-MM-DD
+  }
+  function addMonths(yr, mo, n) {
+    let nm = mo + n;
+    let ny = yr + Math.floor((nm-1)/12);
+    nm = ((nm-1)%12)+1;
+    if (nm<=0){nm+=12;ny--;}
+    return [ny, nm];
+  }
+
   let from, to;
   switch(period.type) {
     case 'this_month':
-      from = new Date(y, m, 1);
-      to   = new Date(y, m+1, 0);
+      from = firstDay(y, m);
+      to   = lastDay(y, m);
       break;
-    case 'last_month':
-      from = new Date(y, m-1, 1);
-      to   = new Date(y, m, 0);
+    case 'last_month': {
+      const [py, pm] = addMonths(y, m, -1);
+      from = firstDay(py, pm);
+      to   = lastDay(py, pm);
       break;
+    }
     case 'this_year':
-      from = new Date(y, 0, 1);
-      to   = new Date(y, 11, 31);
+      from = firstDay(y, 1);
+      to   = lastDay(y, 12);
       break;
     case 'last_year':
-      from = new Date(y-1, 0, 1);
-      to   = new Date(y-1, 11, 31);
+      from = firstDay(y-1, 1);
+      to   = lastDay(y-1, 12);
       break;
-    case 'last_3months':
-      from = new Date(y, m-2, 1);
-      to   = new Date(y, m+1, 0);
+    case 'last_3months': {
+      const [py, pm] = addMonths(y, m, -2);
+      from = firstDay(py, pm);
+      to   = lastDay(y, m);
       break;
-    case 'last_6months':
-      from = new Date(y, m-5, 1);
-      to   = new Date(y, m+1, 0);
+    }
+    case 'last_6months': {
+      const [py, pm] = addMonths(y, m, -5);
+      from = firstDay(py, pm);
+      to   = lastDay(y, m);
       break;
+    }
     case 'all_time':
-      from = new Date(2025, 0, 1);
-      to   = new Date(2099, 11, 31);
+      from = '2025-01-01';
+      to   = '2099-12-31';
       break;
     case 'custom_month': {
-      // period.month = 'YYYY-MM'
       const parts = (period.month||getCurrentMonth()).split('-').map(Number);
-      const cy = parts[0], cm = parts[1];
-      from = new Date(cy, cm-1, 1);
-      to   = new Date(cy, cm, 0);
+      const [cy, cm] = parts;
+      from = firstDay(cy, cm);
+      to   = lastDay(cy, cm);
       break;
     }
     case 'custom_range':
-      from = new Date(period.from);
-      to   = new Date(period.to);
+      from = period.from;
+      to   = period.to;
       break;
     default:
-      from = new Date(y, m, 1);
-      to   = new Date(y, m+1, 0);
+      from = firstDay(y, m);
+      to   = lastDay(y, m);
   }
-  return {
-    from: from.toISOString().slice(0,10),
-    to:   to.toISOString().slice(0,10),
-  };
+  return { from, to };
 }
 
 function filterByPeriod(arr, dateField='tanggal') {
@@ -2062,9 +1928,11 @@ function setPeriod(type, opts={}) {
 }
 
 function updatePeriodLabel() {
-  const range = computePeriodRange(currentPeriod);
-  const el = document.getElementById('monthLabel');
-  if (el) el.textContent = currentPeriod.label || monthName(currentMonth);
+  const label = currentPeriod.label || monthName(currentMonth);
+  ['monthLabel','monthLabelLap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
 }
 let state = {
   events: [], items: [], expenses: [],
@@ -2073,6 +1941,17 @@ let state = {
   pengeluaran: [], penerimaan: [],
 };
 let currentPage = 'dash';
+
+// ============================================================
+// GLOBAL HELPERS
+// ============================================================
+const OPS_KEYWORDS = ['fee','transport','tol','parkir','bensin','listrik','ongkir','akomodasi','waiters','vendor','operasional'];
+function isOpsRow(x) {
+  const k = (x.kategori||'').toLowerCase();
+  const t = (x.keterangan||'').toLowerCase();
+  return OPS_KEYWORDS.some(w => k.includes(w) || t.includes(w));
+}
+
 
 function getCurrentMonth() {
   return new Date().toISOString().slice(0,7);
@@ -2090,8 +1969,10 @@ function gotoPage(page) {
 
   // FAB visibility
   const fab = document.getElementById('fabBtn');
-  fab.style.display = ['dash','settings','laporan'].includes(page) ? 'none' : 'flex';
-  fab.onclick = page==='kas' ? openKasInput : openAddSheet;
+  fab.style.display = ['settings','laporan'].includes(page) ? 'none' : 'flex';
+  if (page === 'kas') fab.onclick = openKasInput;
+  else if (page === 'events') fab.onclick = () => { renderEventForm(null); openSheet('eventFormSheet'); };
+  else fab.onclick = () => openSheet('kasInputSheet');
 
   renderPage(page);
 }
@@ -2108,47 +1989,72 @@ function renderPage(page) {
 // API
 // ============================================================
 async function api(params) {
-  if (!API_URL) throw new Error('URL API belum diset. Buka Settings!');
-  const url = new URL(API_URL);
-  if (params) Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
-  // Semua pakai GET untuk bypass CORS Google Apps Script
-  const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
-  const json = await res.json();
-  if (json.status !== 'ok') throw new Error(json.message);
-  return json.data;
+  // Supabase REST API
+  const sheet = params.sheet;
+  const table = TABLE_MAP[sheet] || ('gubukan_' + sheet);
+  const url   = SUPA_URL + '/rest/v1/' + table + '?select=*&limit=10000';
+  const res   = await fetch(url, { headers: SUPA_HEADERS });
+  if (!res.ok) throw new Error('Supabase error: ' + res.status);
+  return await res.json();
 }
 
 async function apiWrite(action, sheet, data, id) {
-  if (!API_URL) throw new Error('URL API belum diset. Buka Settings!');
-  const url = new URL(API_URL);
-  url.searchParams.set('action', action);
-  if (sheet) url.searchParams.set('sheet', sheet);
-  if (id)    url.searchParams.set('id', id);
-  if (data)  url.searchParams.set('data', encodeURIComponent(JSON.stringify(data)));
-  const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
-  const json = await res.json();
-  if (json.status !== 'ok') throw new Error(json.message);
-  return json.data;
+  const table = TABLE_MAP[sheet] || ('gubukan_' + sheet);
+  let url, method, body;
+
+  if (action === 'insert') {
+    // Generate UUID if no id
+    if (!data.id) data.id = crypto.randomUUID();
+    if (!data.created_at) data.created_at = new Date().toISOString();
+    url    = SUPA_URL + '/rest/v1/' + table;
+    method = 'POST';
+    body   = JSON.stringify(data);
+  } else if (action === 'update') {
+    url    = SUPA_URL + '/rest/v1/' + table + '?id=eq.' + (id || data.id);
+    method = 'PATCH';
+    body   = JSON.stringify(data);
+  } else if (action === 'delete') {
+    url    = SUPA_URL + '/rest/v1/' + table + '?id=eq.' + id;
+    method = 'DELETE';
+    body   = null;
+  }
+
+  const res = await fetch(url, { method, headers: SUPA_HEADERS, body });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Supabase ' + action + ' error: ' + err);
+  }
+  const result = await res.json().catch(() => ({}));
+  // Return first item or data with id
+  return Array.isArray(result) ? (result[0] || data) : (result || data);
+}
+
+async function supaFetch(table, extraParams='') {
+  const url = SUPA_URL + '/rest/v1/' + table + '?select=*&limit=10000' + extraParams;
+  const res = await fetch(url, { headers: SUPA_HEADERS });
+  if (!res.ok) throw new Error('Supabase fetch ' + table + ': ' + res.status);
+  return await res.json();
 }
 
 async function syncData() {
   const btn = document.getElementById('syncBtn');
   btn.classList.add('spinning');
   try {
-    if (!API_URL) { toast('⚠️ Set URL API di Settings dulu!'); return; }
-    const [events, items, stokMasuk, stokKeluar, pengeluaran, penerimaan, tokba, rt, vendors] = await Promise.all([
-      api({ action: 'getAll', sheet: 'events' }),
-      api({ action: 'getAll', sheet: 'event_items' }),
-      api({ action: 'getAll', sheet: 'stok_masuk' }),
-      api({ action: 'getAll', sheet: 'stok_keluar' }),
-      api({ action: 'getAll', sheet: 'pengeluaran' }),
-      api({ action: 'getAll', sheet: 'penerimaan' }),
-      api({ action: 'getAll', sheet: 'tokba' }),
-      api({ action: 'getAll', sheet: 'rumah_tangga' }),
-      api({ action: 'getAll', sheet: 'vendors' }),
+    const [events, items, expenses, stokMasuk, stokKeluar, pengeluaran, penerimaan, tokba, rt, vendors] = await Promise.all([
+      supaFetch('gubukan_events',        '&order=tanggal.asc'),
+      supaFetch('gubukan_event_items'),
+      supaFetch('gubukan_expenses'),
+      supaFetch('gubukan_stok_masuk',    '&order=tanggal.asc'),
+      supaFetch('gubukan_stok_keluar'),
+      supaFetch('gubukan_pengeluaran'),
+      supaFetch('gubukan_penerimaan'),
+      supaFetch('gubukan_tokba'),
+      supaFetch('gubukan_rt'),
+      supaFetch('gubukan_vendors'),
     ]);
     state.events      = events      || [];
     state.items       = items       || [];
+    state.expenses    = expenses    || [];
     state.stok_masuk  = stokMasuk   || [];
     state.stok_keluar = stokKeluar  || [];
     state.pengeluaran = pengeluaran || [];
@@ -2161,7 +2067,7 @@ async function syncData() {
     renderPage(currentPage);
     populateEventDropdowns();
     populateStokDatalist();
-    toast('✅ ' + state.events.length + ' events · ' + state.stok_masuk.length + ' stok items');
+    toast('✅ ' + state.events.length + ' events · ' + state.expenses.length + ' expenses');
   } catch(e) {
     toast('❌ ' + e.message);
   } finally {
@@ -2208,16 +2114,16 @@ function fmtDate(d) {
 // DASHBOARD
 // ============================================================
 function renderDash() {
-  const mEvents   = state.events;
-  const mExpenses = state.expenses;
+  const mEvents   = filterByPeriod(state.events);
+  const mExpenses = filterByPeriod(state.expenses);
   const mTokba    = state.tokba;
   const mRT       = state.rt;
 
   const omzet   = mEvents.reduce((s,e) => s + (Number(e.omzet)||0), 0);
-  const hpp     = mExpenses.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const ops     = mExpenses.filter(x=>x.kategori==='Operasional').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const ovh     = mExpenses.filter(x=>x.kategori==='Overhead').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const laba    = omzet - hpp - ops - ovh;
+  const hpp  = mExpenses.filter(x => !isOpsRow(x)).reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const ops  = mExpenses.filter(x =>  isOpsRow(x)).reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const ovh  = 0;
+  const laba = omzet - hpp - ops;
   const margin  = omzet > 0 ? (laba/omzet*100).toFixed(1) : 0;
 
   const tokIn   = mTokba.reduce((s,x)=>s+(Number(x.masuk)||0),0);
@@ -2228,10 +2134,10 @@ function renderDash() {
   const rtKeluar= mRT.reduce((s,x)=>s+(Number(x.rutin)||0)+(Number(x.jajan)||0)+(Number(x.extraordinary)||0),0);
   const rtSaldo = rtMasuk - rtKeluar;
 
-  document.getElementById('dashTitle').textContent = monthName(currentMonth);
   const range = computePeriodRange(currentPeriod);
-  document.getElementById('dashPeriod').textContent = mEvents.length + ' event · ' + fmtDate(range.from) + ' s/d ' + fmtDate(range.to);
-  document.getElementById('monthLabel').textContent = monthName(currentMonth);
+  document.getElementById('dashTitle').textContent = currentPeriod.label || monthName(currentMonth);
+  { const dp=document.getElementById('dashPeriod'); if(dp) dp.textContent = mEvents.length + ' event · ' + fmtDate(range.from) + ' s/d ' + fmtDate(range.to); }
+  { const ml=document.getElementById('monthLabel'); if(ml) ml.textContent = currentPeriod.label||monthName(currentMonth); }
 
   document.getElementById('dOmzet').textContent = rp(omzet);
   document.getElementById('dEventCount').textContent = mEvents.length + ' event';
@@ -2253,7 +2159,7 @@ function renderDash() {
   document.getElementById('dMarginBar').style.width = Math.min(Math.abs(marginV3||margin),100) + '%';
   document.getElementById('dHPP').textContent   = rp(hppV3||hpp);
   document.getElementById('dOps').textContent   = rp(opsV3||ops);
-  document.getElementById('dTerima').textContent = rp(terimaV3);
+  { const _e_dTerima=document.getElementById('dTerima'); if(_e_dTerima) _e_dTerima.textContent=rp(terimaV3); }
 
   // Recent events - today & future only, sorted ascending (nearest first)
   const todayStr = new Date().toISOString().slice(0,10);
@@ -2267,21 +2173,18 @@ function renderDash() {
     return;
   }
   el.innerHTML = recent.map(ev => {
-    const evExp = state.expenses.filter(x=>x.event_id===ev.id);
     const evOmzet = Number(ev.omzet)||0;
-    const evCost  = evExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-    const evLaba  = evOmzet - evCost;
-    const evMargin= evOmzet>0?(evLaba/evOmzet*100).toFixed(0):0;
-    const dot = ev.status==='lunas'?'green': ev.status==='dp'?'orange':'red';
-    return `<div class="event-card" onclick="showDetail('${ev.id}')">
-      <div class="event-dot ${dot}"></div>
+    const st = ev.status||'pending';
+    const statusLabel = {booking:'Booking',dp:'DP',lunas:'Lunas',follow:'Follow Up',pending:'Pending',batal:'Batal'};
+    return `<div class="event-item" onclick="showDetail('${ev.id}')">
+      <div class="event-status ${st}"></div>
       <div class="event-info">
         <div class="event-customer">${ev.customer||'-'}</div>
         <div class="event-meta">${fmtDate(ev.tanggal)} · ${ev.lokasi||'-'}</div>
       </div>
-      <div class="event-omzet">
-        <div class="event-omzet-val">${rp(evOmzet)}</div>
-        <div class="event-margin">${evMargin}%</div>
+      <div class="event-right">
+        <div class="event-omzet">${evOmzet>0?rp(evOmzet):'—'}</div>
+        <div class="event-badge ${st}">${statusLabel[st]||st}</div>
       </div>
     </div>`;
   }).join('');
@@ -2321,35 +2224,45 @@ function renderBarChart() {
 // ============================================================
 // EVENTS
 // ============================================================
+function filterEvents(f) {
+  window._evFilter = f;
+  document.querySelectorAll('[data-evfilter]').forEach(c=>
+    c.classList.toggle('active', c.dataset.evfilter===f));
+  renderEvents();
+}
+
 function renderEvents() {
-  const mEvents = state.events;
-  const el = document.getElementById('eventsList');
-  if (!mEvents.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada event<br>Tekan + untuk tambah</div>';
+  const mAll = filterByPeriod(state.events).sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
+  const filter = window._evFilter || 'all';
+  const filtered = filter==='all' ? mAll : mAll.filter(e=>e.status===filter);
+  
+  document.getElementById('eventsCount').textContent = 
+    filtered.length + ' event' + (filter!=='all'?' · '+filter:'');
+
+  const el = document.getElementById('eventList');
+  if (!el) return;
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada event</div>';
     return;
   }
-  el.innerHTML = mEvents.sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal)).map(ev => {
-    const evExp   = state.expenses.filter(x=>x.event_id===ev.id);
+  const statusLabel = {booking:'Booking',dp:'DP',lunas:'Lunas',follow:'Follow Up',pending:'Pending',batal:'Batal'};
+  el.innerHTML = filtered.map(ev => {
     const evOmzet = Number(ev.omzet)||0;
-    const evCost  = evExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-    const evLaba  = evOmzet - evCost;
-    const evMargin= evOmzet>0?(evLaba/evOmzet*100).toFixed(0):0;
-    const dot = ev.status==='lunas'?'green':ev.status==='dp'?'orange':'red';
-    return `<div class="event-card" onclick="showDetail('${ev.id}')">
-      <div class="event-dot ${dot}"></div>
+    const st = ev.status||'pending';
+    return `<div class="event-item" onclick="showDetail('${ev.id}')">
+      <div class="event-status ${st}"></div>
       <div class="event-info">
         <div class="event-customer">${ev.customer||'-'}</div>
         <div class="event-meta">${fmtDate(ev.tanggal)} · ${ev.lokasi||'-'}</div>
       </div>
-      <div class="event-omzet">
-        <div class="event-omzet-val">${rp(evOmzet)}</div>
-        <div class="event-margin" style="color:${evLaba>=0?'var(--green)':'var(--red)'}">
-          ${evLaba>=0?'+':''}${evMargin}%
-        </div>
+      <div class="event-right">
+        <div class="event-omzet">${evOmzet>0?rp(evOmzet):'—'}</div>
+        <div class="event-badge ${st}">${statusLabel[st]||st}</div>
       </div>
     </div>`;
   }).join('');
 }
+
 
 function showDetail(eventId) {
   const ev = state.events.find(e=>e.id===eventId);
@@ -2392,69 +2305,57 @@ function renderDetailTab(tab) {
     follow:'📞 Follow Up',pending:'⏳ Pending',batal:'❌ Batal'};
 
   const header = `
-    <div style="padding:14px 16px 0;">
-      <div style="font-size:11px;color:var(--text2);">${fmtDate(ev.tanggal)} · <span style="color:var(--gold)">${statusLabel[ev.status]||ev.status}</span></div>
-      <div style="font-size:17px;font-weight:600;color:var(--cream);margin:3px 0;">${ev.customer}</div>
-      <div style="font-size:11px;color:var(--text2);">📍 ${ev.lokasi||'-'}</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-        <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--gold)">${rp(omzet)}</div>
-        <span class="detail-badge ${laba>=0?'profit':'loss'}">${laba>=0?'✅':'❌'} ${Math.abs(margin)}%</span>
+    <div style="padding:16px 20px 0;">
+      <div style="font-size:11px;color:var(--ink3);font-family:var(--font-mono);">${fmtDate(ev.tanggal)} · <span class="event-badge ${ev.status||'pending'}">${statusLabel[ev.status]||ev.status}</span></div>
+      <div style="font-size:18px;font-weight:600;color:var(--ink);margin:6px 0;">${ev.customer}</div>
+      <div style="font-size:12px;color:var(--ink3);">📍 ${ev.lokasi||'-'}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+        <div style="font-family:var(--font-mono);font-size:22px;font-weight:700;color:var(--green)">${rp(omzet)}</div>
+        <span style="font-size:12px;color:${laba>=0?'var(--green)':'var(--red)'};background:${laba>=0?'var(--green-dim)':'var(--red-dim)'};padding:3px 10px;border-radius:20px;font-weight:600;">${laba>=0?'✅':'❌'} ${Math.abs(margin)}%</span>
       </div>
     </div>
-    <div style="display:flex;border-bottom:1px solid var(--border);margin-top:12px;">
-      <div style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;
-        color:${tab==='info'?'var(--gold)':'var(--text2)'};
-        border-bottom:2px solid ${tab==='info'?'var(--gold)':'transparent'}"
-        onclick="renderDetailTab('info')">📋 Info</div>
-      <div style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;
-        color:${tab==='bayar'?'var(--gold)':'var(--text2)'};
-        border-bottom:2px solid ${tab==='bayar'?'var(--gold)':'transparent'}"
-        onclick="renderDetailTab('bayar')">💳 Bayar</div>
-      <div style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;
-        color:${tab==='stok'?'var(--gold)':'var(--text2)'};
-        border-bottom:2px solid ${tab==='stok'?'var(--gold)':'transparent'}"
-        onclick="renderDetailTab('stok')">📦 HPP</div>
-      <div style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;
-        color:${tab==='invoice'?'var(--gold)':'var(--text2)'};
-        border-bottom:2px solid ${tab==='invoice'?'var(--gold)':'transparent'}"
-        onclick="renderDetailTab('invoice')">🧾 Invoice</div>
+    <div class="tab-bar" style="margin-top:12px;">
+      <button class="tab-btn ${tab==='info'?'active':''}" onclick="renderDetailTab('info')">📋 Info</button>
+      <button class="tab-btn ${tab==='bayar'?'active':''}" onclick="renderDetailTab('bayar')">💳 Bayar</button>
+      <button class="tab-btn ${tab==='stok'?'active':''}" onclick="renderDetailTab('stok')">📦 HPP</button>
+      <button class="tab-btn ${tab==='invoice'?'active':''}" onclick="renderDetailTab('invoice')">🧾 Invoice</button>
     </div>`;
 
   let body = '';
 
   if (tab === 'info') {
-    body = `<div style="padding:0 16px 16px;">
-      <div class="totals-card" style="margin-top:14px;">
+    body = `<div style="padding:0 20px 20px;">
+      <div class="info-box" style="margin-top:14px;">
         ${evItems.map(it=>`
-          <div class="breakdown-item">
+          <div class="info-row">
             <div><div style="font-size:12px;">${it.menu}</div>
-            <div class="breakdown-cat">${it.qty} pcs × ${rp(it.harga_satuan)}</div></div>
+            <div class="" style="font-size:10px;color:var(--ink3)">${it.qty} pcs × ${rp(it.harga_satuan)}</div></div>
             <div style="color:var(--green)">${rp(it.total)}</div>
           </div>`).join('')}
-        <div class="breakdown-item" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
-          <span style="color:var(--text2);font-size:11px;">HPP Bahan</span>
+        <div class="info-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+          <span style="color:var(--ink3);font-size:11px;">HPP Bahan</span>
           <span style="color:var(--blue)">${rp(hpp)}</span>
         </div>
-        <div class="breakdown-item">
-          <span style="color:var(--text2);font-size:11px;">Operasional</span>
+        <div class="info-row">
+          <span style="color:var(--ink3);font-size:11px;">Operasional</span>
           <span style="color:var(--orange)">${rp(ops)}</span>
         </div>
-        ${ovhV2>0?`<div class="breakdown-item">
-          <span style="color:var(--text2);font-size:11px;">Overhead</span>
-          <span style="color:var(--text2)">${rp(ovhV2)}</span>
+        ${ovhV2>0?`<div class="info-row">
+          <span style="color:var(--ink3);font-size:11px;">Overhead</span>
+          <span class="lbl">${rp(ovhV2)}</span>
         </div>`:''}
-        <div class="breakdown-item" style="font-weight:600;font-size:14px;">
+        <div class="info-row" style="font-weight:600;font-size:14px;">
           <span>Laba Bersih</span>
           <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)}</span>
         </div>
-        <div class="breakdown-item">
-          <span style="font-size:11px;color:var(--text2);">Isrun 10%</span>
+        <div class="info-row">
+          <span style="font-size:11px;color:var(--ink3);">Isrun 10%</span>
           <span style="color:var(--gold)">${rp(isrun)}</span>
         </div>
       </div>
-      ${ev.catatan?`<div style="padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);margin-bottom:10px;">📝 ${ev.catatan}</div>`:''}
-      <button class="btn-submit" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
-      <button class="btn-outline" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
+      ${ev.catatan?`<div style="padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--ink3);margin-bottom:10px;">📝 ${ev.catatan}</div>`:''}
+      <button class="btn btn-primary" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
+      <button class="btn btn-secondary" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
     </div>`;
 
   } else if (tab === 'bayar') {
@@ -2466,18 +2367,18 @@ function renderDetailTab(tab) {
     const paidByType = {};
     evPays.forEach(p=>{ paidByType[p.jenis]=(paidByType[p.jenis]||0)+Number(p.jumlah); });
 
-    body = `<div style="padding:0 16px 16px;">
+    body = `<div style="padding:0 20px 20px;">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:14px 0 8px;">
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;">Total</div>
-          <div style="font-size:12px;font-weight:600;color:var(--cream)">${rp(omzet)}</div>
+          <div style="font-size:9px;color:var(--ink4);text-transform:uppercase;">Total</div>
+          <div style="font-size:12px;font-weight:600;color:var(--ink)">${rp(omzet)}</div>
         </div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;">Dibayar</div>
+          <div style="font-size:9px;color:var(--ink4);text-transform:uppercase;">Dibayar</div>
           <div style="font-size:12px;font-weight:600;color:var(--green)">${rp(totalPaid)}</div>
         </div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;">Sisa</div>
+          <div style="font-size:9px;color:var(--ink4);text-transform:uppercase;">Sisa</div>
           <div style="font-size:12px;font-weight:600;color:${sisa>0?'var(--red)':'var(--green)'}">${rp(sisa)}</div>
         </div>
       </div>
@@ -2491,9 +2392,9 @@ function renderDetailTab(tab) {
         return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:6px;">
           <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;background:${done?'rgba(76,175,130,0.2)':'rgba(212,168,67,0.15)'};">${done?'✅':s.icon}</div>
           <div style="flex:1;">
-            <div style="font-size:11px;color:var(--text2)">${s.label}</div>
-            <div style="font-size:13px;font-weight:600;color:var(--cream)">${rpFull(s.amount)}</div>
-            <div style="font-size:10px;color:var(--text3)">${s.desc}${paid>0?' · Dibayar: '+rp(paid):''}</div>
+            <div style="font-size:11px;color:var(--ink3)">${s.label}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink)">${rpFull(s.amount)}</div>
+            <div style="font-size:10px;color:var(--ink4)">${s.desc}${paid>0?' · Dibayar: '+rp(paid):''}</div>
           </div>
           ${!done?`<button onclick="openTerimaForEvent('${ev.id}','${s.key}',${s.amount})"
             style="font-size:11px;color:var(--gold);border:1px solid var(--gold);border-radius:12px;padding:3px 10px;cursor:pointer;background:none;white-space:nowrap;">Bayar</button>`
@@ -2507,61 +2408,61 @@ function renderDetailTab(tab) {
           <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:6px;">
             <div style="font-size:20px;">💳</div>
             <div style="flex:1;">
-              <div style="font-size:12px;color:var(--cream)">${p.label||p.jenis} · ${p.metode||''}</div>
-              <div style="font-size:10px;color:var(--text3)">${fmtDate(p.tanggal)} ${p.catatan?'· '+p.catatan:''}</div>
+              <div style="font-size:12px;color:var(--ink)">${p.label||p.jenis} · ${p.metode||''}</div>
+              <div style="font-size:10px;color:var(--ink4)">${fmtDate(p.tanggal)} ${p.catatan?'· '+p.catatan:''}</div>
             </div>
             <div style="text-align:right;">
               <div style="font-size:13px;font-weight:600;color:var(--green)">${rp(p.jumlah)}</div>
               <div style="font-size:10px;color:var(--gold);cursor:pointer;" onclick="printBuktiByPayId('${p.id}','${ev.id}')">🖨️ Bukti</div>
             </div>
           </div>`).join('')}`
-      :'<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:13px;">💳 Belum ada pembayaran</div>'}
+      :'<div style="text-align:center;padding:20px 0;color:var(--ink4);font-size:13px;">💳 Belum ada pembayaran</div>'}
 
-      <button class="btn-submit" style="margin-top:8px;" onclick="openTerimaForEvent('${ev.id}','custom',${sisa})">+ Tambah Pembayaran</button>
+      <button class="btn btn-primary" style="margin-top:8px;" onclick="openTerimaForEvent('${ev.id}','custom',${sisa})">+ Tambah Pembayaran</button>
     </div>`;
 
   } else if (tab === 'stok') {
-    body = `<div style="padding:0 16px 16px;">
+    body = `<div style="padding:0 20px 20px;">
       <div class="form-section-title" style="margin-top:14px;">HPP Bahan Baku</div>
       ${skItems.length?skItems.map(s=>`
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;justify-content:space-between;margin-bottom:6px;">
           <div>
-            <div style="font-size:12px;color:var(--cream)">${s.nama}</div>
-            <div style="font-size:10px;color:var(--text3)">${s.qty} ${s.satuan} × ${rp(s.harga_avg)}/unit</div>
+            <div style="font-size:12px;color:var(--ink)">${s.nama}</div>
+            <div style="font-size:10px;color:var(--ink4)">${s.qty} ${s.satuan} × ${rp(s.harga_avg)}/unit</div>
           </div>
           <div style="font-size:13px;font-weight:600;color:var(--blue)">${rp(s.total_hpp)}</div>
         </div>`).join('')
-      :'<div style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px;">Belum ada bahan ditarik</div>'}
+      :'<div style="text-align:center;padding:16px 0;color:var(--ink4);font-size:12px;">Belum ada bahan ditarik</div>'}
 
-      <button class="btn-outline" style="margin-top:4px;" onclick="openStokKeluar('${ev.id}')">📦 + Tarik Bahan Baku</button>
+      <button class="btn btn-secondary" style="margin-top:4px;" onclick="openStokKeluar('${ev.id}')">📦 + Tarik Bahan Baku</button>
 
       <div class="form-section-title" style="margin-top:14px;">Biaya Operasional</div>
       ${opsItems.length?opsItems.map(o=>`
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;justify-content:space-between;margin-bottom:6px;">
           <div>
-            <div style="font-size:12px;color:var(--cream)">${o.keterangan}</div>
-            <div style="font-size:10px;color:var(--text3)">${o.kategori} · ${fmtDate(o.tanggal)}</div>
+            <div style="font-size:12px;color:var(--ink)">${o.keterangan}</div>
+            <div style="font-size:10px;color:var(--ink4)">${o.kategori} · ${fmtDate(o.tanggal)}</div>
           </div>
           <div style="font-size:13px;font-weight:600;color:var(--orange)">${rp(o.jumlah)}</div>
         </div>`).join('')
-      :'<div style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px;">Belum ada biaya ops</div>'}
+      :'<div style="text-align:center;padding:16px 0;color:var(--ink4);font-size:12px;">Belum ada biaya ops</div>'}
 
-      <button class="btn-outline" style="margin-top:4px;" onclick="openOpsForEvent('${ev.id}')">🚗 + Tambah Biaya Ops</button>
+      <button class="btn btn-secondary" style="margin-top:4px;" onclick="openOpsForEvent('${ev.id}')">🚗 + Tambah Biaya Ops</button>
 
-      <div class="totals-card" style="margin-top:12px;">
-        <div class="breakdown-item">
-          <span style="color:var(--text2)">Total HPP Bahan</span>
+      <div class="info-box" style="margin-top:12px;">
+        <div class="info-row">
+          <span class="lbl">Total HPP Bahan</span>
           <span style="color:var(--blue)">${rpFull(hpp)}</span>
         </div>
-        <div class="breakdown-item">
-          <span style="color:var(--text2)">Total Operasional</span>
+        <div class="info-row">
+          <span class="lbl">Total Operasional</span>
           <span style="color:var(--orange)">${rpFull(ops)}</span>
         </div>
-        <div class="breakdown-item" style="font-weight:600;">
+        <div class="info-row" style="font-weight:600;">
           <span>Total Biaya</span>
           <span style="color:var(--red)">${rpFull(hpp+ops)}</span>
         </div>
-        <div class="breakdown-item" style="font-weight:600;font-size:14px;">
+        <div class="info-row" style="font-weight:600;font-size:14px;">
           <span>Net Margin</span>
           <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)} (${margin}%)</span>
         </div>
@@ -2570,33 +2471,33 @@ function renderDetailTab(tab) {
 
   } else if (tab === 'invoice') {
     const invNo = 'INV/' + (ev.no_event||'000') + '/' + (ev.bulan||'').replace('-','') + '/' + ev.id.slice(-4).toUpperCase();
-    body = `<div style="padding:0 16px 16px;">
-      <div class="totals-card" style="margin-top:14px;margin-bottom:12px;">
-        <div class="breakdown-item"><span style="color:var(--text2);font-size:11px;">No. Invoice</span><span style="color:var(--gold);font-size:11px">${invNo}</span></div>
-        <div class="breakdown-item"><span style="color:var(--text2);font-size:11px;">Customer</span><span style="font-size:12px">${ev.customer}</span></div>
-        <div class="breakdown-item"><span style="color:var(--text2);font-size:11px;">Tgl Event</span><span style="font-size:12px">${fmtDate(ev.tanggal)}</span></div>
-        <div class="breakdown-item"><span style="color:var(--text2);font-size:11px;">Lokasi</span><span style="font-size:12px">${ev.lokasi||'-'}</span></div>
+    body = `<div style="padding:0 20px 20px;">
+      <div class="info-box" style="margin-top:14px;margin-bottom:12px;">
+        <div class="info-row"><span style="color:var(--ink3);font-size:11px;">No. Invoice</span><span style="color:var(--gold);font-size:11px">${invNo}</span></div>
+        <div class="info-row"><span style="color:var(--ink3);font-size:11px;">Customer</span><span style="font-size:12px">${ev.customer}</span></div>
+        <div class="info-row"><span style="color:var(--ink3);font-size:11px;">Tgl Event</span><span style="font-size:12px">${fmtDate(ev.tanggal)}</span></div>
+        <div class="info-row"><span style="color:var(--ink3);font-size:11px;">Lokasi</span><span style="font-size:12px">${ev.lokasi||'-'}</span></div>
       </div>
-      <div class="totals-card" style="margin-bottom:12px;">
+      <div class="info-box" style="margin-bottom:12px;">
         ${evItems.map(it=>`
-          <div class="breakdown-item">
+          <div class="info-row">
             <div><div style="font-size:12px">${it.menu}</div>
-            <div class="breakdown-cat">${it.qty} pcs × ${rpFull(it.harga_satuan)}</div></div>
+            <div class="" style="font-size:10px;color:var(--ink3)">${it.qty} pcs × ${rpFull(it.harga_satuan)}</div></div>
             <div style="color:var(--green);font-size:12px">${rpFull(it.total)}</div>
           </div>`).join('')}
-        <div class="breakdown-item" style="font-weight:600;font-size:14px;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+        <div class="info-row" style="font-weight:600;font-size:14px;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
           <span>TOTAL</span><span style="color:var(--gold)">${rpFull(omzet)}</span>
         </div>
-        <div class="breakdown-item" style="color:var(--green)">
+        <div class="info-row" style="color:var(--green)">
           <span style="font-size:11px">Terbayar</span><span>${rpFull(totalPaid)}</span>
         </div>
-        <div class="breakdown-item" style="font-weight:600;color:${sisa>0?'var(--red)':'var(--green)'}">
+        <div class="info-row" style="font-weight:600;color:${sisa>0?'var(--red)':'var(--green)'}">
           <span>${sisa>0?'Sisa Tagihan':'✅ LUNAS'}</span>
           <span>${rpFull(Math.abs(sisa))}</span>
         </div>
       </div>
-      <button class="btn-submit" onclick="printInvoice('${ev.id}')">🖨️ Print Invoice</button>
-      <button class="btn-outline" onclick="printBuktiEvent('${ev.id}')">📄 Bukti Pembayaran</button>
+      <button class="btn btn-primary" onclick="printInvoice('${ev.id}')">🖨️ Print Invoice</button>
+      <button class="btn btn-secondary" onclick="printBuktiEvent('${ev.id}')">📄 Bukti Pembayaran</button>
     </div>`;
   }
 
@@ -2607,7 +2508,7 @@ function renderDetailTab(tab) {
 // KAS
 // ============================================================
 function renderKas() {
-  document.getElementById('kasTitle').textContent  = monthName(currentMonth);
+  const kasTitleEl=document.getElementById('kasTitle'); if(kasTitleEl) kasTitleEl.textContent = monthName(currentMonth);
   document.getElementById('kasPeriod').textContent = 'Jurnal Keuangan Bulanan';
   window._kasFilter  = window._kasFilter  || 'all';
   window._kasSort    = window._kasSort    || 'tgl_desc';
@@ -2699,9 +2600,9 @@ function renderKasTable(data, totalIn, totalOut, saldoAwal, saldoAkhir) {
     const dateOut = items.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
     const gid = 'dg_'+date.replace(/-/g,'');
     rows += `<tr class="kas-date-row" onclick="toggleKasGroup('${gid}')">
-      <td colspan="4" style="font-size:11px;font-weight:600;color:var(--text2);">
+      <td colspan="4" style="font-size:11px;font-weight:600;color:var(--ink3);">
         📅 ${fmtDate(date)||date}
-        <span style="float:right;font-size:10px;color:var(--text3);">
+        <span style="float:right;font-size:10px;color:var(--ink4);">
           ${dateIn>0?'<span style=color:var(--green)>+'+rp(dateIn)+'</span>':''}
           ${dateOut>0?'<span style=color:var(--red);margin-left:6px>-'+rp(dateOut)+'</span>':''}
         </span>
@@ -2735,14 +2636,14 @@ function renderKasTable(data, totalIn, totalOut, saldoAwal, saldoAkhir) {
         <tbody>${rows}</tbody>
         <tfoot>
           <tr>
-            <td colspan="2" style="color:var(--text2);font-size:11px;">
+            <td colspan="2" style="color:var(--ink3);font-size:11px;">
               Saldo Awal: ${rp(saldoAwal)}
             </td>
             <td style="text-align:right;color:var(--green);">${rp(totalIn)}</td>
             <td style="text-align:right;color:var(--red);">${rp(totalOut)}</td>
           </tr>
           <tr>
-            <td colspan="2" style="color:var(--cream);font-size:13px;">Saldo Akhir</td>
+            <td colspan="2" style="color:var(--ink);font-size:13px;">Saldo Akhir</td>
             <td colspan="2" style="text-align:right;font-size:14px;
               color:${saldoAkhir>=0?'var(--green)':'var(--red)'};">${rp(saldoAkhir)}</td>
           </tr>
@@ -2799,7 +2700,14 @@ function buildKasJournalByMonth(m) {
 }
 
 function buildKasJournal() {
-  return buildKasJournalByMonth(currentMonth);}
+  // Filter by period
+  const range = computePeriodRange(currentPeriod);
+  const all = buildKasJournalByMonth(currentMonth);
+  return all.filter(j => {
+    const d = (j.tanggal||'').slice(0,10);
+    return d >= range.from && d <= range.to;
+  });
+}
 
 function switchKasTab(tab) {
   document.querySelectorAll('.kas-tab').forEach(t=>t.classList.remove('active'));
@@ -2820,12 +2728,12 @@ function renderRT() {
   const keluar = rutin + jajan + extra;
   const saldo  = masuk - keluar;
 
-  document.getElementById('rtIn').textContent    = rp(masuk);
-  document.getElementById('rtOut').textContent   = rp(keluar);
-  document.getElementById('rtSaldo').textContent = rp(saldo);
-  document.getElementById('rtRutin').textContent = rp(rutin);
-  document.getElementById('rtJajan').textContent = rp(jajan);
-  document.getElementById('rtExtra').textContent = rp(extra);
+  { const _e_rtIn=document.getElementById('rtIn'); if(_e_rtIn) _e_rtIn.textContent=rp(masuk); }
+  { const _e_rtOut=document.getElementById('rtOut'); if(_e_rtOut) _e_rtOut.textContent=rp(keluar); }
+  { const _e_rtSaldo=document.getElementById('rtSaldo'); if(_e_rtSaldo) _e_rtSaldo.textContent=rp(saldo); }
+  { const _e_rtRutin=document.getElementById('rtRutin'); if(_e_rtRutin) _e_rtRutin.textContent=rp(rutin); }
+  { const _e_rtJajan=document.getElementById('rtJajan'); if(_e_rtJajan) _e_rtJajan.textContent=rp(jajan); }
+  { const _e_rtExtra=document.getElementById('rtExtra'); if(_e_rtExtra) _e_rtExtra.textContent=rp(extra); }
 
   const el = document.getElementById('rtList');
   if (!mRT.length) {
@@ -2837,7 +2745,7 @@ function renderRT() {
     const amt = isMasuk ? Number(x.masuk) : (Number(x.rutin)||0)+(Number(x.jajan)||0)+(Number(x.extraordinary)||0);
     const kat = isMasuk?'masuk': x.rutin?'rutin': x.jajan?'jajan':'extraordinary';
     const katColor = {masuk:'var(--green)',rutin:'var(--blue)',jajan:'var(--gold)',extraordinary:'var(--red)'};
-    return `<div class="trans-item">
+    return `<div class="event-item">
       <div class="trans-icon ${isMasuk?'in':'out'}">${isMasuk?'💚':'💸'}</div>
       <div class="trans-info">
         <div class="trans-desc">${x.item}</div>
@@ -2854,7 +2762,7 @@ function renderRT() {
 let itemCount = 0;
 let expCount  = 0;
 
-function openAddSheet() {
+function openAddSheet() { renderEventForm(null);
   if (currentPage === 'events') {
     resetEventForm();
     openSheet('eventSheet');
@@ -2867,7 +2775,7 @@ function openAddSheet() {
 
 function resetEventForm() {
   document.getElementById('editEventId').value = '';
-  document.getElementById('eventSheetTitle').textContent = 'Tambah Event';
+  { const _e_eventSheetTitle=document.getElementById('eventSheetTitle'); if(_e_eventSheetTitle) _e_eventSheetTitle.textContent='Tambah Event'; }
   document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('fEventNo').value = '';
   document.getElementById('fCustomer').value = '';
@@ -2940,14 +2848,14 @@ function calcTotals() {
   const margin = omzet > 0 ? (labaBersih/omzet*100).toFixed(1) : 0;
   const isrun = omzet * 0.1;
 
-  document.getElementById('tOmzet').textContent    = rpFull(omzet);
-  document.getElementById('tHPP').textContent      = rpFull(hpp);
-  document.getElementById('tOps').textContent      = rpFull(ops);
-  document.getElementById('tOvh').textContent      = rpFull(ovh);
-  document.getElementById('tLabaKotor').textContent= rpFull(labaKotor);
-  document.getElementById('tLaba').textContent     = rpFull(labaBersih);
-  document.getElementById('tMargin').textContent   = margin + '%';
-  document.getElementById('tIsrun').textContent    = rpFull(isrun);
+  { const _e_tOmzet=document.getElementById('tOmzet'); if(_e_tOmzet) _e_tOmzet.textContent=rpFull(omzet); }
+  { const _e_tHPP=document.getElementById('tHPP'); if(_e_tHPP) _e_tHPP.textContent=rpFull(hpp); }
+  { const _e_tOps=document.getElementById('tOps'); if(_e_tOps) _e_tOps.textContent=rpFull(ops); }
+  { const _e_tOvh=document.getElementById('tOvh'); if(_e_tOvh) _e_tOvh.textContent=rpFull(ovh); }
+  { const _e_tLabaKotor=document.getElementById('tLabaKotor'); if(_e_tLabaKotor) _e_tLabaKotor.textContent=rpFull(labaKotor); }
+  { const _e_tLaba=document.getElementById('tLaba'); if(_e_tLaba) _e_tLaba.textContent=rpFull(labaBersih); }
+  { const _e_tMargin=document.getElementById('tMargin'); if(_e_tMargin) _e_tMargin.textContent=margin + '%'; }
+  { const _e_tIsrun=document.getElementById('tIsrun'); if(_e_tIsrun) _e_tIsrun.textContent=rpFull(isrun); }
 
   const lRow = document.getElementById('tLabaRow');
   lRow.className = 'total-row ' + (labaBersih >= 0 ? 'profit' : 'loss');
@@ -3035,7 +2943,7 @@ function editEvent(id) {
   setTimeout(() => {
     resetEventForm();
     document.getElementById('editEventId').value = id;
-    document.getElementById('eventSheetTitle').textContent = 'Edit Event';
+    { const _e_eventSheetTitle=document.getElementById('eventSheetTitle'); if(_e_eventSheetTitle) _e_eventSheetTitle.textContent='Edit Event'; }
     document.getElementById('fDate').value     = ev.tanggal?.slice(0,10)||'';
     document.getElementById('fEventNo').value  = ev.no_event||'';
     document.getElementById('fCustomer').value = ev.customer||'';
@@ -3140,23 +3048,23 @@ async function saveRT() {
 // SETTINGS
 // ============================================================
 function saveApiUrl() {
-  const url = document.getElementById('apiUrlInput').value.trim();
+  const url = SUPA_URL; // Supabase - fixed URL
   if (!url) { toast('⚠️ URL tidak boleh kosong!'); return; }
   API_URL = url;
-  localStorage.setItem('gubukan_api_url', url);
-  document.getElementById('urlStatus').textContent = '🔄 Testing...';
+  // localStorage.setItem('gubukan_api_url', url); // Supabase - not needed
+  { const _e_urlStatus=document.getElementById('urlStatus'); if(_e_urlStatus) _e_urlStatus.textContent='🔄 Testing...'; }
   document.getElementById('urlStatus').className = 'url-status';
   fetch(url + '?action=getSummary')
     .then(r=>r.json())
     .then(d=>{
       if (d.status==='ok') {
-        document.getElementById('urlStatus').textContent = '✅ Koneksi berhasil!';
+        { const _e_urlStatus=document.getElementById('urlStatus'); if(_e_urlStatus) _e_urlStatus.textContent='✅ Koneksi berhasil!'; }
         document.getElementById('urlStatus').className = 'url-status ok';
         syncData();
       } else throw new Error(d.message);
     })
     .catch(e=>{
-      document.getElementById('urlStatus').textContent = '❌ Gagal: ' + e.message;
+      { const _e_urlStatus=document.getElementById('urlStatus'); if(_e_urlStatus) _e_urlStatus.textContent='❌ Gagal: ' + e.message; }
       document.getElementById('urlStatus').className = 'url-status err';
     });
 }
@@ -3263,23 +3171,13 @@ function overlayClose(e, id) { if (e.target.classList.contains('overlay')) close
 // ============================================================
 let toastTimer;
 function toast(msg) {
-  const el = document.getElementById('toast');
+  const el = document.getElementById('toastEl') || document.getElementById('toast');
+  if (!el) return;
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
-
-// ============================================================
-// EVENT FILTER CHIPS
-// ============================================================
-document.getElementById('eventFilters').addEventListener('click', e => {
-  const chip = e.target.closest('.filter-chip');
-  if (!chip) return;
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-  chip.classList.add('active');
-  // TODO: filter logic
-});
 
 // ============================================================
 // EXPORT (Print)
@@ -3398,14 +3296,14 @@ function calcStokHarga() {
     const existing = stokSummary.find(s=>s.nama===nama);
     if (existing && existing.total_qty_kecil>0) {
       const newAvg = (existing.total_nilai + total) / (existing.total_qty_kecil + qtyKecil);
-      document.getElementById('stokAvgOld').textContent    = rpFull(existing.harga_avg) + ' / ' + existing.satuan_kecil;
-      document.getElementById('stokAvgResult').textContent = rpFull(newAvg) + ' / ' + (document.getElementById('stokSatuanKecil').value);
+      { const _e_stokAvgOld=document.getElementById('stokAvgOld'); if(_e_stokAvgOld) _e_stokAvgOld.textContent=rpFull(existing.harga_avg) + ' / ' + existing.satuan_kecil; }
+      { const _e_stokAvgResult=document.getElementById('stokAvgResult'); if(_e_stokAvgResult) _e_stokAvgResult.textContent=rpFull(newAvg) + ' / ' + (document.getElementById('stokSatuanKecil').value); }
     } else {
-      document.getElementById('stokAvgOld').textContent    = 'Bahan baru';
-      document.getElementById('stokAvgResult').textContent = perUnit>0 ? rpFull(perUnit) : '-';
+      { const _e_stokAvgOld=document.getElementById('stokAvgOld'); if(_e_stokAvgOld) _e_stokAvgOld.textContent='Bahan baru'; }
+      { const _e_stokAvgResult=document.getElementById('stokAvgResult'); if(_e_stokAvgResult) _e_stokAvgResult.textContent=perUnit>0 ? rpFull(perUnit) : '-'; }
     }
   }
-  document.getElementById('stokAvgNew').textContent = perUnit>0 ? rpFull(perUnit) : '-';
+  { const _e_stokAvgNew=document.getElementById('stokAvgNew'); if(_e_stokAvgNew) _e_stokAvgNew.textContent=perUnit>0 ? rpFull(perUnit) : '-'; }
 }
 
 // --- Save Stok Masuk ---
@@ -3833,15 +3731,15 @@ const _origOpenSheet = window.openSheet;
 function renderLaporan() {
   document.getElementById('laporanTitle').textContent = monthName(currentMonth);
   const lapRange = computePeriodRange(currentPeriod);
-  document.getElementById('laporanPeriod').textContent = fmtDate(lapRange.from) + ' s/d ' + fmtDate(lapRange.to);
+  const lpEl=document.getElementById('laporanPeriod'); if(lpEl) lpEl.textContent = fmtDate(lapRange.from) + ' s/d ' + fmtDate(lapRange.to);
 
-  const mEvents  = state.events;
-  const mSK      = (state.stok_keluar||[]);
-  const mPeng    = (state.pengeluaran||[]);
-  const mTerima  = (state.penerimaan||[]);
-  const mExp     = (state.expenses||[]);
-  const mTokba   = (state.tokba||[]);
-  const mRT      = (state.rt||[]);
+  const mEvents  = filterByPeriod(state.events);
+  const mSK      = filterByPeriod(state.stok_keluar||[]);
+  const mPeng    = filterByPeriod(state.pengeluaran||[]);
+  const mTerima  = filterByPeriod(state.penerimaan||[]);
+  const mExp     = filterByPeriod(state.expenses||[]);
+  const mTokba   = filterByPeriod(state.tokba||[]);
+  const mRT      = filterByPeriod(state.rt||[]);
 
   // ---- PENERIMAAN ----
   const omzetEvent = mEvents.reduce((s,e) => s+(Number(e.omzet)||0), 0);
@@ -3865,7 +3763,7 @@ function renderLaporan() {
     opsMap[kat].items.push(r);
   });
   const opsExpMap = {};
-  mExp.filter(x=>x.kategori==='Operasional').forEach(r => {
+  mExp.filter(x=>isOpsRow(x)).forEach(r => {
     const kat = r.sub_kategori||r.keterangan?.split(' ')[0]||'ops';
     if (!opsExpMap[kat]) opsExpMap[kat] = { total:0, items:[] };
     opsExpMap[kat].total += Number(r.jumlah)||0;
@@ -3873,7 +3771,7 @@ function renderLaporan() {
   });
   const useOpsMap = Object.keys(opsMap).length > 0 ? opsMap : opsExpMap;
   const opsTotal  = Object.values(useOpsMap).reduce((s,v)=>s+v.total, 0);
-  const ovhTotal  = mExp.filter(x=>x.kategori==='Overhead').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const ovhTotal  = 0; // overhead tidak dipisah dari data lama
 
   const totalBiaya  = hppTotal + opsTotal + ovhTotal;
   const labaBersih  = totalOmzet - totalBiaya;
@@ -3892,55 +3790,53 @@ function renderLaporan() {
   el.innerHTML = `
 
     <!-- RINGKASAN EKSEKUTIF -->
-    <div class="laporan-summary-card">
-      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
-        📊 Ringkasan Eksekutif — ${monthName(currentMonth)}
-      </div>
-      <div class="laporan-summary-row">
-        <span style="color:var(--text2)">Omzet Gubukan (Event)</span>
+    <div class="summary-card">
+      <div class="summary-title">📊 Ringkasan Eksekutif · ${monthName(currentMonth)}</div>
+      <div class="summary-row">
+        <span class="lbl">Omzet Gubukan (Event)</span>
         <span style="color:var(--green)">${rpFull(omzetEvent)}</span>
       </div>
-      ${tokbaIn>0?`<div class="laporan-summary-row">
-        <span style="color:var(--text2)">Omzet Toko Online</span>
+      ${tokbaIn>0?`<div class="summary-row">
+        <span class="lbl">Omzet Toko Online</span>
         <span style="color:var(--green)">${rpFull(tokbaIn)}</span>
       </div>`:''}
-      <div class="laporan-summary-row" style="font-weight:600;">
-        <span style="color:var(--cream)">Total Omzet</span>
+      <div class="summary-row" style="font-weight:600;">
+        <span style="color:var(--ink)">Total Omzet</span>
         <span style="color:var(--green);font-size:14px">${rpFull(totalOmzet)}</span>
       </div>
       <div style="border-top:1px solid var(--border);margin:6px 0;"></div>
-      <div class="laporan-summary-row">
-        <span style="color:var(--text2)">HPP (Beli Stok)</span>
+      <div class="summary-row">
+        <span class="lbl">HPP (Beli Stok)</span>
         <span style="color:var(--blue)">(${rpFull(hppTotal)})</span>
       </div>
-      <div class="laporan-summary-row">
-        <span style="color:var(--text2)">Biaya Operasional</span>
+      <div class="summary-row">
+        <span class="lbl">Biaya Operasional</span>
         <span style="color:var(--orange)">(${rpFull(opsTotal)})</span>
       </div>
-      ${ovhTotal>0?`<div class="laporan-summary-row">
-        <span style="color:var(--text2)">Overhead</span>
-        <span style="color:var(--text2)">(${rpFull(ovhTotal)})</span>
+      ${ovhTotal>0?`<div class="summary-row">
+        <span class="lbl">Overhead</span>
+        <span class="lbl">(${rpFull(ovhTotal)})</span>
       </div>`:''}
       <div style="border-top:1px solid var(--border);margin:6px 0;"></div>
-      <div class="laporan-summary-row total">
+      <div class="summary-row total">
         <span>Laba Bersih Usaha</span>
         <span style="color:${labaBersih>=0?'var(--green)':'var(--red)'}">${rpFull(labaBersih)}</span>
       </div>
-      <div class="laporan-summary-row" style="font-size:12px;">
-        <span style="color:var(--text3)">Margin %</span>
+      <div class="summary-row" style="font-size:12px;">
+        <span style="color:var(--ink4)">Margin %</span>
         <span style="color:var(--gold);font-weight:600">${margin}%</span>
       </div>
-      <div class="laporan-summary-row" style="font-size:12px;">
-        <span style="color:var(--text3)">Isrun 10% dari Laba</span>
+      <div class="summary-row" style="font-size:12px;">
+        <span style="color:var(--ink4)">Isrun 10% dari Laba</span>
         <span style="color:var(--gold)">${rpFull(isrun)}</span>
       </div>
     </div>
 
     <!-- PENERIMAAN EVENT -->
     <div class="laporan-section">
-      <div class="laporan-section-header" onclick="toggleLapSection('secPenerima')">
-        <div class="laporan-section-title">💰 Penerimaan Event <span style="font-size:10px;color:var(--text3)">(${mEvents.length} event)</span></div>
-        <div class="laporan-section-total" style="color:var(--green)">${rp(omzetEvent)}</div>
+      <div class="laporan-section-hd" onclick="toggleLapSection('secPenerima')">
+        <div class="laporan-section-label">💰 Penerimaan Event <span style="font-size:10px;color:var(--ink4)">(${mEvents.length} event)</span></div>
+        <div class="laporan-section-val" style="color:var(--green)">${rp(omzetEvent)}</div>
       </div>
       <div class="laporan-section-body" id="secPenerima">
         ${mEvents.length ? mEvents.sort((a,b)=>new Date(a.tanggal)-new Date(b.tanggal)).map(ev => {
@@ -3960,9 +3856,9 @@ function renderLaporan() {
             </div>
           </div>`;
         }).join('')
-        : '<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px;">Belum ada event</div>'}
+        : '<div style="padding:16px;text-align:center;color:var(--ink4);font-size:12px;">Belum ada event</div>'}
         <div class="laporan-row" style="background:var(--bg3);">
-          <span style="font-weight:600;color:var(--cream)">TOTAL OMZET</span>
+          <span style="font-weight:600;color:var(--ink)">TOTAL OMZET</span>
           <span class="laporan-row-val in">${rpFull(omzetEvent)}</span>
         </div>
       </div>
@@ -3971,9 +3867,9 @@ function renderLaporan() {
     <!-- PENERIMAAN PEMBAYARAN -->
     ${mTerima.length?`
     <div class="laporan-section">
-      <div class="laporan-section-header" onclick="toggleLapSection('secTerima')">
-        <div class="laporan-section-title">📥 Penerimaan Kas <span style="font-size:10px;color:var(--text3)">(${mTerima.length} transaksi)</span></div>
-        <div class="laporan-section-total" style="color:var(--green)">${rp(terima)}</div>
+      <div class="laporan-section-hd" onclick="toggleLapSection('secTerima')">
+        <div class="laporan-section-label">📥 Penerimaan Kas <span style="font-size:10px;color:var(--ink4)">(${mTerima.length} transaksi)</span></div>
+        <div class="laporan-section-val" style="color:var(--green)">${rp(terima)}</div>
       </div>
       <div class="laporan-section-body" id="secTerima">
         ${mTerima.map(r=>{
@@ -3987,7 +3883,7 @@ function renderLaporan() {
           </div>`;
         }).join('')}
         <div class="laporan-row" style="background:var(--bg3);">
-          <span style="font-weight:600;color:var(--cream)">TOTAL TERIMA</span>
+          <span style="font-weight:600;color:var(--ink)">TOTAL TERIMA</span>
           <span class="laporan-row-val in">${rpFull(terima)}</span>
         </div>
       </div>
@@ -3995,9 +3891,9 @@ function renderLaporan() {
 
     <!-- HPP BAHAN BAKU -->
     <div class="laporan-section">
-      <div class="laporan-section-header" onclick="toggleLapSection('secHPP')">
-        <div class="laporan-section-title">📦 HPP Bahan Baku</div>
-        <div class="laporan-section-total" style="color:var(--blue)">(${rp(hppTotal)})</div>
+      <div class="laporan-section-hd" onclick="toggleLapSection('secHPP')">
+        <div class="laporan-section-label">📦 HPP Bahan Baku</div>
+        <div class="laporan-section-val" style="color:var(--blue)">(${rp(hppTotal)})</div>
       </div>
       <div class="laporan-section-body" id="secHPP">
         ${mSK.length ? (() => {
@@ -4026,7 +3922,7 @@ function renderLaporan() {
             <div class="laporan-row-val out">${rp(x.jumlah)}</div>
           </div>`).join('')}
         <div class="laporan-row" style="background:var(--bg3);">
-          <span style="font-weight:600;color:var(--cream)">TOTAL HPP</span>
+          <span style="font-weight:600;color:var(--ink)">TOTAL HPP</span>
           <span class="laporan-row-val out">${rpFull(hppTotal)}</span>
         </div>
       </div>
@@ -4034,15 +3930,15 @@ function renderLaporan() {
 
     <!-- BIAYA OPERASIONAL -->
     <div class="laporan-section">
-      <div class="laporan-section-header" onclick="toggleLapSection('secOps')">
-        <div class="laporan-section-title">🚗 Biaya Operasional</div>
-        <div class="laporan-section-total" style="color:var(--orange)">(${rp(opsTotal)})</div>
+      <div class="laporan-section-hd" onclick="toggleLapSection('secOps')">
+        <div class="laporan-section-label">🚗 Biaya Operasional</div>
+        <div class="laporan-section-val" style="color:var(--orange)">(${rp(opsTotal)})</div>
       </div>
       <div class="laporan-section-body" id="secOps">
         ${Object.entries(useOpsMap).map(([kat,v])=>`
           <div class="laporan-row" style="background:rgba(224,138,60,0.05);">
             <div style="flex:1;">
-              <div style="font-size:12px;font-weight:600;color:var(--cream)">${katLabel[kat]||kat}</div>
+              <div style="font-size:12px;font-weight:600;color:var(--ink)">${katLabel[kat]||kat}</div>
             </div>
             <div class="laporan-row-val out">${rp(v.total)}</div>
           </div>
@@ -4055,9 +3951,9 @@ function renderLaporan() {
             <div class="laporan-row-val out">${rp(r.jumlah)}</div>
           </div>`).join('')}
         `).join('')}
-        ${Object.keys(useOpsMap).length===0?'<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px;">Belum ada biaya operasional</div>':''}
+        ${Object.keys(useOpsMap).length===0?'<div style="padding:16px;text-align:center;color:var(--ink4);font-size:12px;">Belum ada biaya operasional</div>':''}
         <div class="laporan-row" style="background:var(--bg3);">
-          <span style="font-weight:600;color:var(--cream)">TOTAL OPERASIONAL</span>
+          <span style="font-weight:600;color:var(--ink)">TOTAL OPERASIONAL</span>
           <span class="laporan-row-val out">${rpFull(opsTotal)}</span>
         </div>
       </div>
@@ -4066,9 +3962,9 @@ function renderLaporan() {
     ${ovhTotal>0?`
     <!-- OVERHEAD -->
     <div class="laporan-section">
-      <div class="laporan-section-header" onclick="toggleLapSection('secOvh')">
-        <div class="laporan-section-title">💡 Overhead</div>
-        <div class="laporan-section-total" style="color:var(--text2)">(${rp(ovhTotal)})</div>
+      <div class="laporan-section-hd" onclick="toggleLapSection('secOvh')">
+        <div class="laporan-section-label">💡 Overhead</div>
+        <div class="laporan-section-val" style="color:var(--ink3)">(${rp(ovhTotal)})</div>
       </div>
       <div class="laporan-section-body" id="secOvh">
         ${mExp.filter(x=>x.kategori==='Overhead').map(x=>`
@@ -4077,7 +3973,7 @@ function renderLaporan() {
             <div class="laporan-row-val out">${rp(x.jumlah)}</div>
           </div>`).join('')}
         <div class="laporan-row" style="background:var(--bg3);">
-          <span style="font-weight:600;color:var(--cream)">TOTAL OVERHEAD</span>
+          <span style="font-weight:600;color:var(--ink)">TOTAL OVERHEAD</span>
           <span class="laporan-row-val out">${rpFull(ovhTotal)}</span>
         </div>
       </div>
@@ -4086,9 +3982,9 @@ function renderLaporan() {
     ${tokbaIn>0||tokbaOut>0?`
     <!-- TOKO ONLINE -->
     <div class="laporan-section">
-      <div class="laporan-section-header" onclick="toggleLapSection('secTokba')">
-        <div class="laporan-section-title">🛒 Toko Online</div>
-        <div class="laporan-section-total" style="color:${tokbaIn-tokbaOut>=0?'var(--green)':'var(--red)'}">${rp(tokbaIn-tokbaOut)}</div>
+      <div class="laporan-section-hd" onclick="toggleLapSection('secTokba')">
+        <div class="laporan-section-label">🛒 Toko Online</div>
+        <div class="laporan-section-val" style="color:${tokbaIn-tokbaOut>=0?'var(--green)':'var(--red)'}">${rp(tokbaIn-tokbaOut)}</div>
       </div>
       <div class="laporan-section-body" id="secTokba">
         ${mTokba.map(r=>`
@@ -4109,34 +4005,34 @@ function renderLaporan() {
     </div>`:''}
 
     <!-- TOTAL AKHIR -->
-    <div class="laporan-summary-card" style="margin-top:14px;border-color:var(--gold)">
+    <div class="summary-card" style="border-color:var(--gold);">
       <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
         📊 Neraca Bulan ${monthName(currentMonth)}
       </div>
-      <div class="laporan-summary-row">
-        <span style="color:var(--text2)">Total Omzet</span>
+      <div class="summary-row">
+        <span class="lbl">Total Omzet</span>
         <span style="color:var(--green);font-weight:600">${rpFull(totalOmzet)}</span>
       </div>
-      <div class="laporan-summary-row">
-        <span style="color:var(--text2)">Total Biaya</span>
+      <div class="summary-row">
+        <span class="lbl">Total Biaya</span>
         <span style="color:var(--red)">(${rpFull(totalBiaya)})</span>
       </div>
-      <div class="laporan-summary-row total">
+      <div class="summary-row total">
         <span>Laba Bersih Usaha</span>
         <span style="color:${labaBersih>=0?'var(--green)':'var(--red)'}">${rpFull(labaBersih)}</span>
       </div>
-      <div class="laporan-summary-row" style="font-size:12px;">
-        <span style="color:var(--text3)">Margin %</span>
+      <div class="summary-row" style="font-size:12px;">
+        <span style="color:var(--ink4)">Margin %</span>
         <span style="color:var(--gold);font-weight:600">${margin}%</span>
       </div>
-      <div class="laporan-summary-row" style="font-size:12px;">
-        <span style="color:var(--text3)">Isrun 10% dari Laba</span>
+      <div class="summary-row" style="font-size:12px;">
+        <span style="color:var(--ink4)">Isrun 10% dari Laba</span>
         <span style="color:var(--gold)">${rpFull(isrun)}</span>
       </div>
     </div>
 
     <div style="padding:0 14px 80px;">
-      <button class="btn-submit" onclick="printLaporan()">🖨️ Print / Share Laporan</button>
+      <button class="btn btn-primary" onclick="printLaporan()">🖨️ Print / Share Laporan</button>
     </div>
   `;
 }
@@ -4149,12 +4045,12 @@ function toggleLapSection(id) {
 }
 
 function printLaporan() {
-  const mEvents  = state.events;
-  const mSK      = (state.stok_keluar||[]);
-  const mPeng    = (state.pengeluaran||[]);
-  const mTerima  = (state.penerimaan||[]);
-  const mExp     = (state.expenses||[]);
-  const mTokba   = (state.tokba||[]);
+  const mEvents  = filterByPeriod(state.events);
+  const mSK      = filterByPeriod(state.stok_keluar||[]);
+  const mPeng    = filterByPeriod(state.pengeluaran||[]);
+  const mTerima  = filterByPeriod(state.penerimaan||[]);
+  const mExp     = filterByPeriod(state.expenses||[]);
+  const mTokba   = filterByPeriod(state.tokba||[]);
 
   const omzetEvent = mEvents.reduce((s,e)=>s+(Number(e.omzet)||0),0);
   const hppStok    = mSK.reduce((s,r)=>s+(Number(r.total_hpp)||0),0);
@@ -4401,9 +4297,9 @@ function updateTerimaSummary2() {
   const ter = getEventPenerimaan(eventId);
   const sisa = (Number(ev.omzet)||0) - ter.total;
   sumEl.style.display = 'block';
-  document.getElementById('tsTotal2').textContent   = rpFull(Number(ev.omzet)||0);
-  document.getElementById('tsDibayar2').textContent = rpFull(ter.total);
-  document.getElementById('tsSisa2').textContent    = rpFull(Math.max(0,sisa));
+  { const _e_tsTotal2=document.getElementById('tsTotal2'); if(_e_tsTotal2) _e_tsTotal2.textContent=rpFull(Number(ev.omzet)||0); }
+  { const _e_tsDibayar2=document.getElementById('tsDibayar2'); if(_e_tsDibayar2) _e_tsDibayar2.textContent=rpFull(ter.total); }
+  { const _e_tsSisa2=document.getElementById('tsSisa2'); if(_e_tsSisa2) _e_tsSisa2.textContent=rpFull(Math.max(0,sisa)); }
   const jenis = document.getElementById('terimaJenis2').value;
   const jumlahEl = document.getElementById('terimaJumlah2');
   if (jenis==='booking') jumlahEl.value = 100000;
@@ -4678,6 +4574,87 @@ function applyCustomRange() {
   closeSheet('monthSheet');
 }
 
+function renderEventForm(eventId) {
+  const ev = eventId ? state.events.find(e=>e.id===eventId) : null;
+  const isEdit = !!ev;
+  document.getElementById('eventFormTitle').textContent = isEdit ? 'Edit Event' : 'Tambah Event';
+  const bulan = currentMonth;
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('eventFormBody').innerHTML = `
+    <div style="padding:0 20px 20px;">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">No. Event</label>
+          <input type="text" class="form-control" id="ef_no" value="${ev?.no_event||''}" placeholder="233">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="ef_status">
+            ${['pending','booking','dp','lunas','follow','batal'].map(s=>
+              `<option value="${s}" ${(ev?.status||'pending')===s?'selected':''}>${s}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Customer</label>
+        <input type="text" class="form-control" id="ef_customer" value="${ev?.customer||''}" placeholder="Nama customer">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lokasi</label>
+        <input type="text" class="form-control" id="ef_lokasi" value="${ev?.lokasi||''}" placeholder="Lokasi acara">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="ef_tgl" value="${ev?.tanggal||today}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Omzet (Rp)</label>
+          <input type="number" class="form-control" id="ef_omzet" value="${ev?.omzet||''}" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <textarea class="form-control" id="ef_catatan" rows="2" placeholder="Catatan...">${ev?.catatan||''}</textarea>
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:8px;" onclick="saveEventForm(${isEdit?`'${ev.id}'`:'null'})">
+        💾 ${isEdit?'Update Event':'Simpan Event'}
+      </button>
+      ${isEdit?`<button class="btn btn-danger" onclick="deleteEvent('${ev.id}')">🗑️ Hapus Event</button>`:''}
+    </div>`;
+}
+
+async function saveEventForm(eventId) {
+  const no      = document.getElementById('ef_no')?.value.trim();
+  const customer= document.getElementById('ef_customer')?.value.trim();
+  const lokasi  = document.getElementById('ef_lokasi')?.value.trim();
+  const tgl     = document.getElementById('ef_tgl')?.value;
+  const status  = document.getElementById('ef_status')?.value;
+  const omzet   = Number(document.getElementById('ef_omzet')?.value)||0;
+  const catatan = document.getElementById('ef_catatan')?.value.trim();
+  if (!customer||!tgl) { toast('⚠️ Isi Customer dan Tanggal!'); return; }
+  const data = {
+    no_event: no, customer, lokasi, tanggal: tgl,
+    bulan: tgl.slice(0,7), status, omzet,
+    isrun: omzet*0.1, catatan,
+  };
+  try {
+    if (eventId) {
+      await apiWrite('update','events',data,eventId);
+      const idx = state.events.findIndex(e=>e.id===eventId);
+      if (idx>=0) state.events[idx] = {...state.events[idx],...data};
+    } else {
+      const res = await apiWrite('insert','events',data);
+      state.events.push({...data, id: res.id});
+    }
+    cacheState();
+    closeSheet('eventFormSheet');
+    renderPage(currentPage);
+    toast('✅ Event disimpan!');
+  } catch(e) { toast('❌ '+e.message); }
+}
+
 function init() {
   // Apply saved theme
   const savedTheme = localStorage.getItem('gubukan_theme') || 'navy';
@@ -4698,7 +4675,7 @@ function init() {
   updatePeriodLabel();
   setInterval(updateToday, 60000);
   // Load API URL into settings
-  if (API_URL) document.getElementById('apiUrlInput').value = API_URL;
+  // Supabase built-in
 
   // Load default dates
   const today = new Date().toISOString().slice(0,10);
@@ -4712,7 +4689,7 @@ function init() {
 
   // Render
   renderDash();
-  document.getElementById('monthLabel').textContent = monthName(currentMonth);
+  { const ml=document.getElementById('monthLabel'); if(ml) ml.textContent = currentPeriod.label||monthName(currentMonth); }
 
   // Auto sync if URL exists
   if (API_URL) syncData();
@@ -4720,6 +4697,7 @@ function init() {
 }
 
 init();
+
 </script>
 </body>
 </html>
