@@ -11,25 +11,88 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 :root {
-  --bg:        #0f0e0c;
-  --bg2:       #1a1814;
-  --bg3:       #252218;
-  --card:      #1e1c16;
-  --border:    #2e2b20;
-  --gold:      #d4a843;
-  --gold2:     #f0c96a;
-  --cream:     #f5edd8;
+  /* Navy (default) */
+  --bg:        #0a0f1e;
+  --bg2:       #0d1528;
+  --bg3:       #111d35;
+  --card:      #0f1a30;
+  --border:    #1e2d4a;
+  --gold:      #4d9ef7;
+  --gold2:     #7bb8ff;
+  --cream:     #e8f0ff;
   --green:     #4caf82;
   --red:       #e05c5c;
-  --blue:      #5c9ee0;
+  --blue:      #4d9ef7;
   --orange:    #e08a3c;
-  --text:      #e8dfc8;
-  --text2:     #a09880;
-  --text3:     #6b6352;
+  --text:      #d0dff5;
+  --text2:     #7a9bc4;
+  --text3:     #3d5a80;
   --shadow:    0 4px 24px rgba(0,0,0,0.5);
   --radius:    14px;
   --radius-sm: 8px;
 }
+
+/* ---- THEMES ---- */
+[data-theme="earthy"] {
+  --bg:#0f0e0c; --bg2:#1a1814; --bg3:#252218; --card:#1e1c16;
+  --border:#2e2b20; --gold:#d4a843; --gold2:#f0c96a; --cream:#f5edd8;
+  --text:#e8dfc8; --text2:#a09880; --text3:#6b6352;
+}
+[data-theme="navy"] {
+  --bg:#0a0f1e; --bg2:#0d1528; --bg3:#111d35; --card:#0f1a30;
+  --border:#1e2d4a; --gold:#4d9ef7; --gold2:#7bb8ff; --cream:#e8f0ff;
+  --text:#d0dff5; --text2:#7a9bc4; --text3:#3d5a80;
+}
+[data-theme="forest"] {
+  --bg:#0a1208; --bg2:#0f1a0c; --bg3:#152410; --card:#111e0e;
+  --border:#1e3018; --gold:#5cb85c; --gold2:#7dd87d; --cream:#e8f5e8;
+  --text:#d0f0d0; --text2:#7ab87a; --text3:#3d6b3d;
+}
+[data-theme="purple"] {
+  --bg:#0e0a1e; --bg2:#150d28; --bg3:#1c1235; --card:#130f30;
+  --border:#251a4a; --gold:#9b59b6; --gold2:#c39bd3; --cream:#f0e8ff;
+  --text:#e0d0ff; --text2:#9b7ac4; --text3:#5a3d80;
+}
+[data-theme="rose"] {
+  --bg:#1a0a0e; --bg2:#280d15; --bg3:#35111c; --card:#300f1a;
+  --border:#4a1a28; --gold:#e05c8a; --gold2:#f07aa0; --cream:#ffe8f0;
+  --text:#f5d0dd; --text2:#c47a95; --text3:#803d55;
+}
+[data-theme="light"] {
+  --bg:#f0f4ff; --bg2:#e8eef8; --bg3:#dde5f5; --card:#edf1fb;
+  --border:#c8d5ea; --gold:#2563eb; --gold2:#3b82f6; --cream:#1e3a5f;
+  --green:#16a34a; --red:#dc2626; --orange:#ea580c;
+  --text:#1e3a5f; --text2:#4a6fa5; --text3:#8fa8c8;
+}
+
+/* Theme picker */
+.theme-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 10px; padding: 14px;
+}
+.theme-card {
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  overflow: hidden; cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.theme-card:active { transform: scale(0.96); }
+.theme-card.active { border-color: var(--gold); }
+.theme-preview {
+  height: 52px;
+  display: flex; flex-direction: column;
+  padding: 6px 8px; gap: 4px;
+}
+.theme-preview-bar {
+  height: 6px; border-radius: 3px;
+  opacity: 0.9;
+}
+.theme-name {
+  text-align: center; font-size: 11px;
+  color: var(--text2); padding: 5px 0;
+  background: var(--card);
+}
+
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -796,6 +859,11 @@ textarea.form-control { resize: vertical; min-height: 70px; }
           <div class="settings-desc">Pak Arifin, Mba Ika, Bu Dewi, dll</div>
         </div>
         <div class="settings-arrow">›</div>
+      </div>
+
+      <div style="padding:4px 0 6px;">
+        <div style="padding:0 14px 8px;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">🎨 Tema Warna</div>
+        <div class="theme-grid" id="themeGrid"></div>
       </div>
       <div class="settings-item" onclick="exportMonth()">
         <div class="settings-icon">📤</div>
@@ -1784,7 +1852,8 @@ function selectMonth(m) {
   currentMonth = m;
   localStorage.setItem('gubukan_month', m);
   closeSheet('monthSheet');
-  renderPage(currentPage); // render langsung dari cache, cepat!
+  document.getElementById('monthLabel').textContent = monthName(m);
+  renderPage(currentPage);
 }
 
 // ============================================================
@@ -1827,7 +1896,49 @@ function exportMonth() {
 // ============================================================
 // INIT
 // ============================================================
+// ============================================================
+// THEME SYSTEM
+// ============================================================
+const THEMES = [
+  { id:'navy',   name:'Navy',   bg:'#0a0f1e', bg2:'#0d1528', accent:'#4d9ef7' },
+  { id:'earthy', name:'Earthy', bg:'#0f0e0c', bg2:'#1a1814', accent:'#d4a843' },
+  { id:'forest', name:'Forest', bg:'#0a1208', bg2:'#0f1a0c', accent:'#5cb85c' },
+  { id:'purple', name:'Purple', bg:'#0e0a1e', bg2:'#150d28', accent:'#9b59b6' },
+  { id:'rose',   name:'Rose',   bg:'#1a0a0e', bg2:'#280d15', accent:'#e05c8a' },
+  { id:'light',  name:'Light',  bg:'#f0f4ff', bg2:'#e8eef8', accent:'#2563eb' },
+];
+
+function applyTheme(id) {
+  document.documentElement.setAttribute('data-theme', id);
+  localStorage.setItem('gubukan_theme', id);
+  // Update active state
+  document.querySelectorAll('.theme-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.theme === id);
+  });
+}
+
+function buildThemeGrid() {
+  const current = localStorage.getItem('gubukan_theme') || 'navy';
+  const grid = document.getElementById('themeGrid');
+  if (!grid) return;
+  grid.innerHTML = THEMES.map(t => `
+    <div class="theme-card ${t.id===current?'active':''}" 
+         data-theme="${t.id}" onclick="applyTheme('${t.id}')">
+      <div class="theme-preview" style="background:${t.bg};">
+        <div class="theme-preview-bar" style="background:${t.accent};width:80%;"></div>
+        <div class="theme-preview-bar" style="background:${t.bg2};width:60%;"></div>
+        <div class="theme-preview-bar" style="background:${t.accent};width:40%;opacity:0.5;"></div>
+      </div>
+      <div class="theme-name">${t.name}</div>
+    </div>`).join('');
+}
+
+
 function init() {
+  // Apply saved theme
+  const savedTheme = localStorage.getItem('gubukan_theme') || 'navy';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  buildThemeGrid();
   // Load API URL into settings
   if (API_URL) document.getElementById('apiUrlInput').value = API_URL;
 
