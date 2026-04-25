@@ -2117,10 +2117,7 @@ function loadCache() {
 // FORMATTERS
 // ============================================================
 function rp(n) {
-  n = Number(n) || 0;
-  if (Math.abs(n) >= 1000000) return 'Rp ' + (n/1000000).toFixed(1) + 'jt';
-  if (Math.abs(n) >= 1000)    return 'Rp ' + (n/1000).toFixed(0) + 'rb';
-  return 'Rp ' + n.toLocaleString('id');
+  return 'Rp ' + (Number(n)||0).toLocaleString('id-ID');
 }
 
 function rpFull(n) {
@@ -2571,11 +2568,13 @@ function filterKas(filter) {
   const journal  = buildKasJournal();
   const filtered = filter==='all' ? journal : journal.filter(j=>j.type===filter);
 
-  // Saldo awal = saldo kumulatif semua transaksi sebelum periode ini
-  const range2     = computePeriodRange(currentPeriod);
-  const prevEnd    = new Date(new Date(range2.from) - 86400000).toISOString().slice(0,10);
-  const jPrev = buildKasJournalByRange("2000-01-01", prevEnd);
-  const saldoAwal = jPrev.filter(j=>j.dir==="in" && j.type!=="tokba").reduce((s,j)=>s+j.amount,0) - jPrev.filter(j=>j.dir==="out" && j.type!=="tokba").reduce((s,j)=>s+j.amount,0);
+  // Saldo awal = kumulatif semua transaksi sebelum dari_tanggal periode ini
+  const range2  = computePeriodRange(currentPeriod);
+  const prevEnd = new Date(new Date(range2.from) - 86400000).toISOString().slice(0,10);
+  // Pakai buildKasJournalByRange dengan tanggal — konsisten untuk semua tipe periode
+  const jPrev   = buildKasJournalByRange('2000-01-01', prevEnd);
+  const saldoAwal = jPrev.filter(j=>j.dir==='in'  && j.type!=='tokba').reduce((s,j)=>s+j.amount,0)
+                  - jPrev.filter(j=>j.dir==='out' && j.type!=='tokba').reduce((s,j)=>s+j.amount,0);
   // totalIn/Out: exclude tokba (punya tab sendiri, tidak sama dengan dashboard HPP+Ops)
   const totalIn    = filtered.filter(j=>j.dir==='in'  && j.type!=='tokba').reduce((s,j)=>s+j.amount,0);
   const totalOut   = filtered.filter(j=>j.dir==='out' && j.type!=='tokba').reduce((s,j)=>s+j.amount,0);
