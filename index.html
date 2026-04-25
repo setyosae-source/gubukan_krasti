@@ -980,7 +980,10 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="topbar-logo">🍲 Gubukan</div>
-  <div class="topbar-month" id="monthLabel" onclick="openMonthPicker()">Loading...</div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+    <div class="topbar-month" id="monthLabel" onclick="openMonthPicker()">Loading...</div>
+    <div id="todayLabel" style="font-size:10px;color:var(--text3);"></div>
+  </div>
   <div class="topbar-sync" id="syncBtn" onclick="syncData()">🔄</div>
 </div>
 
@@ -1046,7 +1049,7 @@ textarea.form-control { resize: vertical; min-height: 70px; }
     </div>
 
     <div class="section-header">
-      <div class="section-title">Event Terkini</div>
+      <div class="section-title">📅 Event Mendatang</div>
       <button class="section-action" onclick="gotoPage('events')">Lihat Semua</button>
     </div>
     <div class="event-list" id="recentEvents">
@@ -2119,11 +2122,15 @@ function renderDash() {
   document.getElementById('dOps').textContent   = rp(opsV3||ops);
   document.getElementById('dTerima').textContent = rp(terimaV3);
 
-  // Recent events
-  const recent = [...mEvents].sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal)).slice(0,5);
+  // Recent events - today & future only, sorted ascending (nearest first)
+  const todayStr = new Date().toISOString().slice(0,10);
+  const recent = [...state.events]
+    .filter(ev => ev.tanggal >= todayStr && ev.status !== 'batal')
+    .sort((a,b) => new Date(a.tanggal)-new Date(b.tanggal))
+    .slice(0,8);
   const el = document.getElementById('recentEvents');
   if (!recent.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada event bulan ini</div>';
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🎉</div>Tidak ada event mendatang</div>';
     return;
   }
   el.innerHTML = recent.map(ev => {
@@ -4532,6 +4539,18 @@ function init() {
   document.documentElement.setAttribute('data-theme', savedTheme);
   buildThemeGrid();
   initBackHandler();
+
+  // Set today date in topbar
+  const updateToday = () => {
+    const now = new Date();
+    const days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+    const label = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+    const el = document.getElementById('todayLabel');
+    if (el) el.textContent = label;
+  };
+  updateToday();
+  setInterval(updateToday, 60000);
   // Load API URL into settings
   if (API_URL) document.getElementById('apiUrlInput').value = API_URL;
 
