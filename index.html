@@ -555,111 +555,21 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 .empty-icon { font-size: 40px; margin-bottom: 10px; }
 
 /* ---- MONTH PICKER ---- */
-.month-picker-scroll { padding: 8px 14px 16px; overflow-y: auto; max-height: 70vh; }
-.month-year-group { margin-bottom: 14px; }
-.month-year-label {
-  font-family: 'Playfair Display', serif;
-  font-size: 15px; color: var(--gold);
-  margin-bottom: 8px; padding: 4px 0;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.month-year-badge {
-  font-size: 10px; color: var(--text3);
-  font-family: 'DM Sans', sans-serif;
-}
 .month-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; padding: 16px;
 }
 .month-btn {
-  padding: 8px 4px; text-align: center;
+  padding: 10px; text-align: center;
   background: var(--bg3); border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  cursor: pointer; font-size: 11px; color: var(--text2);
-  transition: all 0.15s; position: relative;
+  cursor: pointer; font-size: 12px; color: var(--text2);
 }
-.month-btn:active { transform: scale(0.95); }
 .month-btn.active {
   border-color: var(--gold);
-  background: rgba(77,158,247,0.15);
-  color: var(--gold); font-weight: 600;
+  background: rgba(212,168,67,0.15);
+  color: var(--gold);
 }
-.month-btn.has-data::after {
-  content: ''; position: absolute;
-  top: 4px; right: 4px;
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: var(--green);
-}
-.month-btn.future { opacity: 0.5; }
-
-
-/* ---- PAYMENT SYSTEM ---- */
-.payment-tabs {
-  display: flex; border-bottom: 1px solid var(--border);
-  margin-bottom: 14px;
-}
-.payment-tab {
-  flex: 1; padding: 10px; text-align: center;
-  font-size: 12px; cursor: pointer;
-  color: var(--text2); border-bottom: 2px solid transparent;
-  transition: color 0.2s;
-}
-.payment-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-
-.payment-step {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); margin-bottom: 6px;
-}
-.payment-step-icon {
-  width: 32px; height: 32px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; flex-shrink: 0;
-}
-.payment-step-icon.done  { background: rgba(76,175,130,0.2); }
-.payment-step-icon.pend  { background: rgba(212,168,67,0.2); }
-.payment-step-icon.wait  { background: rgba(110,110,110,0.15); }
-.payment-step-info { flex: 1; }
-.payment-step-label { font-size: 12px; color: var(--text2); }
-.payment-step-amount { font-size: 14px; font-weight: 600; color: var(--cream); }
-.payment-step-date { font-size: 10px; color: var(--text3); margin-top: 2px; }
-.payment-step-action {
-  font-size: 11px; color: var(--gold);
-  border: 1px solid var(--gold);
-  border-radius: 12px; padding: 3px 10px;
-  cursor: pointer; background: none; white-space: nowrap;
-}
-.payment-progress {
-  background: var(--border); border-radius: 4px;
-  height: 8px; margin: 10px 0; overflow: hidden;
-}
-.payment-progress-fill {
-  height: 100%; border-radius: 4px;
-  background: linear-gradient(90deg, var(--green), var(--gold));
-  transition: width 0.6s ease;
-}
-.payment-summary {
-  display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 6px; margin-bottom: 12px;
-}
-.payment-summary-item {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 8px; text-align: center;
-}
-.payment-summary-label { font-size: 9px; color: var(--text3); text-transform: uppercase; margin-bottom: 3px; }
-.payment-summary-val { font-size: 12px; font-weight: 600; }
-
-/* Invoice print styles */
-@media print {
-  body > *:not(#invoicePrint) { display: none !important; }
-  #invoicePrint { display: block !important; }
-  .invoice-wrap { box-shadow: none !important; }
-}
-#invoicePrint { display: none; }
-
 
 /* ---- EVENT DETAIL SHEET ---- */
 .detail-omzet {
@@ -691,6 +601,79 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   .fab { right: calc(50% - 240px + 16px); }
   .toast { max-width: 400px; }
 }
+
+/* ---- STOK & BIAYA SYSTEM ---- */
+.quick-btns {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; padding: 14px;
+}
+.quick-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  cursor: pointer; text-align: center;
+  transition: border-color 0.2s, transform 0.15s;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+}
+.quick-btn:active { transform: scale(0.97); }
+.quick-btn.keluar { border-top: 3px solid var(--red); }
+.quick-btn.masuk  { border-top: 3px solid var(--green); }
+.quick-btn-icon { font-size: 24px; }
+.quick-btn-label { font-size: 12px; font-weight: 600; color: var(--cream); }
+.quick-btn-desc { font-size: 10px; color: var(--text3); }
+
+.stok-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 6px;
+}
+.stok-icon { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+.stok-info { flex: 1; min-width: 0; }
+.stok-nama { font-size: 13px; font-weight: 600; color: var(--cream); }
+.stok-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.stok-right { text-align: right; }
+.stok-qty { font-size: 13px; font-weight: 600; color: var(--gold); }
+.stok-harga { font-size: 10px; color: var(--text2); }
+.stok-low { border-left: 3px solid var(--red); }
+
+.badge {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 10px; font-size: 10px; font-weight: 600;
+}
+.badge-hpp   { background: rgba(92,158,224,0.2);  color: var(--blue); }
+.badge-ops   { background: rgba(224,138,60,0.2);  color: var(--orange); }
+.badge-terima{ background: rgba(76,175,130,0.2);  color: var(--green); }
+.badge-stok  { background: rgba(212,168,67,0.2);  color: var(--gold); }
+
+/* Stok keluar rows in event form */
+.stok-pick-row {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px;
+  margin-bottom: 8px;
+}
+.stok-pick-top {
+  display: grid; grid-template-columns: 1fr auto auto auto;
+  gap: 8px; align-items: center;
+}
+
+/* Dashboard stats row */
+.stat-row {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 8px; padding: 0 14px 12px;
+}
+.stat-mini {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px;
+  text-align: center;
+}
+.stat-mini-label { font-size: 9px; color: var(--text3); text-transform: uppercase; margin-bottom: 3px; }
+.stat-mini-val { font-size: 13px; font-weight: 600; }
+
 </style>
 </head>
 <body>
@@ -713,9 +696,10 @@ textarea.form-control { resize: vertical; min-height: 70px; }
       <div class="dash-period" id="dashPeriod">—</div>
     </div>
 
+    <!-- Stats Row -->
     <div class="summary-grid">
       <div class="summary-card green">
-        <div class="sc-label">Omzet Gubukan</div>
+        <div class="sc-label">Omzet</div>
         <div class="sc-value green" id="dOmzet">Rp 0</div>
         <div class="sc-sub" id="dEventCount">0 event</div>
       </div>
@@ -725,20 +709,35 @@ textarea.form-control { resize: vertical; min-height: 70px; }
         <div class="sc-sub" id="dMargin">margin 0%</div>
         <div class="progress-bar"><div class="progress-fill" id="dMarginBar" style="width:0%"></div></div>
       </div>
-      <div class="summary-card blue">
-        <div class="sc-label">Toko Online</div>
-        <div class="sc-value" id="dTokba">Rp 0</div>
-        <div class="sc-sub" id="dTokbaSaldo">saldo</div>
+    </div>
+
+    <!-- Mini stats -->
+    <div class="stat-row">
+      <div class="stat-mini">
+        <div class="stat-mini-label">HPP</div>
+        <div class="stat-mini-val" style="color:var(--blue)" id="dHPP">Rp 0</div>
       </div>
-      <div class="summary-card orange">
-        <div class="sc-label">Kas RT</div>
-        <div class="sc-value" id="dRT">Rp 0</div>
-        <div class="sc-sub" id="dRTSaldo">saldo</div>
+      <div class="stat-mini">
+        <div class="stat-mini-label">Ops</div>
+        <div class="stat-mini-val" style="color:var(--orange)" id="dOps">Rp 0</div>
       </div>
-      <div class="summary-card-wide summary-card red">
-        <div class="sc-label">Total Pengeluaran Bisnis</div>
-        <div class="sc-value" id="dTotalExp">Rp 0</div>
-        <div class="sc-sub" id="dExpBreak">HPP + Operasional + Overhead</div>
+      <div class="stat-mini">
+        <div class="stat-mini-label">Terima</div>
+        <div class="stat-mini-val" style="color:var(--green)" id="dTerima">Rp 0</div>
+      </div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="quick-btns">
+      <div class="quick-btn keluar" onclick="openSheet('inputBiayaSheet')">
+        <div class="quick-btn-icon">📤</div>
+        <div class="quick-btn-label">Input Biaya</div>
+        <div class="quick-btn-desc">Stok bahan · Ops · Transport</div>
+      </div>
+      <div class="quick-btn masuk" onclick="openSheet('inputTerimaSheet')">
+        <div class="quick-btn-icon">📥</div>
+        <div class="quick-btn-label">Input Terima</div>
+        <div class="quick-btn-desc">Booking · DP · Pelunasan</div>
       </div>
     </div>
 
@@ -760,11 +759,9 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   <div class="page" id="page-events">
     <div class="filter-row" id="eventFilters">
       <div class="filter-chip active" data-filter="all">Semua</div>
-      <div class="filter-chip" data-filter="booking">📅 Booking</div>
-      <div class="filter-chip" data-filter="dp">💰 DP</div>
       <div class="filter-chip" data-filter="lunas">✅ Lunas</div>
+      <div class="filter-chip" data-filter="dp">💰 DP</div>
       <div class="filter-chip" data-filter="follow">📞 Follow Up</div>
-      <div class="filter-chip" data-filter="pending">⏳ Pending</div>
     </div>
     <div class="event-list" id="eventsList">
       <div class="loading"><div class="spinner"></div>Memuat...</div>
@@ -965,11 +962,9 @@ textarea.form-control { resize: vertical; min-height: 70px; }
       <div class="form-group">
         <label class="form-label">Status</label>
         <select class="form-control" id="fStatus">
-          <option value="booking">📅 Booking</option>
-          <option value="dp">💰 DP Masuk</option>
           <option value="lunas">✅ Lunas</option>
+          <option value="dp">💰 DP</option>
           <option value="follow">📞 Follow Up</option>
-          <option value="pending">⏳ Pending</option>
           <option value="batal">❌ Batal</option>
         </select>
       </div>
@@ -1099,44 +1094,209 @@ textarea.form-control { resize: vertical; min-height: 70px; }
       <div class="sheet-title">Pilih Bulan</div>
       <div class="sheet-close" onclick="closeSheet('monthSheet')">✕</div>
     </div>
-    <div class="month-picker-scroll" id="monthGrid"></div>
+    <div class="month-grid" id="monthGrid"></div>
   </div>
 </div>
 
 
-<!-- Payment Sheet -->
-<div class="overlay" id="paymentSheet" onclick="overlayClose(event,'paymentSheet')">
+<!-- ==================== INPUT BIAYA SHEET ==================== -->
+<div class="overlay" id="inputBiayaSheet" onclick="overlayClose(event,'inputBiayaSheet')">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
-      <div class="sheet-title" id="paymentSheetTitle">Catat Pembayaran</div>
-      <div class="sheet-close" onclick="closeSheet('paymentSheet')">✕</div>
+      <div class="sheet-title">📤 Input Biaya</div>
+      <div class="sheet-close" onclick="closeSheet('inputBiayaSheet')">✕</div>
     </div>
     <div class="sheet-body">
-      <input type="hidden" id="payEventId">
-      <input type="hidden" id="payType">
+      <!-- Type Selector -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div class="quick-btn keluar" id="biayaTypeStok" onclick="switchBiayaType('stok')" style="padding:10px;">
+          <div class="quick-btn-icon" style="font-size:18px;">📦</div>
+          <div class="quick-btn-label" style="font-size:11px;">Beli Stok</div>
+          <div class="quick-btn-desc">Bahan baku</div>
+        </div>
+        <div class="quick-btn" id="biayaTypeOps" onclick="switchBiayaType('ops')" style="padding:10px;">
+          <div class="quick-btn-icon" style="font-size:18px;">🚗</div>
+          <div class="quick-btn-label" style="font-size:11px;">Biaya Ops</div>
+          <div class="quick-btn-desc">Transport, fee, tol</div>
+        </div>
+      </div>
+
+      <!-- STOK FORM -->
+      <div id="formStok">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tanggal</label>
+            <input type="date" class="form-control" id="stokTgl">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kategori</label>
+            <select class="form-control" id="stokKat">
+              <option value="sayuran">🥕 Sayuran</option>
+              <option value="daging">🥩 Daging/Protein</option>
+              <option value="dairy">🧀 Dairy/Susu</option>
+              <option value="bumbu">🌶️ Bumbu</option>
+              <option value="tepung">🌾 Tepung/Baking</option>
+              <option value="packaging">📦 Packaging</option>
+              <option value="frozen">❄️ Frozen</option>
+              <option value="lainnya">📋 Lainnya</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nama Bahan</label>
+          <input type="text" class="form-control" id="stokNama" placeholder="Wortel, Mozarella, Pastry Edo..." list="stokNamaList">
+          <datalist id="stokNamaList"></datalist>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Qty Beli</label>
+            <input type="number" class="form-control" id="stokQty" placeholder="5" oninput="calcStokHarga()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Satuan Beli</label>
+            <select class="form-control" id="stokSatuan" onchange="updateSatuanKecil()">
+              <option value="kg">kg</option>
+              <option value="gram">gram</option>
+              <option value="liter">liter</option>
+              <option value="ml">ml</option>
+              <option value="pack">pack</option>
+              <option value="pcs">pcs</option>
+              <option value="lusin">lusin</option>
+              <option value="box">box</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Satuan Pakai</label>
+            <select class="form-control" id="stokSatuanKecil">
+              <option value="gram">gram</option>
+              <option value="ml">ml</option>
+              <option value="pcs">pcs</option>
+              <option value="kg">kg</option>
+              <option value="liter">liter</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Konversi (1 satuan beli = ? satuan pakai)</label>
+            <input type="number" class="form-control" id="stokKonversi" placeholder="1000" oninput="calcStokHarga()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Harga Beli Total (Rp)</label>
+            <input type="number" class="form-control" id="stokHargaTotal" placeholder="50000" oninput="calcStokHarga()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Harga / Satuan Pakai</label>
+            <input type="text" class="form-control" id="stokHargaPerUnit" placeholder="otomatis" readonly style="opacity:0.7">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Toko / Supplier</label>
+          <input type="text" class="form-control" id="stokToko" placeholder="Hoktung Mart, Mba Evi...">
+        </div>
+        <div class="totals-card" style="margin-bottom:12px;" id="stokAvgCard">
+          <div class="total-row"><span>Harga beli ini</span><span id="stokAvgNew">Rp 0 / unit</span></div>
+          <div class="total-row"><span>Harga avg sebelumnya</span><span id="stokAvgOld">-</span></div>
+          <div class="total-row highlight"><span>Harga avg baru</span><span id="stokAvgResult" style="color:var(--gold)">-</span></div>
+        </div>
+        <button class="btn-submit" onclick="saveStokMasuk()">💾 Simpan Stok</button>
+      </div>
+
+      <!-- OPS FORM -->
+      <div id="formOps" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tanggal</label>
+            <input type="date" class="form-control" id="opsTgl">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kategori</label>
+            <select class="form-control" id="opsKat">
+              <option value="transport">🚗 Transport</option>
+              <option value="tol">🛣️ Tol & Parkir</option>
+              <option value="fee_waitress">👩 Fee Waitress</option>
+              <option value="fee_vendor">🤝 Fee Vendor</option>
+              <option value="bensin">⛽ Bensin</option>
+              <option value="listrik">💡 Listrik</option>
+              <option value="iklan">📢 Iklan</option>
+              <option value="lainnya">📋 Lainnya</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Keterangan</label>
+          <input type="text" class="form-control" id="opsKet" placeholder="Transport ke GOR Tj.Priok, Fee Bu Dewi...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Referensi Event (opsional)</label>
+          <select class="form-control" id="opsEventRef">
+            <option value="">— Biaya Umum —</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Jumlah (Rp)</label>
+            <input type="number" class="form-control" id="opsJumlah" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Metode Bayar</label>
+            <select class="form-control" id="opsMetode">
+              <option value="cash">💵 Cash</option>
+              <option value="transfer">🏦 Transfer</option>
+              <option value="qris">📱 QRIS</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Toko / Nama Penerima</label>
+          <input type="text" class="form-control" id="opsToko" placeholder="Pak Larjo, SPBU, dll">
+        </div>
+        <button class="btn-submit" onclick="savePengeluaran()">💾 Simpan Biaya</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== INPUT TERIMA SHEET ==================== -->
+<div class="overlay" id="inputTerimaSheet" onclick="overlayClose(event,'inputTerimaSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">📥 Input Penerimaan</div>
+      <div class="sheet-close" onclick="closeSheet('inputTerimaSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
       <div class="form-group">
-        <label class="form-label">Jenis Pembayaran</label>
-        <select class="form-control" id="payJenis">
-          <option value="booking">📅 Booking Fee (Rp 100.000)</option>
-          <option value="dp">💰 DP (50% dari total)</option>
-          <option value="pelunasan">✅ Pelunasan</option>
-          <option value="custom">💵 Jumlah Custom</option>
+        <label class="form-label">Jenis Penerimaan</label>
+        <select class="form-control" id="terimaJenis" onchange="onTerimaJenisChange()">
+          <option value="booking">📅 Booking Fee</option>
+          <option value="dp">💰 DP Event</option>
+          <option value="pelunasan">✅ Pelunasan Event</option>
+          <option value="umum">💵 Penerimaan Umum</option>
+        </select>
+      </div>
+      <div class="form-group" id="terimaEventGroup">
+        <label class="form-label">Event</label>
+        <select class="form-control" id="terimaEventRef">
+          <option value="">— Pilih Event —</option>
         </select>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Tanggal Bayar</label>
-          <input type="date" class="form-control" id="payTgl">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="terimaTgl">
         </div>
         <div class="form-group">
           <label class="form-label">Jumlah (Rp)</label>
-          <input type="number" class="form-control" id="payJumlah" placeholder="0" oninput="calcSisaBayar()">
+          <input type="number" class="form-control" id="terimaJumlah" placeholder="0">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Metode Pembayaran</label>
-        <select class="form-control" id="payMetode">
+        <label class="form-label">Metode</label>
+        <select class="form-control" id="terimaMetode">
           <option value="transfer">🏦 Transfer Bank</option>
           <option value="cash">💵 Cash</option>
           <option value="qris">📱 QRIS</option>
@@ -1144,21 +1304,61 @@ textarea.form-control { resize: vertical; min-height: 70px; }
       </div>
       <div class="form-group">
         <label class="form-label">Catatan</label>
-        <input type="text" class="form-control" id="payNote" placeholder="No. ref, nama pengirim, dll">
+        <input type="text" class="form-control" id="terimaCatatan" placeholder="Nama pengirim, no. ref...">
       </div>
-      <div class="totals-card" id="payTotalsCard">
-        <div class="total-row"><span>Total Tagihan</span><span id="payTotal">Rp 0</span></div>
-        <div class="total-row"><span>Sudah Dibayar</span><span id="payDibayar" style="color:var(--green)">Rp 0</span></div>
-        <div class="total-row highlight"><span>Sisa Tagihan</span><span id="paySisa" style="color:var(--red)">Rp 0</span></div>
+      <!-- Ringkasan event jika dipilih -->
+      <div id="terimaEventSummary" style="display:none;" class="totals-card">
+        <div class="total-row"><span>Total Tagihan</span><span id="tsTotal">-</span></div>
+        <div class="total-row"><span>Sudah Dibayar</span><span id="tsDibayar" style="color:var(--green)">-</span></div>
+        <div class="total-row highlight"><span>Sisa</span><span id="tsSisa" style="color:var(--red)">-</span></div>
       </div>
-      <button class="btn-submit" onclick="savePayment()">💾 Simpan & Cetak Bukti</button>
-      <button class="btn-outline" onclick="savePayment(false)">💾 Simpan Saja</button>
+      <button class="btn-submit" onclick="savePenerimaan(true)">💾 Simpan & Cetak Bukti</button>
+      <button class="btn-outline" onclick="savePenerimaan(false)">💾 Simpan Saja</button>
     </div>
   </div>
 </div>
 
-<!-- Invoice Print Area -->
-<div id="invoicePrint"></div>
+<!-- ==================== STOK KELUAR SHEET ==================== -->
+<div class="overlay" id="stokKeluarSheet" onclick="overlayClose(event,'stokKeluarSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">📦 Tarik Stok ke Event</div>
+      <div class="sheet-close" onclick="closeSheet('stokKeluarSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="skEventId">
+      <div class="form-group">
+        <label class="form-label">Event</label>
+        <select class="form-control" id="skEvent"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bahan Baku</label>
+        <select class="form-control" id="skBahan" onchange="onSkBahanChange()">
+          <option value="">— Pilih Bahan —</option>
+        </select>
+      </div>
+      <div class="totals-card" id="skStokInfo" style="display:none;">
+        <div class="total-row"><span>Stok tersedia</span><span id="skQtySisa">-</span></div>
+        <div class="total-row"><span>Harga avg</span><span id="skHargaAvg">-</span></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty Pakai</label>
+          <input type="number" class="form-control" id="skQty" placeholder="0" oninput="calcSkHPP()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Satuan</label>
+          <input type="text" class="form-control" id="skSatuan" readonly style="opacity:0.7">
+        </div>
+      </div>
+      <div class="totals-card">
+        <div class="total-row highlight"><span>HPP bahan ini</span><span id="skHPP" style="color:var(--blue)">Rp 0</span></div>
+      </div>
+      <button class="btn-submit" onclick="saveStokKeluar()">💾 Tarik ke Event</button>
+    </div>
+  </div>
+</div>
 
 
 <!-- TOAST -->
@@ -1173,7 +1373,9 @@ let API_URL = localStorage.getItem('gubukan_api_url') || '';
 let currentMonth = localStorage.getItem('gubukan_month') || getCurrentMonth();
 let state = {
   events: [], items: [], expenses: [],
-  tokba: [], rt: [], vendors: [], payments: []
+  tokba: [], rt: [], vendors: [],
+  payments: [], stok_masuk: [], stok_keluar: [],
+  pengeluaran: [], penerimaan: [],
 };
 let currentPage = 'dash';
 
@@ -1237,16 +1439,32 @@ async function syncData() {
   btn.classList.add('spinning');
   try {
     if (!API_URL) { toast('⚠️ Set URL API di Settings dulu!'); return; }
-    const monthly = await api({ action: 'getMonthly', month: currentMonth });
-    state.events   = await api({ action: 'getAll', sheet: 'events' });
-    state.items     = await api({ action: 'getAll', sheet: 'event_items' });
-    state.expenses  = await api({ action: 'getAll', sheet: 'expenses' });
-    state.tokba     = monthly.tokba || [];
-    state.rt        = monthly.rt || [];
-    state.vendors   = await api({ action: 'getAll', sheet: 'vendors' });
+    const [events, items, stokMasuk, stokKeluar, pengeluaran, penerimaan, tokba, rt, vendors] = await Promise.all([
+      api({ action: 'getAll', sheet: 'events' }),
+      api({ action: 'getAll', sheet: 'event_items' }),
+      api({ action: 'getAll', sheet: 'stok_masuk' }),
+      api({ action: 'getAll', sheet: 'stok_keluar' }),
+      api({ action: 'getAll', sheet: 'pengeluaran' }),
+      api({ action: 'getAll', sheet: 'penerimaan' }),
+      api({ action: 'getAll', sheet: 'tokba' }),
+      api({ action: 'getAll', sheet: 'rumah_tangga' }),
+      api({ action: 'getAll', sheet: 'vendors' }),
+    ]);
+    state.events      = events      || [];
+    state.items       = items       || [];
+    state.stok_masuk  = stokMasuk   || [];
+    state.stok_keluar = stokKeluar  || [];
+    state.pengeluaran = pengeluaran || [];
+    state.penerimaan  = penerimaan  || [];
+    state.tokba       = tokba       || [];
+    state.rt          = rt          || [];
+    state.vendors     = vendors     || [];
+    if (!state.payments) state.payments = [];
     cacheState();
     renderPage(currentPage);
-    toast('✅ Data berhasil disync!');
+    populateEventDropdowns();
+    populateStokDatalist();
+    toast('✅ ' + state.events.length + ' events · ' + state.stok_masuk.length + ' stok items');
   } catch(e) {
     toast('❌ ' + e.message);
   } finally {
@@ -1322,13 +1540,22 @@ function renderDash() {
   document.getElementById('dLaba').textContent = rp(laba);
   document.getElementById('dMargin').textContent = 'margin ' + margin + '%';
   document.getElementById('dMarginBar').style.width = Math.min(margin, 100) + '%';
-  document.getElementById('dTokba').textContent = rp(tokSaldo);
-  document.getElementById('dTokbaSaldo').textContent = 'saldo bersih';
-  document.getElementById('dRT').textContent = rp(rtSaldo);
-  document.getElementById('dRTSaldo').textContent = 'saldo kas RT';
-  document.getElementById('dTotalExp').textContent = rp(hpp + ops + ovh);
-  document.getElementById('dExpBreak').textContent =
-    `HPP ${rp(hpp)} · Ops ${rp(ops)} · Ovh ${rp(ovh)}`;
+  // New v3 stats
+  const mStokKeluar  = state.stok_keluar.filter(e=>e.bulan===currentMonth);
+  const mPengeluaran = state.pengeluaran.filter(e=>e.bulan===currentMonth);
+  const mPenerimaan  = state.penerimaan.filter(e=>e.bulan===currentMonth);
+  const hppV3  = mStokKeluar.reduce((s,r)=>s+(Number(r.total_hpp)||0),0);
+  const opsV3  = mPengeluaran.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
+  const terimaV3 = mPenerimaan.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
+  const labaV3 = omzet - hppV3 - opsV3 - ovh;
+  const marginV3 = omzet>0?(labaV3/omzet*100).toFixed(1):0;
+
+  document.getElementById('dLaba').textContent = rp(labaV3||laba);
+  document.getElementById('dMargin').textContent = 'margin ' + (marginV3||margin) + '%';
+  document.getElementById('dMarginBar').style.width = Math.min(Math.abs(marginV3||margin),100) + '%';
+  document.getElementById('dHPP').textContent   = rp(hppV3||hpp);
+  document.getElementById('dOps').textContent   = rp(opsV3||ops);
+  document.getElementById('dTerima').textContent = rp(terimaV3);
 
   // Recent events
   const recent = [...mEvents].sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal)).slice(0,5);
@@ -1343,8 +1570,7 @@ function renderDash() {
     const evCost  = evExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
     const evLaba  = evOmzet - evCost;
     const evMargin= evOmzet>0?(evLaba/evOmzet*100).toFixed(0):0;
-    const dotColor = {lunas:'green',dp:'orange',booking:'blue',pending:'orange',follow:'red',batal:'red'};
-    const dot = dotColor[ev.status] || 'red';
+    const dot = ev.status==='lunas'?'green': ev.status==='dp'?'orange':'red';
     return `<div class="event-card" onclick="showDetail('${ev.id}')">
       <div class="event-dot ${dot}"></div>
       <div class="event-info">
@@ -1406,8 +1632,7 @@ function renderEvents() {
     const evCost  = evExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
     const evLaba  = evOmzet - evCost;
     const evMargin= evOmzet>0?(evLaba/evOmzet*100).toFixed(0):0;
-    const dotColor2 = {lunas:'green',dp:'orange',booking:'blue',pending:'orange',follow:'red',batal:'red'};
-    const dot = dotColor2[ev.status] || 'red';
+    const dot = ev.status==='lunas'?'green':ev.status==='dp'?'orange':'red';
     return `<div class="event-card" onclick="showDetail('${ev.id}')">
       <div class="event-dot ${dot}"></div>
       <div class="event-info">
@@ -1427,19 +1652,8 @@ function renderEvents() {
 function showDetail(eventId) {
   const ev = state.events.find(e=>e.id===eventId);
   if (!ev) return;
-  window._detailEventId = eventId;
-  renderDetailTab('info');
-  openSheet('detailSheet');
-}
-
-function renderDetailTab(tab) {
-  const eventId = window._detailEventId;
-  const ev      = state.events.find(e=>e.id===eventId);
-  if (!ev) return;
-
   const evItems = state.items.filter(x=>x.event_id===eventId);
   const evExp   = state.expenses.filter(x=>x.event_id===eventId);
-  const evPays  = (state.payments||[]).filter(x=>x.event_id===eventId);
   const omzet   = Number(ev.omzet)||0;
   const hpp     = evExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
   const ops     = evExp.filter(x=>x.kategori==='Operasional').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
@@ -1447,177 +1661,66 @@ function renderDetailTab(tab) {
   const laba    = omzet - hpp - ops - ovh;
   const margin  = omzet>0?(laba/omzet*100).toFixed(1):0;
   const isrun   = omzet * 0.1;
-  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
-  const sisa      = omzet - totalPaid;
-  const paidPct   = omzet>0?Math.min(100,(totalPaid/omzet*100)).toFixed(0):0;
 
-  const statusLabel = {booking:'📅 Booking',dp:'💰 DP',lunas:'✅ Lunas',
-    follow:'📞 Follow Up',pending:'⏳ Pending',batal:'❌ Batal'};
+  const profitClass = laba >= 0 ? 'profit' : 'loss';
+  const profitLabel = laba >= 0 ? '✅ Profit' : '❌ Rugi';
 
-  const tabHtml = `
-    <div style="padding:14px 16px 0;">
-      <div style="font-size:11px;color:var(--text2);">${fmtDate(ev.tanggal)} · <span style="color:var(--gold)">${statusLabel[ev.status]||ev.status}</span></div>
-      <div style="font-size:17px;font-weight:600;color:var(--cream);margin:3px 0;">${ev.customer}</div>
-      <div style="font-size:11px;color:var(--text2);">📍 ${ev.lokasi||'-'}</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-        <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);">${rp(omzet)}</div>
-        <span class="detail-badge ${laba>=0?'profit':'loss'}">${laba>=0?'✅':'❌'} ${Math.abs(margin)}%</span>
+  document.getElementById('detailBody').innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--text2);">${fmtDate(ev.tanggal)} · ${ev.status}</div>
+      <div style="font-size:18px;font-weight:600;color:var(--cream);margin:4px 0;">${ev.customer}</div>
+      <div style="font-size:12px;color:var(--text2);">📍 ${ev.lokasi||'-'}</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div class="detail-omzet">${rp(omzet)}</div>
+      <span class="detail-badge ${profitClass}">${profitLabel} ${Math.abs(margin)}%</span>
+    </div>
+
+    <div class="totals-card">
+      ${evItems.map(it=>`
+        <div class="breakdown-item">
+          <div><div>${it.menu}</div><div class="breakdown-cat">${it.qty} pcs × ${rp(it.harga_satuan)}</div></div>
+          <div style="color:var(--green)">${rp(it.total)}</div>
+        </div>`).join('')}
+      <div class="breakdown-item" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
+        <span style="color:var(--text2);font-size:11px;">HPP Bahan</span><span style="color:var(--blue)">${rp(hpp)}</span>
+      </div>
+      <div class="breakdown-item">
+        <span style="color:var(--text2);font-size:11px;">Ops (fee, transport)</span><span style="color:var(--orange)">${rp(ops)}</span>
+      </div>
+      <div class="breakdown-item">
+        <span style="color:var(--text2);font-size:11px;">Overhead</span><span style="color:var(--text2)">${rp(ovh)}</span>
+      </div>
+      <div class="breakdown-item" style="font-weight:600;">
+        <span>Laba Bersih</span>
+        <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)}</span>
+      </div>
+      <div class="breakdown-item">
+        <span style="font-size:11px;color:var(--text2);">Isrun 10%</span>
+        <span style="color:var(--gold)">${rp(isrun)}</span>
       </div>
     </div>
-    <div class="payment-tabs" style="margin-top:12px;">
-      <div class="payment-tab ${tab==='info'?'active':''}" onclick="renderDetailTab('info')">📋 Info</div>
-      <div class="payment-tab ${tab==='payment'?'active':''}" onclick="renderDetailTab('payment')">💳 Bayar</div>
-      <div class="payment-tab ${tab==='invoice'?'active':''}" onclick="renderDetailTab('invoice')">🧾 Invoice</div>
-    </div>`;
 
-  let bodyHtml = '';
+    ${evExp.length ? `
+    <div class="form-section-title">Detail Pengeluaran</div>
+    ${evExp.map(x=>`
+      <div class="breakdown-item">
+        <div>
+          <div style="font-size:12px;">${x.keterangan}</div>
+          <div class="breakdown-cat">${x.kategori} · ${x.toko||''}</div>
+        </div>
+        <div style="color:var(--red);font-size:12px;">${rp(x.jumlah)}</div>
+      </div>`).join('')}
+    ` : ''}
 
-  if (tab === 'info') {
-    bodyHtml = `
-      <div style="padding:0 16px 16px;">
-        <div class="totals-card">
-          ${evItems.map(it=>`
-            <div class="breakdown-item">
-              <div><div style="font-size:12px;">${it.menu}</div>
-              <div class="breakdown-cat">${it.qty} pcs × ${rp(it.harga_satuan)}</div></div>
-              <div style="color:var(--green)">${rp(it.total)}</div>
-            </div>`).join('')}
-          <div class="breakdown-item" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
-            <span style="color:var(--text2);font-size:11px;">HPP</span><span style="color:var(--blue)">${rp(hpp)}</span>
-          </div>
-          <div class="breakdown-item">
-            <span style="color:var(--text2);font-size:11px;">Operasional</span><span style="color:var(--orange)">${rp(ops)}</span>
-          </div>
-          <div class="breakdown-item">
-            <span style="color:var(--text2);font-size:11px;">Overhead</span><span style="color:var(--text2)">${rp(ovh)}</span>
-          </div>
-          <div class="breakdown-item" style="font-weight:600;">
-            <span>Laba Bersih</span>
-            <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)}</span>
-          </div>
-          <div class="breakdown-item">
-            <span style="font-size:11px;color:var(--text2);">Isrun 10%</span>
-            <span style="color:var(--gold)">${rp(isrun)}</span>
-          </div>
-        </div>
-        ${ev.catatan?`<div style="padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);margin-bottom:10px;">📝 ${ev.catatan}</div>`:''}
-        <button class="btn-submit" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
-        <button class="btn-outline" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
-      </div>`;
+    ${ev.catatan ? `<div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);">📝 ${ev.catatan}</div>` : ''}
 
-  } else if (tab === 'payment') {
-    const steps = [
-      { key:'booking', label:'Booking Fee', amount:100000, icon:'📅', desc:'Tanda jadi' },
-      { key:'dp',      label:'DP 50%',      amount:omzet*0.5, icon:'💰', desc:'H-7 sebelum acara' },
-      { key:'pelunasan', label:'Pelunasan',  amount:omzet - Math.min(totalPaid, omzet), icon:'✅', desc:'H-1 sebelum acara' },
-    ];
-    const paidByType = {};
-    evPays.forEach(p => { paidByType[p.jenis] = (paidByType[p.jenis]||0) + Number(p.jumlah); });
+    <button class="btn-submit" style="margin-top:16px;" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
+    <button class="btn-outline" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
+  `;
 
-    bodyHtml = `<div style="padding:0 16px 16px;">
-      <div class="payment-summary">
-        <div class="payment-summary-item">
-          <div class="payment-summary-label">Total</div>
-          <div class="payment-summary-val" style="color:var(--cream)">${rp(omzet)}</div>
-        </div>
-        <div class="payment-summary-item">
-          <div class="payment-summary-label">Dibayar</div>
-          <div class="payment-summary-val" style="color:var(--green)">${rp(totalPaid)}</div>
-        </div>
-        <div class="payment-summary-item">
-          <div class="payment-summary-label">Sisa</div>
-          <div class="payment-summary-val" style="color:${sisa>0?'var(--red)':'var(--green)'}">${rp(sisa)}</div>
-        </div>
-      </div>
-      <div class="payment-progress">
-        <div class="payment-progress-fill" style="width:${paidPct}%"></div>
-      </div>
-      <div style="font-size:11px;color:var(--text2);text-align:right;margin-bottom:12px;">${paidPct}% terbayar</div>
-
-      ${steps.map(s => {
-        const paid = paidByType[s.key] || 0;
-        const isDone = paid >= s.amount * 0.9;
-        return `<div class="payment-step">
-          <div class="payment-step-icon ${isDone?'done':'pend'}">${isDone?'✅':s.icon}</div>
-          <div class="payment-step-info">
-            <div class="payment-step-label">${s.label}</div>
-            <div class="payment-step-amount">${rpFull(s.amount)}</div>
-            <div class="payment-step-date">${s.desc}${paid>0?' · Dibayar: '+rp(paid):''}</div>
-          </div>
-          ${!isDone?`<button class="payment-step-action" onclick="openPayment('${ev.id}','${s.key}',${s.amount})">Bayar</button>`:'<span style="font-size:11px;color:var(--green)">✓ Lunas</span>'}
-        </div>`;
-      }).join('')}
-
-      ${evPays.length ? `
-        <div class="form-section-title" style="margin-top:14px;">Riwayat Pembayaran</div>
-        ${evPays.map(p=>`
-          <div class="trans-item" style="margin-bottom:6px;">
-            <div class="trans-icon in">💳</div>
-            <div class="trans-info">
-              <div class="trans-desc">${p.label||p.jenis} · ${p.metode||''}</div>
-              <div class="trans-meta">${fmtDate(p.tanggal)} ${p.note?'· '+p.note:''}</div>
-            </div>
-            <div style="text-align:right;">
-              <div class="trans-amount in">${rp(p.jumlah)}</div>
-              <div style="font-size:10px;color:var(--gold);cursor:pointer;" onclick="printBukti('${p.id}','${ev.id}')">🖨️ Bukti</div>
-            </div>
-          </div>`).join('')}
-      ` : '<div class="empty" style="padding:20px 0;"><div class="empty-icon">💳</div>Belum ada pembayaran</div>'}
-
-      <button class="btn-submit" style="margin-top:8px;" onclick="openPayment('${ev.id}','custom',${sisa})">+ Tambah Pembayaran</button>
-    </div>`;
-
-  } else if (tab === 'invoice') {
-    const invNo = 'INV/' + (ev.no_event||'000') + '/' + (ev.bulan||'').replace('-','') + '/' + ev.id.slice(-4).toUpperCase();
-    bodyHtml = `<div style="padding:0 16px 16px;">
-      <div class="totals-card" style="margin-bottom:12px;">
-        <div class="breakdown-item">
-          <span style="color:var(--text2);font-size:11px;">No. Invoice</span>
-          <span style="font-size:11px;color:var(--gold);">${invNo}</span>
-        </div>
-        <div class="breakdown-item">
-          <span style="color:var(--text2);font-size:11px;">Customer</span>
-          <span style="font-size:12px;">${ev.customer}</span>
-        </div>
-        <div class="breakdown-item">
-          <span style="color:var(--text2);font-size:11px;">Tanggal Event</span>
-          <span style="font-size:12px;">${fmtDate(ev.tanggal)}</span>
-        </div>
-        <div class="breakdown-item">
-          <span style="color:var(--text2);font-size:11px;">Lokasi</span>
-          <span style="font-size:12px;">${ev.lokasi||'-'}</span>
-        </div>
-      </div>
-
-      <div class="totals-card">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Item</div>
-        ${evItems.map(it=>`
-          <div class="breakdown-item">
-            <div><div style="font-size:12px;">${it.menu}</div>
-            <div class="breakdown-cat">${it.qty} pcs × ${rpFull(it.harga_satuan)}</div></div>
-            <div style="color:var(--green);font-size:12px;">${rpFull(it.total)}</div>
-          </div>`).join('')}
-        <div class="breakdown-item" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;font-weight:600;font-size:14px;">
-          <span>TOTAL</span><span style="color:var(--gold)">${rpFull(omzet)}</span>
-        </div>
-        <div class="breakdown-item">
-          <span style="color:var(--green);font-size:11px;">Terbayar</span>
-          <span style="color:var(--green)">${rpFull(totalPaid)}</span>
-        </div>
-        <div class="breakdown-item">
-          <span style="color:${sisa>0?'var(--red)':'var(--green)'};font-size:12px;font-weight:600;">
-            ${sisa>0?'Sisa Tagihan':'✅ LUNAS'}
-          </span>
-          <span style="color:${sisa>0?'var(--red)':'var(--green)'};font-weight:600;">${rpFull(Math.abs(sisa))}</span>
-        </div>
-      </div>
-
-      <button class="btn-submit" style="margin-top:12px;" onclick="printInvoice('${ev.id}')">🖨️ Print / Share Invoice</button>
-      <button class="btn-outline" onclick="printInvoice('${ev.id}', true)">📄 Bukti Terima Pembayaran</button>
-    </div>`;
-  }
-
-  document.getElementById('detailBody').innerHTML = tabHtml + bodyHtml;
+  openSheet('detailSheet');
 }
 
 // ============================================================
@@ -2038,53 +2141,15 @@ function saveApiUrl() {
 function openMonthPicker() { openSheet('monthSheet'); buildMonthGrid(); }
 
 function buildMonthGrid() {
-  const now = new Date();
-  const thisYear = now.getFullYear();
-  const nextYear = thisYear + 1;
-
-  // Bulan yang punya data
-  const hasData = new Set();
-  [...state.events, ...state.tokba, ...state.rt].forEach(r => {
-    if (r.bulan && /^\d{4}-\d{2}$/.test(r.bulan)) hasData.add(r.bulan);
-  });
-
-  // Tentukan range tahun: dari tahun tertua di data s/d tahun depan
-  const years = [...hasData].map(m => parseInt(m.slice(0,4)));
-  const minYear = years.length ? Math.min(...years) : thisYear;
-  const maxYear = nextYear;
-
-  const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
-  const nowStr = now.toISOString().slice(0,7);
-
-  let html = '';
-  // Tahun terbaru di atas
-  for (let y = maxYear; y >= minYear; y--) {
-    const evCount = [...hasData].filter(m => m.startsWith(y+'-')).length;
-    html += `<div class="month-year-group">
-      <div class="month-year-label">
-        <span>${y}</span>
-        <span class="month-year-badge">${evCount} bulan aktif</span>
-      </div>
-      <div class="month-grid">`;
-
-    for (let mo = 1; mo <= 12; mo++) {
-      const m = y + '-' + String(mo).padStart(2,'0');
-      const isFuture = m > nowStr;
-      const active = m === currentMonth ? 'active' : '';
-      const withData = hasData.has(m) ? 'has-data' : '';
-      const future = isFuture ? 'future' : '';
-      html += `<div class="month-btn ${active} ${withData} ${future}" onclick="selectMonth('${m}')">${MONTHS[mo-1]}</div>`;
-    }
-    html += `</div></div>`;
+  const months = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    months.push(d.toISOString().slice(0,7));
   }
-
-  document.getElementById('monthGrid').innerHTML = html;
-
-  // Scroll to current year
-  setTimeout(() => {
-    const active = document.querySelector('.month-btn.active');
-    if (active) active.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, 100);
+  document.getElementById('monthGrid').innerHTML = months.map(m=>
+    `<div class="month-btn ${m===currentMonth?'active':''}" onclick="selectMonth('${m}')">${monthName(m)}</div>`
+  ).join('');
 }
 
 function selectMonth(m) {
@@ -2092,6 +2157,7 @@ function selectMonth(m) {
   localStorage.setItem('gubukan_month', m);
   closeSheet('monthSheet');
   document.getElementById('monthLabel').textContent = monthName(m);
+  populateEventDropdowns();
   renderPage(currentPage);
 }
 
@@ -2136,265 +2202,348 @@ function exportMonth() {
 // INIT
 // ============================================================
 // ============================================================
-// PAYMENT SYSTEM
+// STOK & BIAYA SYSTEM
 // ============================================================
-function openPayment(eventId, jenis, amount) {
-  const ev = state.events.find(e=>e.id===eventId);
-  if (!ev) return;
-  const evPays = (state.payments||[]).filter(x=>x.event_id===eventId);
-  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
-  const sisa = (Number(ev.omzet)||0) - totalPaid;
 
-  document.getElementById('payEventId').value = eventId;
-  document.getElementById('payJenis').value   = jenis;
-  document.getElementById('payTgl').value     = new Date().toISOString().slice(0,10);
-  document.getElementById('payNote').value    = '';
-
-  // Set jumlah default
-  const defaults = { booking:100000, dp: Math.round((Number(ev.omzet)||0)*0.5), pelunasan: sisa, custom: sisa };
-  document.getElementById('payJumlah').value = defaults[jenis] || amount || 0;
-
-  document.getElementById('payTotal').textContent    = rpFull(Number(ev.omzet)||0);
-  document.getElementById('payDibayar').textContent  = rpFull(totalPaid);
-  document.getElementById('paySisa').textContent     = rpFull(sisa);
-
-  closeSheet('detailSheet');
-  setTimeout(() => openSheet('paymentSheet'), 300);
+// --- Dropdown population ---
+function populateEventDropdowns() {
+  const mEvents = state.events.filter(e=>e.bulan===currentMonth)
+    .sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
+  const options = '<option value="">— Pilih Event —</option>' +
+    mEvents.map(e=>`<option value="${e.id}">${e.no_event||''} · ${e.customer} (${fmtDate(e.tanggal)})</option>`).join('');
+  ['opsEventRef','terimaEventRef','skEvent'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = options;
+  });
 }
 
-function calcSisaBayar() {
-  const eventId = document.getElementById('payEventId').value;
-  const ev = state.events.find(e=>e.id===eventId);
-  if (!ev) return;
-  const evPays = (state.payments||[]).filter(x=>x.event_id===eventId);
-  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
-  const jumlah = Number(document.getElementById('payJumlah').value)||0;
-  const sisa = (Number(ev.omzet)||0) - totalPaid - jumlah;
-  document.getElementById('paySisa').textContent = rpFull(Math.max(0, sisa));
+function populateStokDatalist() {
+  const names = [...new Set(state.stok_masuk.map(s=>s.nama).filter(Boolean))];
+  const dl = document.getElementById('stokNamaList');
+  if (dl) dl.innerHTML = names.map(n=>`<option value="${n}">`).join('');
+
+  const sel = document.getElementById('skBahan');
+  if (sel) {
+    const stokSummary = calcStokSummary();
+    sel.innerHTML = '<option value="">— Pilih Bahan —</option>' +
+      stokSummary.filter(s=>s.qty_sisa>0).map(s=>
+        `<option value="${s.nama}">${s.nama} (${s.qty_sisa.toFixed(2)} ${s.satuan_kecil}) · avg ${rp(s.harga_avg)}</option>`
+      ).join('');
+  }
 }
 
-async function savePayment(printAfter=true) {
-  const eventId = document.getElementById('payEventId').value;
-  const jenis   = document.getElementById('payJenis').value;
-  const jumlah  = Number(document.getElementById('payJumlah').value)||0;
-  const tanggal = document.getElementById('payTgl').value;
-  const metode  = document.getElementById('payMetode').value;
-  const note    = document.getElementById('payNote').value;
+function calcStokSummary() {
+  const summary = {};
+  state.stok_masuk.forEach(r=>{
+    const nama = r.nama;
+    if (!summary[nama]) summary[nama] = {
+      nama, kategori:r.kategori,
+      satuan:r.satuan, satuan_kecil:r.satuan_kecil||r.satuan,
+      konversi:Number(r.konversi)||1,
+      total_qty_kecil:0, total_nilai:0,
+    };
+    const qtyKecil = (Number(r.qty)||0) * (Number(r.konversi)||1);
+    summary[nama].total_qty_kecil += qtyKecil;
+    summary[nama].total_nilai     += Number(r.total_nilai)||0;
+  });
+  state.stok_keluar.forEach(r=>{
+    if (summary[r.nama]) summary[r.nama].total_qty_kecil -= Number(r.qty)||0;
+  });
+  return Object.values(summary).map(s=>({
+    ...s,
+    qty_sisa:   s.total_qty_kecil,
+    harga_avg:  s.total_qty_kecil>0 ? s.total_nilai/s.total_qty_kecil : 0,
+  }));
+}
 
-  if (!jumlah) { toast('⚠️ Isi jumlah pembayaran!'); return; }
-
-  const labelMap = { booking:'Booking Fee', dp:'DP 50%', pelunasan:'Pelunasan', custom:'Pembayaran' };
-  const data = {
-    id: 'pay_' + Date.now(),
-    event_id: eventId,
-    bulan: tanggal.slice(0,7),
-    tanggal, jenis,
-    label: labelMap[jenis]||jenis,
-    jumlah, metode, note,
-    created_at: new Date().toISOString(),
+function getEventHPP(eventId) {
+  const keluar = state.stok_keluar.filter(r=>r.event_id===eventId);
+  const ops    = state.pengeluaran.filter(r=>r.event_id===eventId);
+  return {
+    hpp:    keluar.reduce((s,r)=>s+(Number(r.total_hpp)||0),0),
+    ops:    ops.reduce((s,r)=>s+(Number(r.jumlah)||0),0),
+    keluar, ops_items: ops,
   };
+}
 
-  // Save to local state (payments not in Google Sheets yet - future enhancement)
-  if (!state.payments) state.payments = [];
-  state.payments.push(data);
-  cacheState();
+function getEventPenerimaan(eventId) {
+  const items = state.penerimaan.filter(r=>r.event_id===eventId);
+  return {
+    items,
+    total: items.reduce((s,r)=>s+(Number(r.jumlah)||0),0),
+  };
+}
 
-  // Update event status automatically
-  const ev = state.events.find(e=>e.id===eventId);
-  if (ev) {
-    const totalPaid = state.payments.filter(p=>p.event_id===eventId).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
-    const omzet = Number(ev.omzet)||0;
-    let newStatus = ev.status;
-    if (totalPaid >= omzet) newStatus = 'lunas';
-    else if (totalPaid >= omzet * 0.5) newStatus = 'dp';
-    else if (totalPaid >= 100000) newStatus = 'booking';
+// --- Biaya Type Switch ---
+function switchBiayaType(type) {
+  document.getElementById('formStok').style.display = type==='stok'?'block':'none';
+  document.getElementById('formOps').style.display  = type==='ops'?'block':'none';
+  document.getElementById('biayaTypeStok').className = 'quick-btn ' + (type==='stok'?'keluar':'');
+  document.getElementById('biayaTypeOps').className  = 'quick-btn ' + (type==='ops'?'keluar':'');
+}
 
-    if (newStatus !== ev.status) {
-      ev.status = newStatus;
-      try { await apiWrite('update','events',{status:newStatus},eventId); } catch(e){}
+// --- Stok Harga Calc ---
+function updateSatuanKecil() {
+  const satuan = document.getElementById('stokSatuan').value;
+  const map = { kg:'gram', liter:'ml', pack:'pcs', lusin:'pcs', box:'pcs', gram:'gram', ml:'ml', pcs:'pcs' };
+  const kecil = map[satuan] || satuan;
+  document.getElementById('stokSatuanKecil').value = kecil;
+  const konvMap = { kg:1000, liter:1000, lusin:12, pack:1, box:1, gram:1, ml:1, pcs:1 };
+  document.getElementById('stokKonversi').value = konvMap[satuan]||1;
+  calcStokHarga();
+}
+
+function calcStokHarga() {
+  const qty      = Number(document.getElementById('stokQty').value)||0;
+  const konversi = Number(document.getElementById('stokKonversi').value)||1;
+  const total    = Number(document.getElementById('stokHargaTotal').value)||0;
+  const qtyKecil = qty * konversi;
+  const perUnit  = qtyKecil>0 ? total/qtyKecil : 0;
+  document.getElementById('stokHargaPerUnit').value = perUnit>0 ? rpFull(perUnit)+' / '+document.getElementById('stokSatuanKecil').value : '-';
+
+  // Show avg calculation
+  const nama = document.getElementById('stokNama').value.trim();
+  if (nama) {
+    const stokSummary = calcStokSummary();
+    const existing = stokSummary.find(s=>s.nama===nama);
+    if (existing && existing.total_qty_kecil>0) {
+      const newAvg = (existing.total_nilai + total) / (existing.total_qty_kecil + qtyKecil);
+      document.getElementById('stokAvgOld').textContent    = rpFull(existing.harga_avg) + ' / ' + existing.satuan_kecil;
+      document.getElementById('stokAvgResult').textContent = rpFull(newAvg) + ' / ' + (document.getElementById('stokSatuanKecil').value);
+    } else {
+      document.getElementById('stokAvgOld').textContent    = 'Bahan baru';
+      document.getElementById('stokAvgResult').textContent = perUnit>0 ? rpFull(perUnit) : '-';
     }
   }
-
-  closeSheet('paymentSheet');
-  toast('✅ Pembayaran disimpan!');
-
-  if (printAfter) {
-    setTimeout(() => printBukti(data.id, eventId), 500);
-  } else {
-    setTimeout(() => { showDetail(eventId); renderDetailTab('payment'); }, 300);
-  }
+  document.getElementById('stokAvgNew').textContent = perUnit>0 ? rpFull(perUnit) : '-';
 }
 
-function printBukti(payId, eventId) {
-  const ev  = state.events.find(e=>e.id===eventId);
-  const pay = (state.payments||[]).find(p=>p.id===payId);
-  if (!ev || !pay) { toast('Data tidak ditemukan'); return; }
-  const evItems = state.items.filter(x=>x.event_id===eventId);
-  const totalPaid = (state.payments||[]).filter(p=>p.event_id===eventId).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
-  const sisa = (Number(ev.omzet)||0) - totalPaid;
+// --- Save Stok Masuk ---
+async function saveStokMasuk() {
+  const nama  = document.getElementById('stokNama').value.trim();
+  const qty   = Number(document.getElementById('stokQty').value)||0;
+  const total = Number(document.getElementById('stokHargaTotal').value)||0;
+  const tgl   = document.getElementById('stokTgl').value;
+  if (!nama||!qty||!total||!tgl) { toast('⚠️ Lengkapi data stok!'); return; }
 
-  const html = generateBuktiHTML(ev, pay, evItems, totalPaid, sisa);
-  openPrintWindow(html);
+  const konversi   = Number(document.getElementById('stokKonversi').value)||1;
+  const qtyKecil   = qty * konversi;
+  const hargaPerUnit = qtyKecil>0 ? total/qtyKecil : 0;
+
+  // Calc new avg
+  const stokSummary = calcStokSummary();
+  const existing = stokSummary.find(s=>s.nama===nama);
+  const oldNilai = existing ? existing.total_nilai : 0;
+  const oldQty   = existing ? existing.total_qty_kecil : 0;
+  const newAvg   = (oldNilai + total) / (oldQty + qtyKecil);
+
+  const data = {
+    bulan: tgl.slice(0,7), tanggal: tgl,
+    nama, kategori: document.getElementById('stokKat').value,
+    qty, satuan: document.getElementById('stokSatuan').value,
+    satuan_kecil: document.getElementById('stokSatuanKecil').value,
+    konversi, harga_beli: hargaPerUnit,
+    harga_avg: newAvg, total_nilai: total,
+    toko: document.getElementById('stokToko').value,
+    catatan: '',
+  };
+  try {
+    const res = await apiWrite('insert','stok_masuk',data);
+    state.stok_masuk.push({...data, id: res.id});
+    cacheState();
+    closeSheet('inputBiayaSheet');
+    toast('✅ Stok ' + nama + ' disimpan!');
+    populateStokDatalist();
+  } catch(e) { toast('❌ ' + e.message); }
 }
 
-function printInvoice(eventId, isBukti=false) {
+// --- Save Pengeluaran Ops ---
+async function savePengeluaran() {
+  const ket    = document.getElementById('opsKet').value.trim();
+  const jumlah = Number(document.getElementById('opsJumlah').value)||0;
+  const tgl    = document.getElementById('opsTgl').value;
+  if (!ket||!jumlah||!tgl) { toast('⚠️ Lengkapi data biaya!'); return; }
+
+  const data = {
+    bulan: tgl.slice(0,7), tanggal: tgl,
+    event_id: document.getElementById('opsEventRef').value||'',
+    kategori: document.getElementById('opsKat').value,
+    keterangan: ket, jumlah,
+    metode: document.getElementById('opsMetode').value,
+    toko: document.getElementById('opsToko').value,
+    catatan: '',
+  };
+  try {
+    const res = await apiWrite('insert','pengeluaran',data);
+    state.pengeluaran.push({...data, id:res.id});
+    cacheState();
+    closeSheet('inputBiayaSheet');
+    renderPage(currentPage);
+    toast('✅ Biaya disimpan!');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// --- Stok Keluar ---
+function onSkBahanChange() {
+  const nama = document.getElementById('skBahan').value;
+  const stokSummary = calcStokSummary();
+  const s = stokSummary.find(x=>x.nama===nama);
+  if (!s) { document.getElementById('skStokInfo').style.display='none'; return; }
+  document.getElementById('skStokInfo').style.display='block';
+  document.getElementById('skQtySisa').textContent = s.qty_sisa.toFixed(2) + ' ' + s.satuan_kecil;
+  document.getElementById('skHargaAvg').textContent = rpFull(s.harga_avg) + ' / ' + s.satuan_kecil;
+  document.getElementById('skSatuan').value = s.satuan_kecil;
+  calcSkHPP();
+}
+
+function calcSkHPP() {
+  const nama = document.getElementById('skBahan').value;
+  const qty  = Number(document.getElementById('skQty').value)||0;
+  const stokSummary = calcStokSummary();
+  const s = stokSummary.find(x=>x.nama===nama);
+  const hpp = s ? qty * s.harga_avg : 0;
+  document.getElementById('skHPP').textContent = rpFull(hpp);
+}
+
+async function saveStokKeluar() {
+  const eventId = document.getElementById('skEvent').value;
+  const nama    = document.getElementById('skBahan').value;
+  const qty     = Number(document.getElementById('skQty').value)||0;
+  if (!eventId||!nama||!qty) { toast('⚠️ Lengkapi semua field!'); return; }
+
+  const stokSummary = calcStokSummary();
+  const s = stokSummary.find(x=>x.nama===nama);
+  if (!s) { toast('❌ Bahan tidak ditemukan!'); return; }
+  if (qty > s.qty_sisa) { toast('⚠️ Stok tidak cukup! Sisa: ' + s.qty_sisa.toFixed(2) + ' ' + s.satuan_kecil); return; }
+
   const ev = state.events.find(e=>e.id===eventId);
-  if (!ev) return;
-  const evItems = state.items.filter(x=>x.event_id===eventId);
-  const evPays  = (state.payments||[]).filter(p=>p.event_id===eventId);
-  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const data = {
+    event_id: eventId, bulan: ev?.bulan||currentMonth,
+    tanggal: new Date().toISOString().slice(0,10),
+    nama, qty, satuan: s.satuan_kecil,
+    harga_avg: s.harga_avg,
+    total_hpp: qty * s.harga_avg,
+    catatan: '',
+  };
+  try {
+    const res = await apiWrite('insert','stok_keluar',data);
+    state.stok_keluar.push({...data, id:res.id});
+    cacheState();
+    closeSheet('stokKeluarSheet');
+    toast('✅ ' + nama + ' ' + qty + ' ' + s.satuan_kecil + ' → event ' + (ev?.customer||''));
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// --- Penerimaan ---
+function onTerimaJenisChange() {
+  const jenis = document.getElementById('terimaJenis').value;
+  const isEvent = ['booking','dp','pelunasan'].includes(jenis);
+  document.getElementById('terimaEventGroup').style.display = isEvent ? 'block' : 'none';
+  if (isEvent) updateTerimaSummary();
+}
+
+function updateTerimaSummary() {
+  const eventId = document.getElementById('terimaEventRef').value;
+  const ev = state.events.find(e=>e.id===eventId);
+  if (!ev) { document.getElementById('terimaEventSummary').style.display='none'; return; }
+
+  const ter = getEventPenerimaan(eventId);
+  const sisa = (Number(ev.omzet)||0) - ter.total;
+  document.getElementById('terimaEventSummary').style.display = 'block';
+  document.getElementById('tsTotal').textContent   = rpFull(Number(ev.omzet)||0);
+  document.getElementById('tsDibayar').textContent = rpFull(ter.total);
+  document.getElementById('tsSisa').textContent    = rpFull(Math.max(0,sisa));
+
+  // Auto-fill jumlah based on jenis
+  const jenis = document.getElementById('terimaJenis').value;
+  if (jenis==='booking') document.getElementById('terimaJumlah').value = 100000;
+  else if (jenis==='dp') document.getElementById('terimaJumlah').value = Math.round((Number(ev.omzet)||0)*0.5);
+  else if (jenis==='pelunasan') document.getElementById('terimaJumlah').value = Math.max(0,sisa);
+}
+
+async function savePenerimaan(printAfter=false) {
+  const jenis  = document.getElementById('terimaJenis').value;
+  const jumlah = Number(document.getElementById('terimaJumlah').value)||0;
+  const tgl    = document.getElementById('terimaTgl').value;
+  if (!jumlah||!tgl) { toast('⚠️ Isi jumlah & tanggal!'); return; }
+
+  const labelMap = { booking:'Booking Fee', dp:'DP 50%', pelunasan:'Pelunasan', umum:'Penerimaan Umum' };
+  const data = {
+    event_id: document.getElementById('terimaEventRef').value||'',
+    bulan: tgl.slice(0,7), tanggal: tgl,
+    jenis, label: labelMap[jenis]||jenis,
+    jumlah, metode: document.getElementById('terimaMetode').value,
+    catatan: document.getElementById('terimaCatatan').value,
+  };
+  try {
+    const res = await apiWrite('insert','penerimaan',data);
+    state.penerimaan.push({...data, id:res.id});
+
+    // Auto update event status
+    if (data.event_id) {
+      const ev = state.events.find(e=>e.id===data.event_id);
+      if (ev) {
+        const totalTerima = state.penerimaan.filter(p=>p.event_id===data.event_id).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+        const omzet = Number(ev.omzet)||0;
+        const newStatus = totalTerima >= omzet ? 'lunas' : totalTerima >= omzet*0.5 ? 'dp' : 'booking';
+        if (newStatus !== ev.status) {
+          ev.status = newStatus;
+          try { await apiWrite('update','events',{status:newStatus},ev.id); } catch(e){}
+        }
+      }
+    }
+
+    cacheState();
+    closeSheet('inputTerimaSheet');
+    renderPage(currentPage);
+    toast('✅ Penerimaan Rp ' + jumlah.toLocaleString('id') + ' disimpan!');
+
+    if (printAfter && data.event_id) {
+      const ev = state.events.find(e=>e.id===data.event_id);
+      if (ev) setTimeout(()=>printBuktiTerima(data, ev), 500);
+    }
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function printBuktiTerima(pay, ev) {
+  const totalPaid = state.penerimaan.filter(p=>p.event_id===ev.id).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
   const sisa = (Number(ev.omzet)||0) - totalPaid;
-
-  const html = isBukti
-    ? generateBuktiHTML(ev, evPays[evPays.length-1]||{jumlah:totalPaid,metode:'-',tanggal:new Date().toISOString().slice(0,10),label:'Total Pembayaran'}, evItems, totalPaid, sisa)
-    : generateInvoiceHTML(ev, evItems, evPays, totalPaid, sisa);
-  openPrintWindow(html);
-}
-
-function openPrintWindow(html) {
-  const w = window.open('','_blank','width=420,height=700');
-  w.document.write(html);
-  w.document.close();
-  w.focus();
-  setTimeout(() => w.print(), 500);
-}
-
-function generateBuktiHTML(ev, pay, evItems, totalPaid, sisa) {
   const no = 'BKT/' + (ev.no_event||'000') + '/' + new Date().getTime().toString().slice(-6);
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Bukti Pembayaran</title>
-  <style>
-    * { margin:0;padding:0;box-sizing:border-box; }
-    body { font-family:Arial,sans-serif; font-size:12px; color:#222; padding:16px; max-width:380px; margin:0 auto; }
-    .logo { text-align:center; margin-bottom:12px; }
-    .logo h1 { font-size:20px; color:#1a3a6b; font-weight:900; letter-spacing:1px; }
-    .logo .tagline { font-size:10px; color:#666; }
-    .divider { border-top:2px solid #1a3a6b; margin:8px 0; }
-    .divider2 { border-top:1px dashed #999; margin:8px 0; }
-    .title { text-align:center; font-size:13px; font-weight:bold; margin:8px 0; color:#1a3a6b; }
-    .row { display:flex; justify-content:space-between; padding:3px 0; }
-    .label { color:#666; }
-    .value { font-weight:500; text-align:right; }
-    .total-box { background:#f0f4ff; border:1px solid #1a3a6b; border-radius:6px; padding:10px; margin:10px 0; text-align:center; }
-    .total-box .amount { font-size:22px; font-weight:900; color:#1a3a6b; }
-    .total-box .label { font-size:10px; color:#666; }
-    .sisa { text-align:center; padding:8px; background:${sisa>0?'#fff0f0':'#f0fff4'}; border-radius:6px; margin-top:8px; }
-    .sisa-label { font-size:10px; color:#666; }
-    .sisa-val { font-size:16px; font-weight:700; color:${sisa>0?'#c0392b':'#27ae60'}; }
-    .footer { text-align:center; margin-top:14px; font-size:10px; color:#999; }
-    .stamp { border:2px solid #27ae60; border-radius:50%; width:70px; height:70px; margin:10px auto; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#27ae60; font-weight:bold; font-size:10px; text-align:center; }
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bukti</title>
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;max-width:380px;margin:0 auto}
+  .logo{text-align:center;margin-bottom:12px}.logo h1{font-size:20px;color:#1a3a6b;font-weight:900}
+  .divider{border-top:2px solid #1a3a6b;margin:8px 0}.divider2{border-top:1px dashed #999;margin:8px 0}
+  .title{text-align:center;font-size:13px;font-weight:bold;margin:8px 0;color:#1a3a6b}
+  .row{display:flex;justify-content:space-between;padding:3px 0}.label{color:#666}.value{font-weight:500;text-align:right}
+  .total-box{background:#f0f4ff;border:1px solid #1a3a6b;border-radius:6px;padding:10px;margin:10px 0;text-align:center}
+  .total-box .amount{font-size:22px;font-weight:900;color:#1a3a6b}
+  .sisa{text-align:center;padding:8px;background:${sisa>0?'#fff0f0':'#f0fff4'};border-radius:6px;margin-top:8px}
+  .sisa-val{font-size:16px;font-weight:700;color:${sisa>0?'#c0392b':'#27ae60'}}
+  .footer{text-align:center;margin-top:14px;font-size:10px;color:#999}
   </style></head><body>
-  <div class="logo">
-    <h1>🍲 Gubukan Krasti</h1>
-    <div class="tagline">Catering & Event Food Service</div>
-  </div>
+  <div class="logo"><h1>🍲 Gubukan Krasti</h1><div style="font-size:10px;color:#666">Catering & Event Food Service</div></div>
   <div class="divider"></div>
   <div class="title">BUKTI PENERIMAAN PEMBAYARAN</div>
   <div class="divider2"></div>
   <div class="row"><span class="label">No. Bukti</span><span class="value">${no}</span></div>
-  <div class="row"><span class="label">Tanggal</span><span class="value">${pay.tanggal||new Date().toISOString().slice(0,10)}</span></div>
+  <div class="row"><span class="label">Tanggal</span><span class="value">${pay.tanggal}</span></div>
   <div class="row"><span class="label">Customer</span><span class="value">${ev.customer}</span></div>
-  <div class="row"><span class="label">Lokasi</span><span class="value">${ev.lokasi||'-'}</span></div>
-  <div class="row"><span class="label">Tgl Event</span><span class="value">${ev.tanggal||'-'}</span></div>
+  <div class="row"><span class="label">Acara</span><span class="value">${fmtDate(ev.tanggal)} · ${ev.lokasi||'-'}</span></div>
   <div class="divider2"></div>
-  <div class="row"><span class="label">Jenis</span><span class="value">${pay.label||pay.jenis||'-'}</span></div>
+  <div class="row"><span class="label">Jenis</span><span class="value">${pay.label||pay.jenis}</span></div>
   <div class="row"><span class="label">Metode</span><span class="value">${pay.metode||'-'}</span></div>
-  <div class="total-box">
-    <div class="label">DITERIMA SEBESAR</div>
-    <div class="amount">Rp ${Number(pay.jumlah||0).toLocaleString('id-ID')}</div>
-  </div>
+  ${pay.catatan?`<div class="row"><span class="label">Ket</span><span class="value">${pay.catatan}</span></div>`:''}
+  <div class="total-box"><div style="font-size:10px;color:#666">DITERIMA SEBESAR</div>
+  <div class="amount">Rp ${Number(pay.jumlah||0).toLocaleString('id-ID')}</div></div>
   <div class="row"><span class="label">Total Tagihan</span><span class="value">Rp ${Number(ev.omzet||0).toLocaleString('id-ID')}</span></div>
-  <div class="row"><span class="label">Total Dibayar</span><span class="value" style="color:#27ae60">Rp ${Number(totalPaid).toLocaleString('id-ID')}</span></div>
-  <div class="sisa">
-    <div class="sisa-label">${sisa>0?'SISA TAGIHAN':'STATUS'}</div>
-    <div class="sisa-val">${sisa>0?'Rp '+Number(sisa).toLocaleString('id-ID'):'✅ LUNAS'}</div>
-  </div>
-  ${pay.note?`<div style="margin-top:8px;padding:6px;background:#f9f9f9;border-radius:4px;font-size:11px;">Ket: ${pay.note}</div>`:''}
-  <div style="text-align:center;margin-top:14px;">
-    <div class="stamp">TERIMA<br>KASIH</div>
-  </div>
-  <div class="footer">
-    Bukti ini sah tanpa tanda tangan<br>
-    Gubukan Krasti · gubukan.krasti@gmail.com<br>
-    Dicetak: ${new Date().toLocaleString('id-ID')}
-  </div>
+  <div class="row"><span class="label">Total Dibayar</span><span class="value" style="color:green">Rp ${totalPaid.toLocaleString('id-ID')}</span></div>
+  <div class="sisa"><div style="font-size:10px;color:#666">${sisa>0?'SISA TAGIHAN':'STATUS'}</div>
+  <div class="sisa-val">${sisa>0?'Rp '+sisa.toLocaleString('id-ID'):'✅ LUNAS'}</div></div>
+  <div class="footer">Terima kasih atas kepercayaan Anda 🙏<br>Gubukan Krasti<br>Dicetak: ${new Date().toLocaleString('id-ID')}</div>
   </body></html>`;
-}
-
-function generateInvoiceHTML(ev, evItems, evPays, totalPaid, sisa) {
-  const invNo = 'INV/' + (ev.no_event||'000') + '/' + (ev.bulan||'').replace('-','') + '/' + ev.id.slice(-4).toUpperCase();
-  const itemRows = evItems.map(it =>
-    `<tr><td>${it.menu}</td><td style="text-align:center">${it.qty}</td>
-     <td style="text-align:right">Rp ${Number(it.harga_satuan||0).toLocaleString('id-ID')}</td>
-     <td style="text-align:right">Rp ${Number(it.total||0).toLocaleString('id-ID')}</td></tr>`
-  ).join('');
-  const payRows = evPays.map(p =>
-    `<tr><td>${fmtDate(p.tanggal)}</td><td>${p.label||p.jenis}</td><td>${p.metode||'-'}</td>
-     <td style="text-align:right;color:green">Rp ${Number(p.jumlah).toLocaleString('id-ID')}</td></tr>`
-  ).join('');
-
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Invoice ${invNo}</title>
-  <style>
-    * { margin:0;padding:0;box-sizing:border-box; }
-    body { font-family:Arial,sans-serif;font-size:12px;color:#222;padding:20px;max-width:420px;margin:0 auto; }
-    .header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px; }
-    .brand h1 { font-size:18px;color:#1a3a6b;font-weight:900; }
-    .brand p { font-size:10px;color:#666; }
-    .inv-info { text-align:right; }
-    .inv-info .inv-no { font-size:13px;font-weight:bold;color:#1a3a6b; }
-    .divider { border-top:2px solid #1a3a6b;margin:10px 0; }
-    .divider2 { border-top:1px dashed #ccc;margin:8px 0; }
-    .to-section { background:#f5f8ff;padding:10px;border-radius:6px;margin-bottom:12px; }
-    .to-section .to-label { font-size:10px;color:#666;text-transform:uppercase; }
-    .to-section .to-name { font-size:14px;font-weight:bold;color:#1a3a6b;margin-top:2px; }
-    table { width:100%;border-collapse:collapse;margin:10px 0; }
-    th { background:#1a3a6b;color:#fff;padding:6px 8px;font-size:11px;text-align:left; }
-    td { padding:6px 8px;border-bottom:1px solid #eee;font-size:11px; }
-    .total-row td { font-weight:bold;font-size:13px;border-bottom:none;padding-top:10px; }
-    .status-box { text-align:center;padding:10px;border-radius:6px;margin:10px 0;
-      background:${sisa>0?'#fff0f0':'#f0fff4'};border:1px solid ${sisa>0?'#e74c3c':'#27ae60'}; }
-    .status-box .st { font-size:16px;font-weight:bold;color:${sisa>0?'#e74c3c':'#27ae60'}; }
-    .footer { text-align:center;margin-top:16px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:10px; }
-  </style></head><body>
-  <div class="header">
-    <div class="brand"><h1>🍲 Gubukan Krasti</h1><p>Catering & Event Food Service</p></div>
-    <div class="inv-info">
-      <div class="inv-no">${invNo}</div>
-      <div style="font-size:10px;color:#666;margin-top:2px;">Tgl: ${new Date().toLocaleDateString('id-ID')}</div>
-    </div>
-  </div>
-  <div class="divider"></div>
-  <div class="to-section">
-    <div class="to-label">Tagihan Kepada</div>
-    <div class="to-name">${ev.customer}</div>
-    <div style="font-size:11px;color:#555;margin-top:3px;">📍 ${ev.lokasi||'-'} · 📅 ${ev.tanggal||'-'}</div>
-  </div>
-  <table>
-    <tr><th>Item</th><th>Qty</th><th>Harga</th><th>Total</th></tr>
-    ${itemRows}
-    <tr class="total-row">
-      <td colspan="3">TOTAL</td>
-      <td style="text-align:right;color:#1a3a6b">Rp ${Number(ev.omzet||0).toLocaleString('id-ID')}</td>
-    </tr>
-  </table>
-  ${evPays.length ? `
-  <div class="divider2"></div>
-  <div style="font-size:11px;font-weight:bold;margin-bottom:6px;color:#1a3a6b;">Riwayat Pembayaran</div>
-  <table>
-    <tr><th>Tgl</th><th>Jenis</th><th>Metode</th><th>Jumlah</th></tr>
-    ${payRows}
-  </table>` : ''}
-  <div class="status-box">
-    <div style="font-size:11px;color:#666;">${sisa>0?'Sisa yang harus dibayar':'Status Pembayaran'}</div>
-    <div class="st">${sisa>0?'Rp '+Number(sisa).toLocaleString('id-ID'):'✅ LUNAS'}</div>
-  </div>
-  <div class="footer">
-    Terima kasih atas kepercayaan Anda 🙏<br>
-    Gubukan Krasti · Info: gubukan.krasti@gmail.com<br>
-    Invoice dibuat: ${new Date().toLocaleString('id-ID')}
-  </div>
-  </body></html>`;
+  const w = window.open('','_blank','width=420,height=700');
+  w.document.write(html); w.document.close(); w.focus();
+  setTimeout(()=>w.print(),500);
 }
 
 
