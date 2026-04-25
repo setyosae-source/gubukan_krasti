@@ -2574,7 +2574,8 @@ function filterKas(filter) {
   // Saldo awal = saldo kumulatif semua transaksi sebelum periode ini
   const range2     = computePeriodRange(currentPeriod);
   const prevEnd    = new Date(new Date(range2.from) - 86400000).toISOString().slice(0,10);
-  const saldoAwal  = getSaldoKumulatifSampai(prevEnd);
+  const jPrev = buildKasJournalByRange("2000-01-01", prevEnd);
+  const saldoAwal = jPrev.filter(j=>j.dir==="in").reduce((s,j)=>s+j.amount,0) - jPrev.filter(j=>j.dir==="out").reduce((s,j)=>s+j.amount,0);
   const totalIn    = filtered.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
   const totalOut   = filtered.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
   const saldoAkhir = saldoAwal + totalIn - totalOut;
@@ -2701,8 +2702,7 @@ function kasSortBy(col) {
 
 function buildKasJournalByRange(from, to) {
   // Gunakan filterByPeriod yang sama dengan Dashboard — konsisten
-  // Parameter from/to hanya dipakai untuk getSaldoKumulatifSampai
-  // Untuk buildKasJournal(), kita pakai getFiltered() langsung
+  // from/to dipakai untuk saldo kumulatif (buildKasJournalByRange dipanggil dari filterKas)
   const inRange = (tgl) => { const d=(tgl||'').toString().slice(0,10); return d>=from && d<=to; };
 
   const allSources = [];
