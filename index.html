@@ -555,20 +555,69 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 .empty-icon { font-size: 40px; margin-bottom: 10px; }
 
 /* ---- MONTH PICKER ---- */
+.month-picker-scroll { padding: 8px 14px 16px; overflow-y: auto; max-height: 72vh; }
+.month-year-group { margin-bottom: 12px; }
+.month-year-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0; margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.month-year-label {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px; color: var(--gold);
+}
+.month-year-toggle { font-size: 12px; color: var(--text3); transition: transform 0.2s; }
+.month-year-toggle.collapsed { transform: rotate(-90deg); }
+.month-year-body { overflow: hidden; transition: max-height 0.3s ease; }
+.month-year-body.collapsed { max-height: 0 !important; }
 .month-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 8px; padding: 16px;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 6px; padding-bottom: 4px;
 }
 .month-btn {
-  padding: 10px; text-align: center;
+  padding: 8px 4px; text-align: center;
   background: var(--bg3); border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  cursor: pointer; font-size: 12px; color: var(--text2);
+  cursor: pointer; font-size: 11px; color: var(--text2);
+  position: relative; transition: all 0.15s;
 }
+.month-btn:active { transform: scale(0.95); }
 .month-btn.active {
   border-color: var(--gold);
-  background: rgba(212,168,67,0.15);
-  color: var(--gold);
+  background: rgba(77,158,247,0.15);
+  color: var(--gold); font-weight: 600;
+}
+.month-btn.has-data::after {
+  content: ''; position: absolute;
+  top: 3px; right: 3px;
+  width: 5px; height: 5px;
+  border-radius: 50%; background: var(--green);
+}
+.month-btn.future { opacity: 0.45; }
+
+/* Theme picker */
+.theme-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 10px; padding: 4px 0 12px;
+}
+.theme-card {
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  overflow: hidden; cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.theme-card:active { transform: scale(0.96); }
+.theme-card.active { border-color: var(--gold); }
+.theme-preview {
+  height: 48px; padding: 7px 8px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.theme-preview-bar { height: 6px; border-radius: 3px; }
+.theme-name {
+  text-align: center; font-size: 11px;
+  color: var(--text2); padding: 4px 0;
+  background: var(--card);
 }
 
 /* ---- EVENT DETAIL SHEET ---- */
@@ -673,6 +722,40 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 }
 .stat-mini-label { font-size: 9px; color: var(--text3); text-transform: uppercase; margin-bottom: 3px; }
 .stat-mini-val { font-size: 13px; font-weight: 600; }
+
+
+/* ---- THEMES ---- */
+[data-theme="earthy"] {
+  --bg:#0f0e0c; --bg2:#1a1814; --bg3:#252218; --card:#1e1c16;
+  --border:#2e2b20; --gold:#d4a843; --gold2:#f0c96a; --cream:#f5edd8;
+  --text:#e8dfc8; --text2:#a09880; --text3:#6b6352;
+}
+[data-theme="navy"] {
+  --bg:#0a0f1e; --bg2:#0d1528; --bg3:#111d35; --card:#0f1a30;
+  --border:#1e2d4a; --gold:#4d9ef7; --gold2:#7bb8ff; --cream:#e8f0ff;
+  --text:#d0dff5; --text2:#7a9bc4; --text3:#3d5a80;
+}
+[data-theme="forest"] {
+  --bg:#0a1208; --bg2:#0f1a0c; --bg3:#152410; --card:#111e0e;
+  --border:#1e3018; --gold:#5cb85c; --gold2:#7dd87d; --cream:#e8f5e8;
+  --text:#d0f0d0; --text2:#7ab87a; --text3:#3d6b3d;
+}
+[data-theme="purple"] {
+  --bg:#0e0a1e; --bg2:#150d28; --bg3:#1c1235; --card:#130f30;
+  --border:#251a4a; --gold:#9b59b6; --gold2:#c39bd3; --cream:#f0e8ff;
+  --text:#e0d0ff; --text2:#9b7ac4; --text3:#5a3d80;
+}
+[data-theme="rose"] {
+  --bg:#1a0a0e; --bg2:#280d15; --bg3:#35111c; --card:#300f1a;
+  --border:#4a1a28; --gold:#e05c8a; --gold2:#f07aa0; --cream:#ffe8f0;
+  --text:#f5d0dd; --text2:#c47a95; --text3:#803d55;
+}
+[data-theme="light"] {
+  --bg:#f0f4ff; --bg2:#e8eef8; --bg3:#dde5f5; --card:#edf1fb;
+  --border:#c8d5ea; --gold:#2563eb; --gold2:#3b82f6; --cream:#1e3a5f;
+  --green:#16a34a; --red:#dc2626; --orange:#ea580c;
+  --text:#1e3a5f; --text2:#4a6fa5; --text3:#8fa8c8;
+}
 
 </style>
 </head>
@@ -894,6 +977,11 @@ textarea.form-control { resize: vertical; min-height: 70px; }
         </div>
         <div class="settings-arrow">›</div>
       </div>
+
+      <div style="padding:4px 0 4px;">
+        <div style="padding:10px 0 8px;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">🎨 Tema Warna</div>
+        <div class="theme-grid" id="themeGrid"></div>
+      </div>
     </div>
 
     <div style="padding:14px;color:var(--text3);font-size:11px;text-align:center;">
@@ -1094,7 +1182,7 @@ textarea.form-control { resize: vertical; min-height: 70px; }
       <div class="sheet-title">Pilih Bulan</div>
       <div class="sheet-close" onclick="closeSheet('monthSheet')">✕</div>
     </div>
-    <div class="month-grid" id="monthGrid"></div>
+    <div class="month-picker-scroll" id="monthGrid"></div>
   </div>
 </div>
 
@@ -1652,75 +1740,253 @@ function renderEvents() {
 function showDetail(eventId) {
   const ev = state.events.find(e=>e.id===eventId);
   if (!ev) return;
+  window._detailEventId = eventId;
+  renderDetailTab('info');
+  openSheet('detailSheet');
+}
+
+function renderDetailTab(tab) {
+  const eventId = window._detailEventId;
+  const ev = state.events.find(e=>e.id===eventId);
+  if (!ev) return;
+
   const evItems = state.items.filter(x=>x.event_id===eventId);
-  const evExp   = state.expenses.filter(x=>x.event_id===eventId);
+  // HPP dari stok_keluar (baru)
+  const skItems = (state.stok_keluar||[]).filter(x=>x.event_id===eventId);
+  const opsItems= (state.pengeluaran||[]).filter(x=>x.event_id===eventId);
+  const evPays  = (state.penerimaan||[]).filter(x=>x.event_id===eventId);
+  // HPP lama (fallback dari expenses)
+  const evExp   = (state.expenses||[]).filter(x=>x.event_id===eventId);
+
   const omzet   = Number(ev.omzet)||0;
-  const hpp     = evExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const ops     = evExp.filter(x=>x.kategori==='Operasional').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const ovh     = evExp.filter(x=>x.kategori==='Overhead').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const laba    = omzet - hpp - ops - ovh;
+  // Prioritas: stok_keluar+pengeluaran (v3), fallback ke expenses (v2)
+  const hppV3   = skItems.reduce((s,x)=>s+(Number(x.total_hpp)||0),0);
+  const opsV3   = opsItems.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const hppV2   = evExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const opsV2   = evExp.filter(x=>x.kategori==='Operasional').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const ovhV2   = evExp.filter(x=>x.kategori==='Overhead').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
+  const hpp     = hppV3 > 0 ? hppV3 : hppV2;
+  const ops     = opsV3 > 0 ? opsV3 : opsV2;
+  const laba    = omzet - hpp - ops - ovhV2;
   const margin  = omzet>0?(laba/omzet*100).toFixed(1):0;
   const isrun   = omzet * 0.1;
+  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const sisa      = omzet - totalPaid;
+  const paidPct   = omzet>0?Math.min(100,(totalPaid/omzet*100)).toFixed(0):0;
 
-  const profitClass = laba >= 0 ? 'profit' : 'loss';
-  const profitLabel = laba >= 0 ? '✅ Profit' : '❌ Rugi';
+  const statusLabel = {booking:'📅 Booking',dp:'💰 DP',lunas:'✅ Lunas',
+    follow:'📞 Follow Up',pending:'⏳ Pending',batal:'❌ Batal'};
 
-  document.getElementById('detailBody').innerHTML = `
-    <div style="margin-bottom:12px;">
-      <div style="font-size:11px;color:var(--text2);">${fmtDate(ev.tanggal)} · ${ev.status}</div>
-      <div style="font-size:18px;font-weight:600;color:var(--cream);margin:4px 0;">${ev.customer}</div>
-      <div style="font-size:12px;color:var(--text2);">📍 ${ev.lokasi||'-'}</div>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-      <div class="detail-omzet">${rp(omzet)}</div>
-      <span class="detail-badge ${profitClass}">${profitLabel} ${Math.abs(margin)}%</span>
-    </div>
-
-    <div class="totals-card">
-      ${evItems.map(it=>`
-        <div class="breakdown-item">
-          <div><div>${it.menu}</div><div class="breakdown-cat">${it.qty} pcs × ${rp(it.harga_satuan)}</div></div>
-          <div style="color:var(--green)">${rp(it.total)}</div>
-        </div>`).join('')}
-      <div class="breakdown-item" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
-        <span style="color:var(--text2);font-size:11px;">HPP Bahan</span><span style="color:var(--blue)">${rp(hpp)}</span>
-      </div>
-      <div class="breakdown-item">
-        <span style="color:var(--text2);font-size:11px;">Ops (fee, transport)</span><span style="color:var(--orange)">${rp(ops)}</span>
-      </div>
-      <div class="breakdown-item">
-        <span style="color:var(--text2);font-size:11px;">Overhead</span><span style="color:var(--text2)">${rp(ovh)}</span>
-      </div>
-      <div class="breakdown-item" style="font-weight:600;">
-        <span>Laba Bersih</span>
-        <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)}</span>
-      </div>
-      <div class="breakdown-item">
-        <span style="font-size:11px;color:var(--text2);">Isrun 10%</span>
-        <span style="color:var(--gold)">${rp(isrun)}</span>
+  const header = `
+    <div style="padding:14px 16px 0;">
+      <div style="font-size:11px;color:var(--text2);">${fmtDate(ev.tanggal)} · <span style="color:var(--gold)">${statusLabel[ev.status]||ev.status}</span></div>
+      <div style="font-size:17px;font-weight:600;color:var(--cream);margin:3px 0;">${ev.customer}</div>
+      <div style="font-size:11px;color:var(--text2);">📍 ${ev.lokasi||'-'}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+        <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--gold)">${rp(omzet)}</div>
+        <span class="detail-badge ${laba>=0?'profit':'loss'}">${laba>=0?'✅':'❌'} ${Math.abs(margin)}%</span>
       </div>
     </div>
+    <div style="display:flex;border-bottom:1px solid var(--border);margin-top:12px;">
+      <div style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;
+        color:${tab==='info'?'var(--gold)':'var(--text2)'};
+        border-bottom:2px solid ${tab==='info'?'var(--gold)':'transparent'}"
+        onclick="renderDetailTab('info')">📋 Info</div>
+      <div style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;
+        color:${tab==='bayar'?'var(--gold)':'var(--text2)'};
+        border-bottom:2px solid ${tab==='bayar'?'var(--gold)':'transparent'}"
+        onclick="renderDetailTab('bayar')">💳 Bayar</div>
+      <div style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;
+        color:${tab==='stok'?'var(--gold)':'var(--text2)'};
+        border-bottom:2px solid ${tab==='stok'?'var(--gold)':'transparent'}"
+        onclick="renderDetailTab('stok')">📦 HPP</div>
+      <div style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;
+        color:${tab==='invoice'?'var(--gold)':'var(--text2)'};
+        border-bottom:2px solid ${tab==='invoice'?'var(--gold)':'transparent'}"
+        onclick="renderDetailTab('invoice')">🧾 Invoice</div>
+    </div>`;
 
-    ${evExp.length ? `
-    <div class="form-section-title">Detail Pengeluaran</div>
-    ${evExp.map(x=>`
-      <div class="breakdown-item">
-        <div>
-          <div style="font-size:12px;">${x.keterangan}</div>
-          <div class="breakdown-cat">${x.kategori} · ${x.toko||''}</div>
+  let body = '';
+
+  if (tab === 'info') {
+    body = `<div style="padding:0 16px 16px;">
+      <div class="totals-card" style="margin-top:14px;">
+        ${evItems.map(it=>`
+          <div class="breakdown-item">
+            <div><div style="font-size:12px;">${it.menu}</div>
+            <div class="breakdown-cat">${it.qty} pcs × ${rp(it.harga_satuan)}</div></div>
+            <div style="color:var(--green)">${rp(it.total)}</div>
+          </div>`).join('')}
+        <div class="breakdown-item" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+          <span style="color:var(--text2);font-size:11px;">HPP Bahan</span>
+          <span style="color:var(--blue)">${rp(hpp)}</span>
         </div>
-        <div style="color:var(--red);font-size:12px;">${rp(x.jumlah)}</div>
-      </div>`).join('')}
-    ` : ''}
+        <div class="breakdown-item">
+          <span style="color:var(--text2);font-size:11px;">Operasional</span>
+          <span style="color:var(--orange)">${rp(ops)}</span>
+        </div>
+        ${ovhV2>0?`<div class="breakdown-item">
+          <span style="color:var(--text2);font-size:11px;">Overhead</span>
+          <span style="color:var(--text2)">${rp(ovhV2)}</span>
+        </div>`:''}
+        <div class="breakdown-item" style="font-weight:600;font-size:14px;">
+          <span>Laba Bersih</span>
+          <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)}</span>
+        </div>
+        <div class="breakdown-item">
+          <span style="font-size:11px;color:var(--text2);">Isrun 10%</span>
+          <span style="color:var(--gold)">${rp(isrun)}</span>
+        </div>
+      </div>
+      ${ev.catatan?`<div style="padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);margin-bottom:10px;">📝 ${ev.catatan}</div>`:''}
+      <button class="btn-submit" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
+      <button class="btn-outline" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
+    </div>`;
 
-    ${ev.catatan ? `<div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);">📝 ${ev.catatan}</div>` : ''}
+  } else if (tab === 'bayar') {
+    const steps = [
+      {key:'booking',label:'Booking Fee',amount:100000,icon:'📅',desc:'Tanda jadi'},
+      {key:'dp',label:'DP 50%',amount:omzet*0.5,icon:'💰',desc:'H-7 sebelum acara'},
+      {key:'pelunasan',label:'Pelunasan',amount:Math.max(0,sisa),icon:'✅',desc:'H-1 sebelum acara'},
+    ];
+    const paidByType = {};
+    evPays.forEach(p=>{ paidByType[p.jenis]=(paidByType[p.jenis]||0)+Number(p.jumlah); });
 
-    <button class="btn-submit" style="margin-top:16px;" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
-    <button class="btn-outline" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
-  `;
+    body = `<div style="padding:0 16px 16px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:14px 0 8px;">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;">Total</div>
+          <div style="font-size:12px;font-weight:600;color:var(--cream)">${rp(omzet)}</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;">Dibayar</div>
+          <div style="font-size:12px;font-weight:600;color:var(--green)">${rp(totalPaid)}</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;">Sisa</div>
+          <div style="font-size:12px;font-weight:600;color:${sisa>0?'var(--red)':'var(--green)'}">${rp(sisa)}</div>
+        </div>
+      </div>
+      <div style="background:var(--border);border-radius:4px;height:8px;margin-bottom:14px;overflow:hidden;">
+        <div style="height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),var(--gold));width:${paidPct}%;transition:width 0.6s"></div>
+      </div>
 
-  openSheet('detailSheet');
+      ${steps.map(s=>{
+        const paid=paidByType[s.key]||0;
+        const done=paid>=s.amount*0.9;
+        return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;background:${done?'rgba(76,175,130,0.2)':'rgba(212,168,67,0.15)'};">${done?'✅':s.icon}</div>
+          <div style="flex:1;">
+            <div style="font-size:11px;color:var(--text2)">${s.label}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--cream)">${rpFull(s.amount)}</div>
+            <div style="font-size:10px;color:var(--text3)">${s.desc}${paid>0?' · Dibayar: '+rp(paid):''}</div>
+          </div>
+          ${!done?`<button onclick="openTerimaForEvent('${ev.id}','${s.key}',${s.amount})"
+            style="font-size:11px;color:var(--gold);border:1px solid var(--gold);border-radius:12px;padding:3px 10px;cursor:pointer;background:none;white-space:nowrap;">Bayar</button>`
+            :'<span style="font-size:11px;color:var(--green)">✓ Lunas</span>'}
+        </div>`;
+      }).join('')}
+
+      ${evPays.length?`
+        <div class="form-section-title" style="margin-top:14px;">Riwayat Pembayaran</div>
+        ${evPays.map(p=>`
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <div style="font-size:20px;">💳</div>
+            <div style="flex:1;">
+              <div style="font-size:12px;color:var(--cream)">${p.label||p.jenis} · ${p.metode||''}</div>
+              <div style="font-size:10px;color:var(--text3)">${fmtDate(p.tanggal)} ${p.catatan?'· '+p.catatan:''}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:13px;font-weight:600;color:var(--green)">${rp(p.jumlah)}</div>
+              <div style="font-size:10px;color:var(--gold);cursor:pointer;" onclick="printBuktiByPayId('${p.id}','${ev.id}')">🖨️ Bukti</div>
+            </div>
+          </div>`).join('')}`
+      :'<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:13px;">💳 Belum ada pembayaran</div>'}
+
+      <button class="btn-submit" style="margin-top:8px;" onclick="openTerimaForEvent('${ev.id}','custom',${sisa})">+ Tambah Pembayaran</button>
+    </div>`;
+
+  } else if (tab === 'stok') {
+    body = `<div style="padding:0 16px 16px;">
+      <div class="form-section-title" style="margin-top:14px;">HPP Bahan Baku</div>
+      ${skItems.length?skItems.map(s=>`
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;justify-content:space-between;margin-bottom:6px;">
+          <div>
+            <div style="font-size:12px;color:var(--cream)">${s.nama}</div>
+            <div style="font-size:10px;color:var(--text3)">${s.qty} ${s.satuan} × ${rp(s.harga_avg)}/unit</div>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--blue)">${rp(s.total_hpp)}</div>
+        </div>`).join('')
+      :'<div style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px;">Belum ada bahan ditarik</div>'}
+
+      <button class="btn-outline" style="margin-top:4px;" onclick="openStokKeluar('${ev.id}')">📦 + Tarik Bahan Baku</button>
+
+      <div class="form-section-title" style="margin-top:14px;">Biaya Operasional</div>
+      ${opsItems.length?opsItems.map(o=>`
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;justify-content:space-between;margin-bottom:6px;">
+          <div>
+            <div style="font-size:12px;color:var(--cream)">${o.keterangan}</div>
+            <div style="font-size:10px;color:var(--text3)">${o.kategori} · ${fmtDate(o.tanggal)}</div>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--orange)">${rp(o.jumlah)}</div>
+        </div>`).join('')
+      :'<div style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px;">Belum ada biaya ops</div>'}
+
+      <button class="btn-outline" style="margin-top:4px;" onclick="openOpsForEvent('${ev.id}')">🚗 + Tambah Biaya Ops</button>
+
+      <div class="totals-card" style="margin-top:12px;">
+        <div class="breakdown-item">
+          <span style="color:var(--text2)">Total HPP Bahan</span>
+          <span style="color:var(--blue)">${rpFull(hpp)}</span>
+        </div>
+        <div class="breakdown-item">
+          <span style="color:var(--text2)">Total Operasional</span>
+          <span style="color:var(--orange)">${rpFull(ops)}</span>
+        </div>
+        <div class="breakdown-item" style="font-weight:600;">
+          <span>Total Biaya</span>
+          <span style="color:var(--red)">${rpFull(hpp+ops)}</span>
+        </div>
+        <div class="breakdown-item" style="font-weight:600;font-size:14px;">
+          <span>Net Margin</span>
+          <span style="color:${laba>=0?'var(--green)':'var(--red)'}">${rpFull(laba)} (${margin}%)</span>
+        </div>
+      </div>
+    </div>`;
+
+  } else if (tab === 'invoice') {
+    const invNo = 'INV/' + (ev.no_event||'000') + '/' + (ev.bulan||'').replace('-','') + '/' + ev.id.slice(-4).toUpperCase();
+    body = `<div style="padding:0 16px 16px;">
+      <div class="totals-card" style="margin-top:14px;margin-bottom:12px;">
+        <div class="breakdown-item"><span style="color:var(--text2);font-size:11px;">No. Invoice</span><span style="color:var(--gold);font-size:11px">${invNo}</span></div>
+        <div class="breakdown-item"><span style="color:var(--text2);font-size:11px;">Customer</span><span style="font-size:12px">${ev.customer}</span></div>
+        <div class="breakdown-item"><span style="color:var(--text2);font-size:11px;">Tgl Event</span><span style="font-size:12px">${fmtDate(ev.tanggal)}</span></div>
+        <div class="breakdown-item"><span style="color:var(--text2);font-size:11px;">Lokasi</span><span style="font-size:12px">${ev.lokasi||'-'}</span></div>
+      </div>
+      <div class="totals-card" style="margin-bottom:12px;">
+        ${evItems.map(it=>`
+          <div class="breakdown-item">
+            <div><div style="font-size:12px">${it.menu}</div>
+            <div class="breakdown-cat">${it.qty} pcs × ${rpFull(it.harga_satuan)}</div></div>
+            <div style="color:var(--green);font-size:12px">${rpFull(it.total)}</div>
+          </div>`).join('')}
+        <div class="breakdown-item" style="font-weight:600;font-size:14px;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+          <span>TOTAL</span><span style="color:var(--gold)">${rpFull(omzet)}</span>
+        </div>
+        <div class="breakdown-item" style="color:var(--green)">
+          <span style="font-size:11px">Terbayar</span><span>${rpFull(totalPaid)}</span>
+        </div>
+        <div class="breakdown-item" style="font-weight:600;color:${sisa>0?'var(--red)':'var(--green)'}">
+          <span>${sisa>0?'Sisa Tagihan':'✅ LUNAS'}</span>
+          <span>${rpFull(Math.abs(sisa))}</span>
+        </div>
+      </div>
+      <button class="btn-submit" onclick="printInvoice('${ev.id}')">🖨️ Print Invoice</button>
+      <button class="btn-outline" onclick="printBuktiEvent('${ev.id}')">📄 Bukti Pembayaran</button>
+    </div>`;
+  }
+
+  document.getElementById('detailBody').innerHTML = header + body;
 }
 
 // ============================================================
@@ -2141,15 +2407,73 @@ function saveApiUrl() {
 function openMonthPicker() { openSheet('monthSheet'); buildMonthGrid(); }
 
 function buildMonthGrid() {
-  const months = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    months.push(d.toISOString().slice(0,7));
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  const maxYear  = thisYear + 1; // advance 1 tahun ke depan
+
+  // Bulan yang punya data
+  const hasData = new Set();
+  [...state.events, ...(state.tokba||[]), ...(state.rt||[])].forEach(r => {
+    if (r.bulan && /^\d{4}-\d{2}$/.test(r.bulan)) hasData.add(r.bulan);
+  });
+
+  // Tahun minimum dari data
+  const years = [...hasData].map(m => parseInt(m.slice(0,4)));
+  const minYear = years.length ? Math.min(...years) : thisYear;
+  const nowStr  = now.toISOString().slice(0,7);
+
+  // Collapsed state per year
+  if (!window._yearCollapsed) window._yearCollapsed = {};
+
+  const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+
+  let html = '';
+  for (let y = maxYear; y >= minYear; y--) {
+    const isCollapsed = window._yearCollapsed[y] === true;
+    const evCount = [...hasData].filter(m => m.startsWith(y+'-')).length;
+    const bodyMaxH = isCollapsed ? '0px' : '200px';
+
+    html += `<div class="month-year-group">
+      <div class="month-year-header" onclick="toggleYear(${y})">
+        <span class="month-year-label">${y}</span>
+        <span class="month-year-toggle ${isCollapsed?'collapsed':''}">
+          ${evCount>0?`<span style="color:var(--green);margin-right:6px;">●${evCount}</span>`:''}▼
+        </span>
+      </div>
+      <div class="month-year-body ${isCollapsed?'collapsed':''}" id="yearBody_${y}" style="max-height:${bodyMaxH}">
+        <div class="month-grid">`;
+
+    for (let mo = 1; mo <= 12; mo++) {
+      const m = y + '-' + String(mo).padStart(2,'0');
+      const isFuture  = m > nowStr;
+      const isActive  = m === currentMonth;
+      const withData  = hasData.has(m) ? 'has-data' : '';
+      const futureClass = isFuture ? 'future' : '';
+      html += `<div class="month-btn ${isActive?'active':''} ${withData} ${futureClass}"
+                onclick="selectMonth('${m}')">${MONTHS[mo-1]}</div>`;
+    }
+    html += `</div></div></div>`;
   }
-  document.getElementById('monthGrid').innerHTML = months.map(m=>
-    `<div class="month-btn ${m===currentMonth?'active':''}" onclick="selectMonth('${m}')">${monthName(m)}</div>`
-  ).join('');
+
+  document.getElementById('monthGrid').innerHTML = html;
+
+  // Auto scroll to active
+  setTimeout(() => {
+    const el = document.querySelector('.month-btn.active');
+    if (el) el.scrollIntoView({ block:'center', behavior:'smooth' });
+  }, 150);
+}
+
+function toggleYear(year) {
+  if (!window._yearCollapsed) window._yearCollapsed = {};
+  window._yearCollapsed[year] = !window._yearCollapsed[year];
+  const body   = document.getElementById('yearBody_' + year);
+  const toggle = body?.previousElementSibling?.querySelector('.month-year-toggle');
+  if (!body) return;
+  const collapsed = window._yearCollapsed[year];
+  body.style.maxHeight  = collapsed ? '0px' : '200px';
+  body.classList.toggle('collapsed', collapsed);
+  if (toggle) toggle.classList.toggle('collapsed', collapsed);
 }
 
 function selectMonth(m) {
@@ -2164,7 +2488,10 @@ function selectMonth(m) {
 // ============================================================
 // SHEET CONTROLS
 // ============================================================
-function openSheet(id) { document.getElementById(id).classList.add('open'); }
+function openSheet(id) {
+  document.getElementById(id).classList.add('open');
+  history.pushState({ page: 'main', sheet: id }, '');
+}
 function closeSheet(id){ document.getElementById(id).classList.remove('open'); }
 function overlayClose(e, id) { if (e.target.classList.contains('overlay')) closeSheet(id); }
 
@@ -2547,7 +2874,202 @@ function printBuktiTerima(pay, ev) {
 }
 
 
+// ============================================================
+// THEME SYSTEM
+// ============================================================
+const THEMES = [
+  { id:'navy',   name:'Navy',   bg:'#0a0f1e', bg2:'#0d1528', accent:'#4d9ef7' },
+  { id:'earthy', name:'Earthy', bg:'#0f0e0c', bg2:'#1a1814', accent:'#d4a843' },
+  { id:'forest', name:'Forest', bg:'#0a1208', bg2:'#0f1a0c', accent:'#5cb85c' },
+  { id:'purple', name:'Purple', bg:'#0e0a1e', bg2:'#150d28', accent:'#9b59b6' },
+  { id:'rose',   name:'Rose',   bg:'#1a0a0e', bg2:'#280d15', accent:'#e05c8a' },
+  { id:'light',  name:'Light',  bg:'#f0f4ff', bg2:'#e8eef8', accent:'#2563eb' },
+];
+
+function applyTheme(id) {
+  document.documentElement.setAttribute('data-theme', id);
+  localStorage.setItem('gubukan_theme', id);
+  document.querySelectorAll('.theme-card').forEach(c =>
+    c.classList.toggle('active', c.dataset.theme === id)
+  );
+}
+
+function buildThemeGrid() {
+  const current = localStorage.getItem('gubukan_theme') || 'navy';
+  const grid = document.getElementById('themeGrid');
+  if (!grid) return;
+  grid.innerHTML = THEMES.map(t => `
+    <div class="theme-card ${t.id===current?'active':''}"
+         data-theme="${t.id}" onclick="applyTheme('${t.id}')">
+      <div class="theme-preview" style="background:${t.bg};">
+        <div class="theme-preview-bar" style="background:${t.accent};width:85%;"></div>
+        <div class="theme-preview-bar" style="background:${t.bg2};width:65%;"></div>
+        <div class="theme-preview-bar" style="background:${t.accent};width:45%;opacity:0.5;"></div>
+      </div>
+      <div class="theme-name">${t.name}</div>
+    </div>`).join('');
+}
+
+
+// ---- Detail tab helpers ----
+function openTerimaForEvent(eventId, jenis, amount) {
+  closeSheet('detailSheet');
+  setTimeout(() => {
+    const jenisEl = document.getElementById('terimaJenis');
+    const refEl   = document.getElementById('terimaEventRef');
+    const jumlahEl= document.getElementById('terimaJumlah');
+    if (jenisEl) jenisEl.value = jenis==='custom'?'pelunasan':jenis;
+    if (refEl)   { 
+      // populate dropdowns first
+      populateEventDropdowns();
+      refEl.value = eventId;
+    }
+    if (jumlahEl) jumlahEl.value = amount>0?amount:'';
+    onTerimaJenisChange();
+    openSheet('inputTerimaSheet');
+  }, 300);
+}
+
+function openOpsForEvent(eventId) {
+  closeSheet('detailSheet');
+  setTimeout(() => {
+    switchBiayaType('ops');
+    populateEventDropdowns();
+    const refEl = document.getElementById('opsEventRef');
+    if (refEl) refEl.value = eventId;
+    openSheet('inputBiayaSheet');
+  }, 300);
+}
+
+function openStokKeluar(eventId) {
+  closeSheet('detailSheet');
+  setTimeout(() => {
+    populateEventDropdowns();
+    populateStokDatalist();
+    const skEl = document.getElementById('skEvent');
+    if (skEl) skEl.value = eventId;
+    openSheet('stokKeluarSheet');
+  }, 300);
+}
+
+function printBuktiByPayId(payId, eventId) {
+  const ev  = state.events.find(e=>e.id===eventId);
+  const pay = (state.penerimaan||[]).find(p=>p.id===payId);
+  if (!ev||!pay) { toast('Data tidak ditemukan'); return; }
+  printBuktiTerima(pay, ev);
+}
+
+function printBuktiEvent(eventId) {
+  const ev = state.events.find(e=>e.id===eventId);
+  if (!ev) return;
+  const evPays = (state.penerimaan||[]).filter(p=>p.event_id===eventId);
+  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const lastPay = evPays[evPays.length-1] || {jumlah:totalPaid,metode:'-',tanggal:new Date().toISOString().slice(0,10),label:'Total Pembayaran'};
+  printBuktiTerima(lastPay, ev);
+}
+
+function printInvoice(eventId) {
+  const ev = state.events.find(e=>e.id===eventId);
+  if (!ev) return;
+  const evItems = state.items.filter(x=>x.event_id===eventId);
+  const evPays  = (state.penerimaan||[]).filter(p=>p.event_id===eventId);
+  const totalPaid = evPays.reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const sisa = (Number(ev.omzet)||0) - totalPaid;
+  const invNo = 'INV/' + (ev.no_event||'000') + '/' + (ev.bulan||'').replace('-','') + '/' + ev.id.slice(-4).toUpperCase();
+
+  const payRows = evPays.map(p=>
+    `<tr><td>${fmtDate(p.tanggal)}</td><td>${p.label||p.jenis}</td><td>${p.metode||'-'}</td>
+     <td style="text-align:right;color:green">Rp ${Number(p.jumlah).toLocaleString('id-ID')}</td></tr>`
+  ).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice ${invNo}</title>
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;color:#222;padding:20px;max-width:420px;margin:0 auto}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+  .brand h1{font-size:18px;color:#1a3a6b;font-weight:900}.brand p{font-size:10px;color:#666}
+  .inv{text-align:right}.inv-no{font-size:13px;font-weight:bold;color:#1a3a6b}
+  hr{border:none;border-top:2px solid #1a3a6b;margin:10px 0}
+  .to{background:#f5f8ff;padding:10px;border-radius:6px;margin-bottom:12px}
+  .to-label{font-size:10px;color:#666;text-transform:uppercase}.to-name{font-size:14px;font-weight:bold;color:#1a3a6b;margin-top:2px}
+  table{width:100%;border-collapse:collapse;margin:10px 0}
+  th{background:#1a3a6b;color:#fff;padding:6px 8px;font-size:11px;text-align:left}
+  td{padding:6px 8px;border-bottom:1px solid #eee;font-size:11px}
+  .tot td{font-weight:bold;font-size:13px;border:none;padding-top:10px}
+  .st-box{text-align:center;padding:10px;border-radius:6px;margin:10px 0;background:${sisa>0?'#fff0f0':'#f0fff4'};border:1px solid ${sisa>0?'#e74c3c':'#27ae60'}}
+  .st{font-size:16px;font-weight:bold;color:${sisa>0?'#e74c3c':'#27ae60'}}
+  .footer{text-align:center;margin-top:16px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:10px}
+  </style></head><body>
+  <div class="hdr">
+    <div class="brand"><h1>🍲 Gubukan Krasti</h1><p>Catering & Event Food Service</p></div>
+    <div class="inv"><div class="inv-no">${invNo}</div><div style="font-size:10px;color:#666">${new Date().toLocaleDateString('id-ID')}</div></div>
+  </div>
+  <hr>
+  <div class="to">
+    <div class="to-label">Tagihan Kepada</div>
+    <div class="to-name">${ev.customer}</div>
+    <div style="font-size:11px;color:#555;margin-top:3px">📍 ${ev.lokasi||'-'} · 📅 ${ev.tanggal||'-'}</div>
+  </div>
+  <table>
+    <tr><th>Item</th><th>Qty</th><th>Harga</th><th>Total</th></tr>
+    ${evItems.map(it=>`<tr><td>${it.menu}</td><td>${it.qty}</td><td>Rp ${Number(it.harga_satuan||0).toLocaleString('id-ID')}</td><td>Rp ${Number(it.total||0).toLocaleString('id-ID')}</td></tr>`).join('')}
+    <tr class="tot"><td colspan="3">TOTAL</td><td style="text-align:right;color:#1a3a6b">Rp ${Number(ev.omzet||0).toLocaleString('id-ID')}</td></tr>
+  </table>
+  ${evPays.length?`<hr style="border-top:1px dashed #ccc">
+  <div style="font-size:11px;font-weight:bold;margin-bottom:6px;color:#1a3a6b">Riwayat Pembayaran</div>
+  <table><tr><th>Tgl</th><th>Jenis</th><th>Metode</th><th>Jumlah</th></tr>${payRows}</table>`:''}
+  <div class="st-box">
+    <div style="font-size:11px;color:#666">${sisa>0?'Sisa yang harus dibayar':'Status'}</div>
+    <div class="st">${sisa>0?'Rp '+sisa.toLocaleString('id-ID'):'✅ LUNAS'}</div>
+  </div>
+  <div class="footer">Terima kasih atas kepercayaan Anda 🙏<br>Gubukan Krasti<br>${new Date().toLocaleString('id-ID')}</div>
+  </body></html>`;
+
+  const w = window.open('','_blank','width=460,height=750');
+  w.document.write(html); w.document.close(); w.focus();
+  setTimeout(()=>w.print(),600);
+}
+
+
+// ============================================================
+// BACK BUTTON HANDLER (Android/Browser back button)
+// ============================================================
+function initBackHandler() {
+  // Push initial state
+  history.pushState({ page: 'main' }, '');
+
+  window.addEventListener('popstate', function(e) {
+    // Check if any overlay/sheet is open
+    const openSheet = document.querySelector('.overlay.open');
+    if (openSheet) {
+      // Close topmost open sheet
+      openSheet.classList.remove('open');
+      // Push state again so back button works next time
+      history.pushState({ page: 'main' }, '');
+      return;
+    }
+
+    // If on a page other than dashboard, go back to dashboard
+    if (currentPage !== 'dash') {
+      gotoPage('dash');
+      history.pushState({ page: 'main' }, '');
+      return;
+    }
+
+    // If on dashboard with nothing open — let browser handle (exit or prev page)
+    // But push state to prevent accidental exit
+    history.pushState({ page: 'main' }, '');
+  });
+}
+
+// Override openSheet to push history state
+const _origOpenSheet = window.openSheet;
+
+
 function init() {
+  // Apply saved theme
+  const savedTheme = localStorage.getItem('gubukan_theme') || 'navy';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  buildThemeGrid();
+  initBackHandler();
   // Load API URL into settings
   if (API_URL) document.getElementById('apiUrlInput').value = API_URL;
 
