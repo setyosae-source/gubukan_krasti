@@ -1163,24 +1163,31 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
         </div>
 
         <div class="stat-grid">
-          <div class="stat-card green">
+          <div class="stat-card green" style="grid-column:span 2">
             <div class="stat-label">Omzet</div>
             <div class="stat-value" id="dOmzet">Rp 0</div>
-            <div class="stat-meta" id="dEventCount">0 event</div>
+            <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;">
+              <div class="stat-meta" id="dOmzetEvent" style="font-size:11px;">🍽️ Gubukan: Rp 0</div>
+              <div class="stat-meta" id="dOmzetTokba" style="font-size:11px;display:none;">🛒 Tokba: Rp 0</div>
+            </div>
           </div>
-          <div class="stat-card gold">
+          <div class="stat-card gold" style="grid-column:span 2">
             <div class="stat-label">Laba Bersih</div>
             <div class="stat-value gold" id="dLaba">Rp 0</div>
-            <div class="stat-meta" id="dMargin">margin 0%</div>
-            <div class="stat-progress"><div class="stat-progress-fill" id="dMarginBar" style="width:0%"></div></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+              <div class="stat-progress" style="flex:1"><div class="stat-progress-fill" id="dMarginBar" style="width:0%"></div></div>
+              <div class="stat-meta" id="dMargin" style="font-size:12px;font-weight:600;white-space:nowrap;">0%</div>
+            </div>
           </div>
           <div class="stat-card blue">
             <div class="stat-label">HPP</div>
-            <div class="stat-value" style="color:var(--blue)" id="dHPP">Rp 0</div>
+            <div class="stat-value" style="color:var(--blue);font-size:15px" id="dHPP">Rp 0</div>
+            <div class="stat-meta" id="dHPPCount" style="font-size:10px;">0 item</div>
           </div>
           <div class="stat-card orange">
             <div class="stat-label">Operasional</div>
-            <div class="stat-value" style="color:var(--orange)" id="dOps">Rp 0</div>
+            <div class="stat-value" style="color:var(--orange);font-size:15px" id="dOps">Rp 0</div>
+            <div class="stat-meta" id="dOpsCount" style="font-size:10px;">0 item</div>
           </div>
         </div>
 
@@ -2140,77 +2147,93 @@ function renderDash() {
   const mEvents   = f.events;
   const mExpenses = f.expenses;
   const mTokba    = f.tokba;
-  const mRT       = f.rt;
 
-  const omzet   = mEvents.reduce((s,e) => s + (Number(e.omzet)||0), 0);
-  const hpp  = mExpenses.filter(x => !isOpsRow(x)).reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const ops  = mExpenses.filter(x =>  isOpsRow(x)).reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  const ovh  = 0;
-  const laba = omzet - hpp - ops;
-  const margin  = omzet > 0 ? (laba/omzet*100).toFixed(1) : 0;
+  // ── OMZET ──────────────────────────────────────────────
+  const omzetGubukan = mEvents.reduce((s,e) => s + (Number(e.omzet)||0), 0);
+  const tokbaIn      = mTokba.reduce((s,x) => s + (Number(x.masuk)||0), 0);
+  const omzetTotal   = omzetGubukan + tokbaIn;
 
-  const tokIn   = mTokba.reduce((s,x)=>s+(Number(x.masuk)||0),0);
-  const tokOut  = mTokba.reduce((s,x)=>s+(Number(x.keluar)||0),0);
-  const tokSaldo = tokIn - tokOut;
+  // ── HPP & OPS dari expenses sesuai filter ──────────────
+  const hppRows = mExpenses.filter(x => !isOpsRow(x));
+  const opsRows = mExpenses.filter(x =>  isOpsRow(x));
+  const hpp     = hppRows.reduce((s,x) => s + (Number(x.jumlah)||0), 0);
+  const ops     = opsRows.reduce((s,x) => s + (Number(x.jumlah)||0), 0);
 
-  const rtMasuk = mRT.reduce((s,x)=>s+(Number(x.masuk)||0),0);
-  const rtKeluar= mRT.reduce((s,x)=>s+(Number(x.rutin)||0)+(Number(x.jajan)||0)+(Number(x.extraordinary)||0),0);
-  const rtSaldo = rtMasuk - rtKeluar;
+  // ── LABA ───────────────────────────────────────────────
+  const laba   = omzetTotal - hpp - ops;
+  const margin = omzetTotal > 0 ? (laba / omzetTotal * 100).toFixed(1) : 0;
 
+  // ── PERIOD LABEL ───────────────────────────────────────
   const range = computePeriodRange(currentPeriod);
   document.getElementById('dashTitle').textContent = currentPeriod.label || monthName(currentMonth);
   { const dp=document.getElementById('dashPeriod'); if(dp) dp.textContent = mEvents.length + ' event · ' + fmtDate(range.from) + ' s/d ' + fmtDate(range.to); }
   { const ml=document.getElementById('monthLabel'); if(ml) ml.textContent = currentPeriod.label||monthName(currentMonth); }
 
-  document.getElementById('dOmzet').textContent = rp(omzet);
-  document.getElementById('dEventCount').textContent = mEvents.length + ' event';
-  document.getElementById('dLaba').textContent = rp(laba);
-  document.getElementById('dMargin').textContent = 'margin ' + margin + '%';
-  document.getElementById('dMarginBar').style.width = Math.min(margin, 100) + '%';
-  // New v3 stats
-  const mStokKeluar  = f.stok_keluar;
-  const mPengeluaran = f.pengeluaran;
-  const mPenerimaan  = f.penerimaan;
-  const hppV3  = mStokKeluar.reduce((s,r)=>s+(Number(r.total_hpp)||0),0);
-  const opsV3  = mPengeluaran.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
-  const terimaV3 = mPenerimaan.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
-  const labaV3 = omzet - hppV3 - opsV3 - ovh;
-  const marginV3 = omzet>0?(labaV3/omzet*100).toFixed(1):0;
+  // ── SET KARTU OMZET ────────────────────────────────────
+  document.getElementById('dOmzet').textContent = rp(omzetTotal);
 
-  document.getElementById('dLaba').textContent = rp(labaV3||laba);
-  document.getElementById('dMargin').textContent = 'margin ' + (marginV3||margin) + '%';
-  document.getElementById('dMarginBar').style.width = Math.min(Math.abs(marginV3||margin),100) + '%';
-  document.getElementById('dHPP').textContent   = rp(hppV3||hpp);
-  document.getElementById('dOps').textContent   = rp(opsV3||ops);
-  { const _e_dTerima=document.getElementById('dTerima'); if(_e_dTerima) _e_dTerima.textContent=rp(terimaV3); }
+  const evEl = document.getElementById('dOmzetEvent');
+  if (evEl) evEl.textContent = '🍽️ Gubukan: ' + rp(omzetGubukan) + ' (' + mEvents.length + ' event)';
 
-  // Recent events - today & future only, sorted ascending (nearest first)
+  const tbEl = document.getElementById('dOmzetTokba');
+  if (tbEl) {
+    if (tokbaIn > 0) {
+      tbEl.textContent = '🛒 Tokba: ' + rp(tokbaIn);
+      tbEl.style.display = 'block';
+    } else {
+      tbEl.style.display = 'none';
+    }
+  }
+
+  // ── SET KARTU LABA ─────────────────────────────────────
+  const labaEl = document.getElementById('dLaba');
+  if (labaEl) {
+    labaEl.textContent = rp(laba);
+    labaEl.style.color = laba >= 0 ? 'var(--gold)' : 'var(--red)';
+  }
+  const mEl = document.getElementById('dMargin');
+  if (mEl) {
+    mEl.textContent = margin + '%';
+    mEl.style.color = Number(margin) >= 0 ? 'var(--gold)' : 'var(--red)';
+  }
+  { const mb=document.getElementById('dMarginBar'); if(mb) mb.style.width = Math.min(Math.abs(margin), 100) + '%'; }
+
+  // ── SET KARTU HPP ──────────────────────────────────────
+  document.getElementById('dHPP').textContent = rp(hpp);
+  { const hc=document.getElementById('dHPPCount'); if(hc) hc.textContent = hppRows.length + ' item belanja'; }
+
+  // ── SET KARTU OPS ──────────────────────────────────────
+  document.getElementById('dOps').textContent = rp(ops);
+  { const oc=document.getElementById('dOpsCount'); if(oc) oc.textContent = opsRows.length + ' item ops'; }
+
+  // ── EVENT MENDATANG ────────────────────────────────────
+  // Tidak ikut filter periode — selalu tampil event masa depan
   const todayStr = new Date().toISOString().slice(0,10);
-  const recent = [...f.events]
-    .filter(ev => ev.tanggal >= todayStr && ev.status !== 'batal')
+  const recent = [...state.events]
+    .filter(ev => (ev.tanggal||'') >= todayStr && ev.status !== 'batal')
     .sort((a,b) => new Date(a.tanggal)-new Date(b.tanggal))
-    .slice(0,8);
+    .slice(0, 8);
   const el = document.getElementById('recentEvents');
   if (!recent.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">🎉</div>Tidak ada event mendatang</div>';
-    return;
-  }
-  el.innerHTML = recent.map(ev => {
-    const evOmzet = Number(ev.omzet)||0;
-    const st = ev.status||'pending';
+  } else {
     const statusLabel = {booking:'Booking',dp:'DP',lunas:'Lunas',follow:'Follow Up',pending:'Pending',batal:'Batal'};
-    return `<div class="event-item" onclick="showDetail('${ev.id}')">
-      <div class="event-status ${st}"></div>
-      <div class="event-info">
-        <div class="event-customer">${ev.customer||'-'}</div>
-        <div class="event-meta">${fmtDate(ev.tanggal)} · ${ev.lokasi||'-'}</div>
-      </div>
-      <div class="event-right">
-        <div class="event-omzet">${evOmzet>0?rp(evOmzet):'—'}</div>
-        <div class="event-badge ${st}">${statusLabel[st]||st}</div>
-      </div>
-    </div>`;
-  }).join('');
+    el.innerHTML = recent.map(ev => {
+      const evOmzet = Number(ev.omzet)||0;
+      const st = ev.status||'pending';
+      return `<div class="event-item" onclick="showDetail('${ev.id}')">
+        <div class="event-status ${st}"></div>
+        <div class="event-info">
+          <div class="event-customer">${ev.customer||'-'}</div>
+          <div class="event-meta">${fmtDate(ev.tanggal)} · ${ev.lokasi||'-'}</div>
+        </div>
+        <div class="event-right">
+          <div class="event-omzet">${evOmzet>0?rp(evOmzet):'—'}</div>
+          <div class="event-badge ${st}">${statusLabel[st]||st}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
 
   renderBarChart();
 }
