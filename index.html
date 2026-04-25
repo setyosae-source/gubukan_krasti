@@ -1003,53 +1003,42 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 
   <!-- ==================== KAS ==================== -->
   <div class="page" id="page-kas">
-    <div class="kas-tabs">
-      <div class="kas-tab active" data-kastab="gubukan" onclick="switchKasTab('gubukan')">🍲 Gubukan</div>
-      <div class="kas-tab" data-kastab="tokba" onclick="switchKasTab('tokba')">🛒 Toko Online</div>
+    <div class="dash-header">
+      <div class="dash-greeting">Jurnal Keuangan</div>
+      <div class="dash-title" id="kasTitle">Kas</div>
+      <div class="dash-period" id="kasPeriod">—</div>
     </div>
 
-    <!-- Gubukan Kas -->
-    <div class="kas-content active" id="kas-gubukan">
-      <div class="summary-grid" style="padding-top:12px;">
-        <div class="summary-card green">
-          <div class="sc-label">Total Masuk</div>
-          <div class="sc-value green" id="kGubIn">Rp 0</div>
-        </div>
-        <div class="summary-card red">
-          <div class="sc-label">Total Keluar</div>
-          <div class="sc-value red" id="kGubOut">Rp 0</div>
-        </div>
+    <!-- Summary strip -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 14px 0;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Terima</div>
+        <div style="font-size:13px;font-weight:600;color:var(--green)" id="kasIn">Rp 0</div>
       </div>
-      <div class="section-header">
-        <div class="section-title">Pengeluaran</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Keluar</div>
+        <div style="font-size:13px;font-weight:600;color:var(--red)" id="kasOut">Rp 0</div>
       </div>
-      <div class="trans-list" id="expensesList">
-        <div class="loading"><div class="spinner"></div>Memuat...</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Saldo</div>
+        <div style="font-size:13px;font-weight:600;color:var(--gold)" id="kasSaldo">Rp 0</div>
       </div>
     </div>
 
-    <!-- Tokba Kas -->
-    <div class="kas-content" id="kas-tokba">
-      <div class="summary-grid" style="padding-top:12px;">
-        <div class="summary-card green">
-          <div class="sc-label">Masuk</div>
-          <div class="sc-value green" id="kTokIn">Rp 0</div>
-        </div>
-        <div class="summary-card red">
-          <div class="sc-label">Keluar</div>
-          <div class="sc-value red" id="kTokOut">Rp 0</div>
-        </div>
-      </div>
-      <div class="section-header">
-        <div class="section-title">Transaksi</div>
-        <button class="section-action" onclick="openSheet('tokbaSheet')">+ Tambah</button>
-      </div>
-      <div class="trans-list" id="tokbaList">
-        <div class="loading"><div class="spinner"></div>Memuat...</div>
-      </div>
+    <!-- Filter chips -->
+    <div style="display:flex;gap:6px;padding:10px 14px;overflow-x:auto;scrollbar-width:none;">
+      <div class="filter-chip active" data-kasfilter="all" onclick="filterKas('all')">Semua</div>
+      <div class="filter-chip" data-kasfilter="terima" onclick="filterKas('terima')">📥 Terima</div>
+      <div class="filter-chip" data-kasfilter="biaya" onclick="filterKas('biaya')">📤 Biaya</div>
+      <div class="filter-chip" data-kasfilter="stok" onclick="filterKas('stok')">📦 Stok</div>
+      <div class="filter-chip" data-kasfilter="tokba" onclick="filterKas('tokba')">🛒 Tokba</div>
+    </div>
+
+    <!-- Journal list -->
+    <div class="trans-list" id="kasJurnalList" style="padding:0 14px;">
+      <div class="loading"><div class="spinner"></div>Memuat...</div>
     </div>
   </div>
-
   <!-- ==================== RT ==================== -->
   <div class="page" id="page-rt">
     <div class="rt-summary">
@@ -1611,6 +1600,257 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 </div>
 
 
+
+<!-- KAS INPUT MODAL -->
+<div class="overlay" id="kasInputSheet" onclick="overlayClose(event,'kasInputSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">+ Tambah Transaksi</div>
+      <div class="sheet-close" onclick="closeSheet('kasInputSheet')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <!-- Type selector -->
+      <div class="form-section-title">Jenis Transaksi</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div class="quick-btn keluar" id="ki_stok" onclick="setKasInputType('stok')" style="padding:10px;">
+          <div class="quick-btn-icon" style="font-size:18px;">📦</div>
+          <div class="quick-btn-label" style="font-size:11px;">Beli Stok</div>
+          <div class="quick-btn-desc">Bahan baku</div>
+        </div>
+        <div class="quick-btn" id="ki_ops" onclick="setKasInputType('ops')" style="padding:10px;">
+          <div class="quick-btn-icon" style="font-size:18px;">🚗</div>
+          <div class="quick-btn-label" style="font-size:11px;">Biaya Ops</div>
+          <div class="quick-btn-desc">Transport, fee, tol</div>
+        </div>
+        <div class="quick-btn" id="ki_terima_event" onclick="setKasInputType('terima_event')" style="padding:10px;">
+          <div class="quick-btn-icon" style="font-size:18px;">🍲</div>
+          <div class="quick-btn-label" style="font-size:11px;">Terima Event</div>
+          <div class="quick-btn-desc">Booking, DP, Lunas</div>
+        </div>
+        <div class="quick-btn" id="ki_terima_tokba" onclick="setKasInputType('terima_tokba')" style="padding:10px;">
+          <div class="quick-btn-icon" style="font-size:18px;">🛒</div>
+          <div class="quick-btn-label" style="font-size:11px;">Terima Tokba</div>
+          <div class="quick-btn-desc">Shopee, Tokped, dll</div>
+        </div>
+      </div>
+
+      <!-- STOK FORM -->
+      <div id="ki_form_stok" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tanggal</label>
+            <input type="date" class="form-control" id="ki_stok_tgl">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kategori</label>
+            <select class="form-control" id="ki_stok_kat">
+              <option value="sayuran">🥕 Sayuran</option>
+              <option value="daging">🥩 Daging/Protein</option>
+              <option value="dairy">🧀 Dairy/Susu</option>
+              <option value="bumbu">🌶️ Bumbu</option>
+              <option value="tepung">🌾 Tepung/Baking</option>
+              <option value="packaging">📦 Packaging</option>
+              <option value="frozen">❄️ Frozen</option>
+              <option value="lainnya">📋 Lainnya</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nama Bahan</label>
+          <input type="text" class="form-control" id="ki_stok_nama" placeholder="Wortel, Mozarella..." list="stokNamaList">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Qty</label>
+            <input type="number" class="form-control" id="ki_stok_qty" placeholder="5" oninput="calcKiStokHarga()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Satuan Beli</label>
+            <select class="form-control" id="ki_stok_satuan" onchange="updateKiSatuanKecil()">
+              <option value="kg">kg</option>
+              <option value="gram">gram</option>
+              <option value="liter">liter</option>
+              <option value="ml">ml</option>
+              <option value="pack">pack</option>
+              <option value="pcs">pcs</option>
+              <option value="lusin">lusin</option>
+              <option value="box">box</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Satuan Pakai</label>
+            <select class="form-control" id="ki_stok_satuan_kecil">
+              <option value="gram">gram</option>
+              <option value="ml">ml</option>
+              <option value="pcs">pcs</option>
+              <option value="kg">kg</option>
+              <option value="liter">liter</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Konversi</label>
+            <input type="number" class="form-control" id="ki_stok_konversi" placeholder="1000" oninput="calcKiStokHarga()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Harga Total (Rp)</label>
+            <input type="number" class="form-control" id="ki_stok_harga" placeholder="50000" oninput="calcKiStokHarga()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Harga/Sat Pakai</label>
+            <input type="text" class="form-control" id="ki_stok_per_unit" readonly style="opacity:0.7">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Toko / Supplier</label>
+          <input type="text" class="form-control" id="ki_stok_toko" placeholder="Hoktung Mart...">
+        </div>
+        <button class="btn-submit" onclick="kiSaveStok()">💾 Simpan Stok</button>
+      </div>
+
+      <!-- OPS FORM -->
+      <div id="ki_form_ops" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tanggal</label>
+            <input type="date" class="form-control" id="ki_ops_tgl">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kategori</label>
+            <select class="form-control" id="ki_ops_kat">
+              <option value="transport">🚗 Transport</option>
+              <option value="tol">🛣️ Tol & Parkir</option>
+              <option value="fee_waitress">👩 Fee Waitress</option>
+              <option value="fee_vendor">🤝 Fee Vendor</option>
+              <option value="bensin">⛽ Bensin</option>
+              <option value="listrik">💡 Listrik</option>
+              <option value="iklan">📢 Iklan</option>
+              <option value="lainnya">📋 Lainnya</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Keterangan</label>
+          <input type="text" class="form-control" id="ki_ops_ket" placeholder="Transport ke GOR, Fee Bu Dewi...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Referensi Event</label>
+          <select class="form-control" id="ki_ops_event">
+            <option value="">— Biaya Umum —</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Jumlah (Rp)</label>
+            <input type="number" class="form-control" id="ki_ops_jumlah" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Metode</label>
+            <select class="form-control" id="ki_ops_metode">
+              <option value="cash">💵 Cash</option>
+              <option value="transfer">🏦 Transfer</option>
+              <option value="qris">📱 QRIS</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Toko / Penerima</label>
+          <input type="text" class="form-control" id="ki_ops_toko" placeholder="Pak Larjo, SPBU...">
+        </div>
+        <button class="btn-submit" onclick="kiSaveOps()">💾 Simpan Biaya</button>
+      </div>
+
+      <!-- TERIMA EVENT FORM -->
+      <div id="ki_form_terima_event" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Event</label>
+          <select class="form-control" id="ki_te_event" onchange="kiUpdateTerimaSummary()">
+            <option value="">— Pilih Event —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jenis</label>
+          <select class="form-control" id="ki_te_jenis" onchange="kiUpdateTerimaSummary()">
+            <option value="booking">📅 Booking Fee (Rp 100.000)</option>
+            <option value="dp">💰 DP 50%</option>
+            <option value="pelunasan">✅ Pelunasan</option>
+            <option value="custom">💵 Custom</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tanggal</label>
+            <input type="date" class="form-control" id="ki_te_tgl">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jumlah (Rp)</label>
+            <input type="number" class="form-control" id="ki_te_jumlah" placeholder="0">
+          </div>
+        </div>
+        <div class="totals-card" id="ki_te_summary" style="display:none;">
+          <div class="total-row"><span>Total Tagihan</span><span id="ki_te_total">-</span></div>
+          <div class="total-row"><span>Sudah Dibayar</span><span id="ki_te_dibayar" style="color:var(--green)">-</span></div>
+          <div class="total-row highlight"><span>Sisa</span><span id="ki_te_sisa" style="color:var(--red)">-</span></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Metode</label>
+          <select class="form-control" id="ki_te_metode">
+            <option value="transfer">🏦 Transfer Bank</option>
+            <option value="cash">💵 Cash</option>
+            <option value="qris">📱 QRIS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catatan</label>
+          <input type="text" class="form-control" id="ki_te_catatan" placeholder="Nama pengirim...">
+        </div>
+        <button class="btn-submit" onclick="kiSaveTerimaEvent(true)">💾 Simpan & Cetak Bukti</button>
+        <button class="btn-outline" onclick="kiSaveTerimaEvent(false)">💾 Simpan Saja</button>
+      </div>
+
+      <!-- TERIMA TOKBA FORM -->
+      <div id="ki_form_terima_tokba" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tanggal</label>
+            <input type="date" class="form-control" id="ki_tt_tgl">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sumber</label>
+            <select class="form-control" id="ki_tt_sumber">
+              <option value="shopee">🛒 Shopee</option>
+              <option value="tokopedia">🟢 Tokopedia</option>
+              <option value="customer">👤 Customer Langsung</option>
+              <option value="lainnya">📋 Lainnya</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Keterangan</label>
+          <input type="text" class="form-control" id="ki_tt_ket" placeholder="Tarik Shopee, Penjualan mozza...">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Masuk (Rp)</label>
+            <input type="number" class="form-control" id="ki_tt_masuk" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Keluar (Rp)</label>
+            <input type="number" class="form-control" id="ki_tt_keluar" placeholder="0">
+          </div>
+        </div>
+        <button class="btn-submit" onclick="kiSaveTokba(true)">💾 Simpan & Cetak</button>
+        <button class="btn-outline" onclick="kiSaveTokba(false)">💾 Simpan Saja</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1646,6 +1886,7 @@ function gotoPage(page) {
   // FAB visibility
   const fab = document.getElementById('fabBtn');
   fab.style.display = ['dash','settings','laporan'].includes(page) ? 'none' : 'flex';
+  fab.onclick = page==='kas' ? openKasInput : openAddSheet;
 
   renderPage(page);
 }
@@ -2156,52 +2397,136 @@ function renderDetailTab(tab) {
 // KAS
 // ============================================================
 function renderKas() {
-  const mExp  = state.expenses.filter(e=>e.bulan===currentMonth);
-  const mTok  = state.tokba.filter(e=>e.bulan===currentMonth);
+  document.getElementById('kasTitle').textContent  = monthName(currentMonth);
+  document.getElementById('kasPeriod').textContent = 'Jurnal Keuangan Bulanan';
+  filterKas(window._kasFilter||'all');
+}
 
-  // Gubukan
-  const gIn  = state.events.filter(e=>e.bulan===currentMonth).reduce((s,e)=>s+(Number(e.omzet)||0),0);
-  const gOut = mExp.reduce((s,x)=>s+(Number(x.jumlah)||0),0);
-  document.getElementById('kGubIn').textContent  = rp(gIn);
-  document.getElementById('kGubOut').textContent = rp(gOut);
+function filterKas(filter) {
+  window._kasFilter = filter;
+  document.querySelectorAll('[data-kasfilter]').forEach(c=>
+    c.classList.toggle('active', c.dataset.kasfilter===filter));
 
-  const el = document.getElementById('expensesList');
-  if (!mExp.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada pengeluaran</div>';
-  } else {
-    el.innerHTML = mExp.map(x=>`
-      <div class="trans-item">
-        <div class="trans-icon out">💸</div>
-        <div class="trans-info">
-          <div class="trans-desc">${x.keterangan}</div>
-          <div class="trans-meta">${x.kategori} · ${fmtDate(x.tanggal)}</div>
-        </div>
-        <div class="trans-amount out">${rp(x.jumlah)}</div>
-      </div>`).join('');
+  // Build unified journal from all sources
+  const journal = buildKasJournal();
+  const filtered = filter==='all' ? journal :
+    journal.filter(j=>j.type===filter);
+
+  // Summary
+  const totalIn  = journal.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
+  const totalOut = journal.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
+  const saldo    = totalIn - totalOut;
+  const kasInEl = document.getElementById('kasIn');
+  const kasOutEl = document.getElementById('kasOut');
+  const kasSaldoEl = document.getElementById('kasSaldo');
+  if (kasInEl) kasInEl.textContent = rp(totalIn);
+  if (kasOutEl) kasOutEl.textContent = rp(totalOut);
+  if (kasSaldoEl) {
+    kasSaldoEl.textContent = rp(saldo);
+    kasSaldoEl.style.color = saldo>=0?'var(--green)':'var(--red)';
+  }
+
+  const el = document.getElementById('kasJurnalList');
+  if (!el) return;
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada transaksi</div>';
+    return;
+  }
+
+  // Group by date
+  const byDate = {};
+  filtered.forEach(j=>{
+    const d = j.tanggal||'';
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(j);
+  });
+
+  el.innerHTML = Object.entries(byDate)
+    .sort(([a],[b])=>b.localeCompare(a))
+    .map(([date, items])=>`
+      <div style="padding:6px 0 3px;font-size:11px;color:var(--text3);font-weight:600;
+        border-bottom:1px solid var(--border);margin-bottom:4px;">
+        ${fmtDate(date)||date}
+      </div>
+      ${items.map(j=>`
+        <div class="trans-item" style="margin-bottom:6px;">
+          <div class="trans-icon ${j.dir==='in'?'in':'out'}" style="font-size:16px;">${j.icon}</div>
+          <div class="trans-info">
+            <div class="trans-desc">${j.label}</div>
+            <div class="trans-meta">${j.meta}</div>
+          </div>
+          <div class="trans-amount ${j.dir==='in'?'in':'out'}">
+            ${j.dir==='in'?'+':'-'}${rp(j.amount)}
+          </div>
+        </div>`).join('')}
+    `).join('');
+}
+
+function buildKasJournal() {
+  const journal = [];
+  const m = currentMonth;
+
+  // Penerimaan event
+  (state.penerimaan||[]).filter(r=>r.bulan===m).forEach(r=>{
+    const ev = state.events.find(e=>e.id===r.event_id);
+    journal.push({
+      type:'terima', dir:'in', amount:Number(r.jumlah)||0,
+      tanggal:r.tanggal, icon:'💰',
+      label: r.label||r.jenis,
+      meta: (ev?ev.customer+' · ':'')+r.metode,
+    });
+  });
+
+  // Stok masuk (pengeluaran)
+  (state.stok_masuk||[]).filter(r=>r.bulan===m).forEach(r=>{
+    journal.push({
+      type:'stok', dir:'out', amount:Number(r.total_nilai)||0,
+      tanggal:r.tanggal, icon:'📦',
+      label: r.nama + ' ' + r.qty + ' ' + r.satuan,
+      meta: r.toko||r.kategori,
+    });
+  });
+
+  // Pengeluaran ops
+  (state.pengeluaran||[]).filter(r=>r.bulan===m).forEach(r=>{
+    const ev = state.events.find(e=>e.id===r.event_id);
+    journal.push({
+      type:'biaya', dir:'out', amount:Number(r.jumlah)||0,
+      tanggal:r.tanggal, icon:'🚗',
+      label: r.keterangan,
+      meta: r.kategori + (ev?' · '+ev.customer:' · Umum'),
+    });
+  });
+
+  // Fallback: expenses lama
+  if (!(state.pengeluaran||[]).filter(r=>r.bulan===m).length) {
+    (state.expenses||[]).filter(r=>r.bulan===m).forEach(r=>{
+      journal.push({
+        type:'biaya', dir:'out', amount:Number(r.jumlah)||0,
+        tanggal:r.tanggal, icon:'💸',
+        label: r.keterangan,
+        meta: r.kategori + (r.toko?' · '+r.toko:''),
+      });
+    });
   }
 
   // Tokba
-  const tIn  = mTok.reduce((s,x)=>s+(Number(x.masuk)||0),0);
-  const tOut = mTok.reduce((s,x)=>s+(Number(x.keluar)||0),0);
-  document.getElementById('kTokIn').textContent  = rp(tIn);
-  document.getElementById('kTokOut').textContent = rp(tOut);
+  (state.tokba||[]).filter(r=>r.bulan===m).forEach(r=>{
+    const masuk = Number(r.masuk)||0;
+    const keluar= Number(r.keluar)||0;
+    if (masuk>0) journal.push({
+      type:'tokba', dir:'in', amount:masuk,
+      tanggal:r.tanggal, icon:'🛒',
+      label: r.keterangan, meta:'Toko Online',
+    });
+    if (keluar>0) journal.push({
+      type:'tokba', dir:'out', amount:keluar,
+      tanggal:r.tanggal, icon:'🛒',
+      label: r.keterangan, meta:'Toko Online',
+    });
+  });
 
-  const tel = document.getElementById('tokbaList');
-  if (!mTok.length) {
-    tel.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada transaksi</div>';
-  } else {
-    tel.innerHTML = mTok.map(x=>`
-      <div class="trans-item">
-        <div class="trans-icon ${Number(x.masuk)>0?'in':'out'}">${Number(x.masuk)>0?'📥':'📤'}</div>
-        <div class="trans-info">
-          <div class="trans-desc">${x.keterangan}</div>
-          <div class="trans-meta">${fmtDate(x.tanggal)}</div>
-        </div>
-        <div class="trans-amount ${Number(x.masuk)>0?'in':'out'}">
-          ${Number(x.masuk)>0? '+'+rp(x.masuk) : '-'+rp(x.keluar)}
-        </div>
-      </div>`).join('');
-  }
+  return journal.sort((a,b)=>(b.tanggal||'').localeCompare(a.tanggal||''));
 }
 
 function switchKasTab(tab) {
@@ -3676,6 +4001,401 @@ function printLaporan() {
   const w = window.open('','_blank','width=720,height=850');
   w.document.write(html); w.document.close(); w.focus();
   setTimeout(()=>w.print(),700);
+}
+
+
+// ============================================================
+// KAS TAB - Input Biaya & Terima (proxy forms)
+// ============================================================
+function switchKasTab(tab) {
+  document.querySelectorAll('.kas-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.kas-content').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`[data-kastab="${tab}"]`).classList.add('active');
+  document.getElementById('kas-' + tab).classList.add('active');
+  if (tab === 'biaya') {
+    switchBiayaTypeKas('stok');
+    populateEventDropdownsKas();
+  }
+  if (tab === 'terima') {
+    populateEventDropdownsKas();
+    onTerimaJenisChange2();
+  }
+}
+
+function populateEventDropdownsKas() {
+  const mEvents = state.events
+    .sort((a,b) => new Date(b.tanggal)-new Date(a.tanggal));
+  const options = '<option value="">— Biaya Umum —</option>' +
+    mEvents.map(e=>`<option value="${e.id}">${e.no_event||''} · ${e.customer} (${fmtDate(e.tanggal)})</option>`).join('');
+  const opt2 = '<option value="">— Pilih Event —</option>' +
+    mEvents.map(e=>`<option value="${e.id}">${e.no_event||''} · ${e.customer} (${fmtDate(e.tanggal)})</option>`).join('');
+  const el1 = document.getElementById('opsEventRef2');
+  const el2 = document.getElementById('terimaEventRef2');
+  if (el1) el1.innerHTML = options;
+  if (el2) el2.innerHTML = opt2;
+}
+
+function switchBiayaTypeKas(type) {
+  document.getElementById('kasFormStok').style.display = type==='stok'?'block':'none';
+  document.getElementById('kasFormOps').style.display  = type==='ops'?'block':'none';
+  document.getElementById('kb_stok').className = 'quick-btn ' + (type==='stok'?'keluar':'');
+  document.getElementById('kb_ops').className  = 'quick-btn ' + (type==='ops'?'keluar':'');
+}
+
+// Override switchBiayaType to also update kas tab buttons
+const _origSwitchBiaya = switchBiayaType;
+function switchBiayaType(type) {
+  _origSwitchBiaya(type);
+  // sync kas tab if visible
+  const kb_stok = document.getElementById('kb_stok');
+  const kb_ops  = document.getElementById('kb_ops');
+  if (kb_stok) kb_stok.className = 'quick-btn ' + (type==='stok'?'keluar':'');
+  if (kb_ops)  kb_ops.className  = 'quick-btn ' + (type==='ops'?'keluar':'');
+  const ks = document.getElementById('kasFormStok');
+  const ko = document.getElementById('kasFormOps');
+  if (ks) ks.style.display = type==='stok'?'block':'none';
+  if (ko) ko.style.display = type==='ops'?'block':'none';
+}
+
+function updateSatuanKecil2() {
+  const satuan = document.getElementById('stokSatuan2').value;
+  const map = { kg:'gram', liter:'ml', pack:'pcs', lusin:'pcs', box:'pcs', gram:'gram', ml:'ml', pcs:'pcs' };
+  document.getElementById('stokSatuanKecil2').value = map[satuan]||satuan;
+  const konvMap = { kg:1000, liter:1000, lusin:12, pack:1, box:1, gram:1, ml:1, pcs:1 };
+  document.getElementById('stokKonversi2').value = konvMap[satuan]||1;
+  calcStokHarga2();
+}
+
+function calcStokHarga2() {
+  const qty    = Number(document.getElementById('stokQty2').value)||0;
+  const konv   = Number(document.getElementById('stokKonversi2').value)||1;
+  const total  = Number(document.getElementById('stokHargaTotal2').value)||0;
+  const qtyK   = qty * konv;
+  const perUnit= qtyK>0 ? total/qtyK : 0;
+  document.getElementById('stokHargaPerUnit2').value = perUnit>0
+    ? rpFull(perUnit)+' / '+document.getElementById('stokSatuanKecil2').value : '-';
+}
+
+async function saveStokMasuk2() {
+  // Copy values to main form fields and call saveStokMasuk
+  const fields = {
+    stokNama: 'stokNama2', stokKat: 'stokKat2',
+    stokQty: 'stokQty2', stokSatuan: 'stokSatuan2',
+    stokSatuanKecil: 'stokSatuanKecil2', stokKonversi: 'stokKonversi2',
+    stokHargaTotal: 'stokHargaTotal2', stokToko: 'stokToko2', stokTgl: 'stokTgl2',
+  };
+  Object.entries(fields).forEach(([to, from]) => {
+    const src = document.getElementById(from);
+    const dst = document.getElementById(to);
+    if (src && dst) dst.value = src.value;
+  });
+  await saveStokMasuk();
+  // Clear form
+  ['stokNama2','stokQty2','stokHargaTotal2','stokToko2'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  toast('✅ Stok disimpan!');
+}
+
+async function savePengeluaran2() {
+  const fields = {
+    opsTgl: 'opsTgl2', opsKat: 'opsKat2', opsKet: 'opsKet2',
+    opsEventRef: 'opsEventRef2', opsJumlah: 'opsJumlah2',
+    opsMetode: 'opsMetode2', opsToko: 'opsToko2',
+  };
+  Object.entries(fields).forEach(([to, from]) => {
+    const src = document.getElementById(from);
+    const dst = document.getElementById(to);
+    if (src && dst) dst.value = src.value;
+  });
+  await savePengeluaran();
+  ['opsKet2','opsJumlah2','opsToko2'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+}
+
+function onTerimaJenisChange2() {
+  const jenis = document.getElementById('terimaJenis2')?.value;
+  const isEvent = ['booking','dp','pelunasan'].includes(jenis);
+  const grp = document.getElementById('terimaEventGroup2');
+  if (grp) grp.style.display = isEvent ? 'block' : 'none';
+  if (isEvent) updateTerimaSummary2();
+}
+
+function updateTerimaSummary2() {
+  const eventId = document.getElementById('terimaEventRef2')?.value;
+  const ev = state.events.find(e=>e.id===eventId);
+  const sumEl = document.getElementById('terimaEventSummary2');
+  if (!ev || !sumEl) { if(sumEl) sumEl.style.display='none'; return; }
+  const ter = getEventPenerimaan(eventId);
+  const sisa = (Number(ev.omzet)||0) - ter.total;
+  sumEl.style.display = 'block';
+  document.getElementById('tsTotal2').textContent   = rpFull(Number(ev.omzet)||0);
+  document.getElementById('tsDibayar2').textContent = rpFull(ter.total);
+  document.getElementById('tsSisa2').textContent    = rpFull(Math.max(0,sisa));
+  const jenis = document.getElementById('terimaJenis2').value;
+  const jumlahEl = document.getElementById('terimaJumlah2');
+  if (jenis==='booking') jumlahEl.value = 100000;
+  else if (jenis==='dp') jumlahEl.value = Math.round((Number(ev.omzet)||0)*0.5);
+  else if (jenis==='pelunasan') jumlahEl.value = Math.max(0,sisa);
+}
+
+async function savePenerimaan2(printAfter=false) {
+  const fields = {
+    terimaJenis: 'terimaJenis2', terimaEventRef: 'terimaEventRef2',
+    terimaTgl: 'terimaTgl2', terimaJumlah: 'terimaJumlah2',
+    terimaMetode: 'terimaMetode2', terimaCatatan: 'terimaCatatan2',
+  };
+  Object.entries(fields).forEach(([to, from]) => {
+    const src = document.getElementById(from);
+    const dst = document.getElementById(to);
+    if (src && dst) dst.value = src.value;
+  });
+  await savePenerimaan(printAfter);
+  ['terimaJumlah2','terimaCatatan2'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+}
+
+
+// ============================================================
+// KAS INPUT FUNCTIONS
+// ============================================================
+function setKasInputType(type) {
+  ['stok','ops','terima_event','terima_tokba'].forEach(t=>{
+    const btn = document.getElementById('ki_'+t);
+    const frm = document.getElementById('ki_form_'+t);
+    if(btn) btn.className = 'quick-btn' + (t===type?' keluar':'');
+    if(frm) frm.style.display = t===type?'block':'none';
+  });
+  // Populate event dropdowns
+  if (type==='ops'||type==='terima_event') {
+    const mEv = state.events.sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
+    const optsOps = '<option value="">— Biaya Umum —</option>' +
+      mEv.map(e=>`<option value="${e.id}">${e.no_event||''} · ${e.customer} (${fmtDate(e.tanggal)})</option>`).join('');
+    const optsEv  = '<option value="">— Pilih Event —</option>' +
+      mEv.map(e=>`<option value="${e.id}">${e.no_event||''} · ${e.customer} (${fmtDate(e.tanggal)})</option>`).join('');
+    const el1 = document.getElementById('ki_ops_event');
+    const el2 = document.getElementById('ki_te_event');
+    if(el1) el1.innerHTML = optsOps;
+    if(el2) el2.innerHTML = optsEv;
+  }
+}
+
+function updateKiSatuanKecil() {
+  const s = document.getElementById('ki_stok_satuan').value;
+  const map = {kg:'gram',liter:'ml',pack:'pcs',lusin:'pcs',box:'pcs',gram:'gram',ml:'ml',pcs:'pcs'};
+  const k = document.getElementById('ki_stok_satuan_kecil');
+  if(k) k.value = map[s]||s;
+  const km = {kg:1000,liter:1000,lusin:12,pack:1,box:1,gram:1,ml:1,pcs:1};
+  const kk = document.getElementById('ki_stok_konversi');
+  if(kk) kk.value = km[s]||1;
+  calcKiStokHarga();
+}
+
+function calcKiStokHarga() {
+  const qty   = Number(document.getElementById('ki_stok_qty')?.value)||0;
+  const konv  = Number(document.getElementById('ki_stok_konversi')?.value)||1;
+  const total = Number(document.getElementById('ki_stok_harga')?.value)||0;
+  const qtyK  = qty*konv;
+  const per   = qtyK>0?total/qtyK:0;
+  const sat   = document.getElementById('ki_stok_satuan_kecil')?.value||'';
+  const el    = document.getElementById('ki_stok_per_unit');
+  if(el) el.value = per>0?rpFull(per)+' / '+sat:'-';
+}
+
+function kiUpdateTerimaSummary() {
+  const eventId = document.getElementById('ki_te_event')?.value;
+  const jenis   = document.getElementById('ki_te_jenis')?.value;
+  const ev = state.events.find(e=>e.id===eventId);
+  const sumEl = document.getElementById('ki_te_summary');
+  if(!ev||!sumEl){if(sumEl)sumEl.style.display='none';return;}
+  const ter = getEventPenerimaan(eventId);
+  const sisa= (Number(ev.omzet)||0)-ter.total;
+  sumEl.style.display='block';
+  document.getElementById('ki_te_total').textContent   = rpFull(Number(ev.omzet)||0);
+  document.getElementById('ki_te_dibayar').textContent = rpFull(ter.total);
+  document.getElementById('ki_te_sisa').textContent    = rpFull(Math.max(0,sisa));
+  const jEl = document.getElementById('ki_te_jumlah');
+  if(jEl){
+    if(jenis==='booking') jEl.value=100000;
+    else if(jenis==='dp') jEl.value=Math.round((Number(ev.omzet)||0)*0.5);
+    else if(jenis==='pelunasan') jEl.value=Math.max(0,sisa);
+  }
+}
+
+async function kiSaveStok() {
+  const nama  = document.getElementById('ki_stok_nama')?.value.trim();
+  const qty   = Number(document.getElementById('ki_stok_qty')?.value)||0;
+  const total = Number(document.getElementById('ki_stok_harga')?.value)||0;
+  const tgl   = document.getElementById('ki_stok_tgl')?.value;
+  if(!nama||!qty||!total||!tgl){toast('⚠️ Lengkapi data stok!');return;}
+  const konv  = Number(document.getElementById('ki_stok_konversi')?.value)||1;
+  const sat   = document.getElementById('ki_stok_satuan')?.value;
+  const satK  = document.getElementById('ki_stok_satuan_kecil')?.value;
+  const qtyK  = qty*konv;
+  const stokSum = calcStokSummary();
+  const ex = stokSum.find(s=>s.nama===nama);
+  const oldV = ex?ex.total_nilai:0;
+  const oldQ = ex?ex.total_qty_kecil:0;
+  const newAvg = (oldV+total)/(oldQ+qtyK);
+  const data = {
+    bulan:tgl.slice(0,7),tanggal:tgl,nama,
+    kategori:document.getElementById('ki_stok_kat')?.value,
+    qty,satuan:sat,satuan_kecil:satK,konversi:konv,
+    harga_beli:qtyK>0?total/qtyK:0,harga_avg:newAvg,
+    total_nilai:total,toko:document.getElementById('ki_stok_toko')?.value||'',catatan:'',
+  };
+  try {
+    const res = await apiWrite('insert','stok_masuk',data);
+    state.stok_masuk.push({...data,id:res.id});
+    cacheState();
+    closeSheet('kasInputSheet');
+    renderKas();
+    populateStokDatalist();
+    toast('✅ Stok '+nama+' disimpan!');
+  } catch(e){toast('❌ '+e.message);}
+}
+
+async function kiSaveOps() {
+  const ket    = document.getElementById('ki_ops_ket')?.value.trim();
+  const jumlah = Number(document.getElementById('ki_ops_jumlah')?.value)||0;
+  const tgl    = document.getElementById('ki_ops_tgl')?.value;
+  if(!ket||!jumlah||!tgl){toast('⚠️ Lengkapi data biaya!');return;}
+  const data = {
+    bulan:tgl.slice(0,7),tanggal:tgl,
+    event_id:document.getElementById('ki_ops_event')?.value||'',
+    kategori:document.getElementById('ki_ops_kat')?.value,
+    keterangan:ket,jumlah,
+    metode:document.getElementById('ki_ops_metode')?.value,
+    toko:document.getElementById('ki_ops_toko')?.value||'',catatan:'',
+  };
+  try {
+    const res = await apiWrite('insert','pengeluaran',data);
+    state.pengeluaran.push({...data,id:res.id});
+    cacheState();
+    closeSheet('kasInputSheet');
+    renderKas();
+    toast('✅ Biaya disimpan!');
+  } catch(e){toast('❌ '+e.message);}
+}
+
+async function kiSaveTerimaEvent(printAfter=false) {
+  const eventId = document.getElementById('ki_te_event')?.value;
+  const jenis   = document.getElementById('ki_te_jenis')?.value;
+  const jumlah  = Number(document.getElementById('ki_te_jumlah')?.value)||0;
+  const tgl     = document.getElementById('ki_te_tgl')?.value;
+  if(!eventId||!jumlah||!tgl){toast('⚠️ Lengkapi data penerimaan!');return;}
+  const labelMap={booking:'Booking Fee',dp:'DP 50%',pelunasan:'Pelunasan',custom:'Pembayaran'};
+  const data = {
+    event_id:eventId,bulan:tgl.slice(0,7),tanggal:tgl,
+    jenis,label:labelMap[jenis]||jenis,jumlah,
+    metode:document.getElementById('ki_te_metode')?.value,
+    catatan:document.getElementById('ki_te_catatan')?.value||'',
+  };
+  try {
+    const res = await apiWrite('insert','penerimaan',data);
+    state.penerimaan.push({...data,id:res.id});
+    // Auto update event status
+    const ev = state.events.find(e=>e.id===eventId);
+    if(ev){
+      const paid = state.penerimaan.filter(p=>p.event_id===eventId).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+      const omzet = Number(ev.omzet)||0;
+      const ns = paid>=omzet?'lunas':paid>=omzet*0.5?'dp':'booking';
+      if(ns!==ev.status){ev.status=ns;try{await apiWrite('update','events',{status:ns},ev.id);}catch(e){}}
+    }
+    cacheState();
+    closeSheet('kasInputSheet');
+    renderKas();
+    toast('✅ Penerimaan disimpan!');
+    if(printAfter&&ev) setTimeout(()=>printBuktiTerima(data,ev),500);
+  } catch(e){toast('❌ '+e.message);}
+}
+
+async function kiSaveTokba(printAfter=false) {
+  const ket    = document.getElementById('ki_tt_ket')?.value.trim();
+  const masuk  = Number(document.getElementById('ki_tt_masuk')?.value)||0;
+  const keluar = Number(document.getElementById('ki_tt_keluar')?.value)||0;
+  const tgl    = document.getElementById('ki_tt_tgl')?.value;
+  const sumber = document.getElementById('ki_tt_sumber')?.value||'';
+  if(!ket||(!masuk&&!keluar)||!tgl){toast('⚠️ Lengkapi data!');return;}
+  const data = {
+    bulan:tgl.slice(0,7), tanggal:tgl,
+    keterangan:ket, sumber,
+    masuk, keluar, saldo:masuk-keluar,
+    no_trans:'', qty:0, satuan:'',
+  };
+  try {
+    const res = await apiWrite('insert','tokba',data);
+    state.tokba.push({...data,id:res.id});
+    cacheState();
+    closeSheet('kasInputSheet');
+    renderKas();
+    toast('✅ Transaksi disimpan!');
+    if (printAfter && masuk>0) {
+      setTimeout(() => printBuktiTokba(data), 500);
+    }
+  } catch(e){toast('❌ '+e.message);}
+}
+
+function printBuktiTokba(data) {
+  const no = 'TOK/' + new Date().getTime().toString().slice(-6);
+  const sumberLabel = {
+    shopee:'Shopee', tokopedia:'Tokopedia',
+    customer:'Customer Langsung', lainnya:'Lainnya'
+  };
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bukti Tokba</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;font-size:12px;color:#222;padding:16px;max-width:380px;margin:0 auto}
+    .logo{text-align:center;margin-bottom:12px}
+    .logo h1{font-size:20px;color:#1a3a6b;font-weight:900}
+    .logo p{font-size:10px;color:#666}
+    .divider{border-top:2px solid #1a3a6b;margin:8px 0}
+    .divider2{border-top:1px dashed #999;margin:8px 0}
+    .title{text-align:center;font-size:13px;font-weight:bold;margin:8px 0;color:#1a3a6b}
+    .row{display:flex;justify-content:space-between;padding:4px 0}
+    .label{color:#666}
+    .total-box{background:#f0f4ff;border:1px solid #1a3a6b;border-radius:6px;padding:12px;margin:10px 0;text-align:center}
+    .total-box .amount{font-size:22px;font-weight:900;color:#1a3a6b}
+    .footer{text-align:center;margin-top:14px;font-size:10px;color:#999}
+  </style></head><body>
+  <div class="logo">
+    <h1>🍲 Gubukan Krasti</h1>
+    <p>Catering & Event Food Service</p>
+  </div>
+  <div class="divider"></div>
+  <div class="title">BUKTI PENERIMAAN TOKO ONLINE</div>
+  <div class="divider2"></div>
+  <div class="row"><span class="label">No. Bukti</span><span>${no}</span></div>
+  <div class="row"><span class="label">Tanggal</span><span>${data.tanggal}</span></div>
+  <div class="row"><span class="label">Sumber</span><span>${sumberLabel[data.sumber]||data.sumber}</span></div>
+  <div class="row"><span class="label">Keterangan</span><span>${data.keterangan}</span></div>
+  <div class="divider2"></div>
+  <div class="total-box">
+    <div style="font-size:10px;color:#666;margin-bottom:4px;">DITERIMA SEBESAR</div>
+    <div class="amount">Rp ${Number(data.masuk||0).toLocaleString('id-ID')}</div>
+  </div>
+  ${data.keluar>0?`<div class="row"><span class="label">Keluar</span><span style="color:#c0392b">Rp ${Number(data.keluar).toLocaleString('id-ID')}</span></div>`:''}
+  <div class="footer">
+    Terima kasih 🙏<br>
+    Gubukan Krasti<br>
+    Dicetak: ${new Date().toLocaleString('id-ID')}
+  </div>
+  </body></html>`;
+  const w = window.open('','_blank','width=420,height=600');
+  w.document.write(html); w.document.close(); w.focus();
+  setTimeout(()=>w.print(),500);
+}
+
+function openKasInput() {
+  const today = new Date().toISOString().slice(0,10);
+  ['ki_stok_tgl','ki_ops_tgl','ki_te_tgl','ki_tt_tgl'].forEach(id=>{
+    const el=document.getElementById(id);if(el&&!el.value)el.value=today;
+  });
+  populateStokDatalist();
+  setKasInputType('stok');
+  openSheet('kasInputSheet');
 }
 
 
