@@ -1085,16 +1085,23 @@ async function syncData() {
   btn.classList.add('spinning');
   try {
     if (!API_URL) { toast('⚠️ Set URL API di Settings dulu!'); return; }
-    const monthly = await api({ action: 'getMonthly', month: currentMonth });
-    state.events   = await api({ action: 'getAll', sheet: 'events' });
-    state.items     = await api({ action: 'getAll', sheet: 'event_items' });
-    state.expenses  = await api({ action: 'getAll', sheet: 'expenses' });
-    state.tokba     = monthly.tokba || [];
-    state.rt        = monthly.rt || [];
-    state.vendors   = await api({ action: 'getAll', sheet: 'vendors' });
+    const [events, items, expenses, tokba, rt, vendors] = await Promise.all([
+      api({ action: 'getAll', sheet: 'events' }),
+      api({ action: 'getAll', sheet: 'event_items' }),
+      api({ action: 'getAll', sheet: 'expenses' }),
+      api({ action: 'getAll', sheet: 'tokba' }),
+      api({ action: 'getAll', sheet: 'rumah_tangga' }),
+      api({ action: 'getAll', sheet: 'vendors' }),
+    ]);
+    state.events   = events   || [];
+    state.items    = items    || [];
+    state.expenses = expenses || [];
+    state.tokba    = tokba    || [];
+    state.rt       = rt       || [];
+    state.vendors  = vendors  || [];
     cacheState();
     renderPage(currentPage);
-    toast('✅ Data berhasil disync!');
+    toast('✅ ' + state.events.length + ' events disync!');
   } catch(e) {
     toast('❌ ' + e.message);
   } finally {
@@ -1777,8 +1784,7 @@ function selectMonth(m) {
   currentMonth = m;
   localStorage.setItem('gubukan_month', m);
   closeSheet('monthSheet');
-  localStorage.removeItem('gubukan_cache');
-  syncData();
+  renderPage(currentPage); // render langsung dari cache, cepat!
 }
 
 // ============================================================
