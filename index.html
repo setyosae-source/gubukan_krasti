@@ -2700,8 +2700,10 @@ function kasSortBy(col) {
 }
 
 function buildKasJournalByRange(from, to) {
-  // Filter helper: tanggal dalam range from..to
-  const inRange = (tgl) => { const d=(tgl||'').slice(0,10); return d>=from && d<=to; };
+  // Gunakan filterByPeriod yang sama dengan Dashboard — konsisten
+  // Parameter from/to hanya dipakai untuk getSaldoKumulatifSampai
+  // Untuk buildKasJournal(), kita pakai getFiltered() langsung
+  const inRange = (tgl) => { const d=(tgl||'').toString().slice(0,10); return d>=from && d<=to; };
 
   const allSources = [];
 
@@ -2712,8 +2714,7 @@ function buildKasJournalByRange(from, to) {
       label:r.label||r.jenis||'Penerimaan',meta:(ev?ev.customer+' · ':'')+String(r.metode||'')});
   });
 
-  // 2. MASUK: dari omzet events (data historis — tidak ada di penerimaan)
-  //    Hanya tampil jika penerimaan kosong (supaya tidak double count)
+  // 2. MASUK: dari omzet events (data historis — fallback jika penerimaan kosong)
   if (!(state.penerimaan||[]).filter(r=>inRange(r.tanggal)).length) {
     (state.events||[]).filter(r=>inRange(r.tanggal)).forEach(ev=>{
       if ((Number(ev.omzet)||0) > 0) {
@@ -2723,12 +2724,10 @@ function buildKasJournalByRange(from, to) {
     });
   }
 
-  // 3. MASUK: dari tokba
+  // 3. MASUK & KELUAR: dari tokba
   (state.tokba||[]).filter(r=>inRange(r.tanggal)).forEach(r=>{
-    if(Number(r.masuk)>0) allSources.push({type:'tokba',dir:'in',amount:Number(r.masuk),
-      tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
-    if(Number(r.keluar)>0) allSources.push({type:'tokba',dir:'out',amount:Number(r.keluar),
-      tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
+    if(Number(r.masuk)>0)  allSources.push({type:'tokba',dir:'in', amount:Number(r.masuk), tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
+    if(Number(r.keluar)>0) allSources.push({type:'tokba',dir:'out',amount:Number(r.keluar),tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
   });
 
   // 4. KELUAR: dari pengeluaran (input manual baru)
@@ -2755,26 +2754,53 @@ function buildKasJournalByRange(from, to) {
   return allSources;
 }
 
-// Hitung saldo kumulatif sampai akhir bulan tertentu (dari semua data sejak awal)
-function getSaldoKumulatifSampai(batasAkhir) {
-  // Ambil semua data dari tanggal paling awal sampai batasAkhir
-  const from = '2000-01-01';
-  const journal = buildKasJournalByRange(from, batasAkhir);
-  const totalIn  = journal.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
-  const totalOut = journal.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
-  return totalIn - totalOut;
-}
-
-function getPrevMonthEnd(m) {
-  // Akhir bulan sebelumnya: misal currentMonth '2025-05' → '2025-04-30'
-  const [y, mo] = m.split('-').map(Number);
-  const lastDay = new Date(y, mo-1, 0); // day 0 = hari terakhir bulan sebelumnya
-  return lastDay.toISOString().slice(0,10);
-}
-
 function buildKasJournal() {
-  const range = computePeriodRange(currentPeriod);
-  return buildKasJournalByRange(range.from, range.to);
+  // Pakai getFiltered() supaya konsisten dengan Dashboard (filterByPeriod)
+  const f = getFiltered();
+  const allSources = [];
+
+  // MASUK: penerimaan atau fallback events
+  if (f.penerimaan.length) {
+    f.penerimaan.forEach(r=>{
+      const ev=state.events.find(e=>e.id===r.event_id);
+      allSources.push({type:'terima',dir:'in',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💰',
+        label:r.label||r.jenis||'Penerimaan',meta:(ev?ev.customer+' · ':'')+String(r.metode||'')});
+    });
+  } else {
+    f.events.forEach(ev=>{
+      if((Number(ev.omzet)||0)>0)
+        allSources.push({type:'terima',dir:'in',amount:Number(ev.omzet)||0,tanggal:ev.tanggal,icon:'💰',
+          label:(ev.no_event?'Ev '+ev.no_event+' · ':'')+String(ev.customer||'-'),meta:ev.lokasi||'Event Catering'});
+    });
+  }
+
+  // MASUK & KELUAR: tokba
+  f.tokba.forEach(r=>{
+    if(Number(r.masuk)>0)  allSources.push({type:'tokba',dir:'in', amount:Number(r.masuk), tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
+    if(Number(r.keluar)>0) allSources.push({type:'tokba',dir:'out',amount:Number(r.keluar),tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
+  });
+
+  // KELUAR: pengeluaran atau fallback expenses
+  if (f.pengeluaran.length) {
+    f.pengeluaran.forEach(r=>{
+      const ev=state.events.find(e=>e.id===r.event_id);
+      allSources.push({type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'🚗',
+        label:r.keterangan,meta:r.kategori+(ev?' · '+ev.customer:' · Umum')});
+    });
+  } else {
+    f.expenses.forEach(r=>{
+      allSources.push({type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💸',
+        label:r.keterangan,meta:r.kategori+(r.toko?' · '+r.toko:'')});
+    });
+  }
+
+  // KELUAR: stok_masuk
+  f.stok_masuk.forEach(r=>{
+    allSources.push({type:'stok',dir:'out',amount:Number(r.total_nilai)||0,tanggal:r.tanggal,icon:'📦',
+      label:(r.nama||'')+' '+r.qty+' '+r.satuan,meta:r.toko||r.kategori});
+  });
+
+  return allSources;
 }
 
 function switchKasTab(tab) {
