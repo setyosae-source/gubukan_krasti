@@ -3237,20 +3237,17 @@ function buildKasJournal() {
   const f = getFiltered();
   const allSources = [];
 
-  // MASUK: penerimaan atau fallback events
-  if (f.penerimaan.length) {
-    f.penerimaan.forEach(r=>{
-      const ev=state.events.find(e=>e.id===r.event_id);
-      allSources.push({type:'terima',dir:'in',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💰',
-        label:r.label||r.jenis||'Penerimaan',meta:(ev?ev.customer+' · ':'')+String(r.metode||'')});
-    });
-  } else {
-    f.events.forEach(ev=>{
-      if((Number(ev.omzet)||0)>0)
-        allSources.push({type:'terima',dir:'in',amount:Number(ev.omzet)||0,tanggal:ev.tanggal,icon:'💰',
-          label:(ev.no_event?'Ev '+ev.no_event+' · ':'')+String(ev.customer||'-'),meta:ev.lokasi||'Event Catering',id:ev.id,table:'events'});
-    });
-  }
+  // MASUK: events SELALU jadi sumber utama
+  f.events.forEach(ev=>{
+    if((Number(ev.omzet)||0)>0)
+      allSources.push({type:'terima',dir:'in',amount:Number(ev.omzet)||0,tanggal:ev.tanggal,icon:'💰',
+        label:(ev.no_event?'Ev '+ev.no_event+' · ':'')+String(ev.customer||'-'),meta:ev.lokasi||'Event Catering',id:ev.id,table:'events'});
+  });
+  // MASUK: penerimaan sebagai tambahan (lintas periode / kas masuk lain)
+  f.penerimaan.filter(r=>!r.event_id).forEach(r=>{
+    allSources.push({type:'terima',dir:'in',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💰',
+      label:r.label||r.jenis||'Penerimaan',meta:String(r.metode||'')});
+  });
 
   // MASUK & KELUAR: tokba
   f.tokba.forEach(r=>{
