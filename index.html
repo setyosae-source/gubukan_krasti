@@ -12,30 +12,30 @@
    DESIGN TOKENS
    ============================================================ */
 :root {
-  --bg:        #0c0d10;
-  --bg2:       #111318;
-  --bg3:       #181a20;
-  --surface:   #1e2028;
-  --surface2:  #252830;
-  --border:    rgba(255,255,255,0.07);
-  --border2:   rgba(255,255,255,0.12);
+  --bg:        #16181f;
+  --bg2:       #1e2128;
+  --bg3:       #252830;
+  --surface:   #2a2d38;
+  --surface2:  #323640;
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.14);
 
-  --ink:       #f0f1f5;
-  --ink2:      #9a9dab;
-  --ink3:      #5a5d6b;
-  --ink4:      #3a3d4a;
+  --ink:       #edeef2;
+  --ink2:      #9da0b0;
+  --ink3:      #636678;
+  --ink4:      #3e4150;
 
   --gold:      #e8b84b;
   --gold2:     #f5d07a;
-  --gold-dim:  rgba(232,184,75,0.12);
+  --gold-dim:  rgba(232,184,75,0.14);
   --green:     #4ade80;
-  --green-dim: rgba(74,222,128,0.1);
+  --green-dim: rgba(74,222,128,0.12);
   --red:       #f87171;
-  --red-dim:   rgba(248,113,113,0.1);
+  --red-dim:   rgba(248,113,113,0.12);
   --blue:      #60a5fa;
-  --blue-dim:  rgba(96,165,250,0.1);
+  --blue-dim:  rgba(96,165,250,0.12);
   --orange:    #fb923c;
-  --orange-dim:rgba(251,146,60,0.1);
+  --orange-dim:rgba(251,146,60,0.12);
 
   --radius:    10px;
   --radius-lg: 16px;
@@ -51,95 +51,268 @@
 }
 
 [data-theme="light"] {
-  --bg:       #f5f5f7;
-  --bg2:      #ffffff;
-  --bg3:      #ebebed;
-  --surface:  #ffffff;
-  --surface2: #f0f0f2;
-  --border:   rgba(0,0,0,0.08);
-  --border2:  rgba(0,0,0,0.14);
-  --ink:      #1a1a2e;
-  --ink2:     #555668;
-  --ink3:     #888a99;
-  --ink4:     #c0c2cc;
+  --bg:        #f0f2f7;
+  --bg2:       #ffffff;
+  --bg3:       #e4e7ef;
+  --surface:   #ffffff;
+  --surface2:  #eaecf4;
+  --border:    rgba(60,70,120,0.1);
+  --border2:   rgba(60,70,120,0.18);
+  --ink:       #1c2040;
+  --ink2:      #4a5070;
+  --ink3:      #7a80a0;
+  --ink4:      #b8bcd0;
+  --gold:      #c49a2a;
+  --gold2:     #dbb840;
+  --gold-dim:  rgba(196,154,42,0.12);
+  --green:     #1a8a45;
+  --green-dim: rgba(26,138,69,0.1);
+  --red:       #cc3333;
+  --red-dim:   rgba(204,51,51,0.1);
+  --blue:      #1a5ccc;
+  --blue-dim:  rgba(26,92,204,0.1);
+  --orange:    #cc6010;
+  --orange-dim:rgba(204,96,16,0.1);
 }
 
 /* ============================================================
-   TEMA TERANG TAMBAHAN
+   TEMA TAMBAHAN — BALANCED
+   dark = alias default */
+[data-theme="dark"] {
+  --bg:        #16181f;
+  --bg2:       #1e2128;
+  --bg3:       #252830;
+  --surface:   #2a2d38;
+  --surface2:  #323640;
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.14);
+  --ink:       #edeef2;
+  --ink2:      #9da0b0;
+  --ink3:      #636678;
+  --ink4:      #3e4150;
+  --gold:      #e8b84b;
+  --gold2:     #f5d07a;
+  --gold-dim:  rgba(232,184,75,0.14);
+  --green:     #4ade80;
+  --green-dim: rgba(74,222,128,0.12);
+  --red:       #f87171;
+  --red-dim:   rgba(248,113,113,0.12);
+  --blue:      #60a5fa;
+  --blue-dim:  rgba(96,165,250,0.12);
+  --orange:    #fb923c;
+  --orange-dim:rgba(251,146,60,0.12);
+}
+
+/* ============================================================
+   TEMA TAMBAHAN — BALANCED
    ============================================================ */
+
+/* Gelap: Navy lebih cerah */
+[data-theme="navy"] {
+  --bg:        #181e2e;
+  --bg2:       #212a40;
+  --bg3:       #283250;
+  --surface:   #2e3a55;
+  --surface2:  #374468;
+  --border:    rgba(100,150,255,0.1);
+  --border2:   rgba(100,150,255,0.18);
+  --ink:       #e8ecf8;
+  --ink2:      #8fa0c8;
+  --ink3:      #5a6e98;
+  --ink4:      #384468;
+  --gold:      #5ba4f5;
+  --gold2:     #7fbfff;
+  --gold-dim:  rgba(91,164,245,0.15);
+  --green:     #4ade80;
+  --green-dim: rgba(74,222,128,0.12);
+  --red:       #f87171;
+  --red-dim:   rgba(248,113,113,0.12);
+  --blue:      #60a5fa;
+  --blue-dim:  rgba(96,165,250,0.12);
+  --orange:    #fb923c;
+  --orange-dim:rgba(251,146,60,0.12);
+}
+
+/* Gelap: Earthy coklat medium */
+[data-theme="earthy"] {
+  --bg:        #1e1a14;
+  --bg2:       #28221a;
+  --bg3:       #342b20;
+  --surface:   #3c3228;
+  --surface2:  #463c30;
+  --border:    rgba(200,160,80,0.1);
+  --border2:   rgba(200,160,80,0.18);
+  --ink:       #f0e8d8;
+  --ink2:      #c0a878;
+  --ink3:      #8a7058;
+  --ink4:      #524838;
+  --gold:      #d4a843;
+  --gold2:     #e8c060;
+  --gold-dim:  rgba(212,168,67,0.15);
+  --green:     #7ec850;
+  --green-dim: rgba(126,200,80,0.12);
+  --red:       #e87060;
+  --red-dim:   rgba(232,112,96,0.12);
+  --blue:      #60a0d8;
+  --blue-dim:  rgba(96,160,216,0.12);
+  --orange:    #e89040;
+  --orange-dim:rgba(232,144,64,0.12);
+}
+
+/* Gelap: Forest hijau medium */
+[data-theme="forest"] {
+  --bg:        #141e18;
+  --bg2:       #1a2820;
+  --bg3:       #203028;
+  --surface:   #283c30;
+  --surface2:  #304838;
+  --border:    rgba(80,180,100,0.1);
+  --border2:   rgba(80,180,100,0.18);
+  --ink:       #e0f0e4;
+  --ink2:      #88c898;
+  --ink3:      #508860;
+  --ink4:      #305840;
+  --gold:      #5cb85c;
+  --gold2:     #78d878;
+  --gold-dim:  rgba(92,184,92,0.15);
+  --green:     #5cb85c;
+  --green-dim: rgba(92,184,92,0.12);
+  --red:       #f87171;
+  --red-dim:   rgba(248,113,113,0.12);
+  --blue:      #60b8d8;
+  --blue-dim:  rgba(96,184,216,0.12);
+  --orange:    #e8a040;
+  --orange-dim:rgba(232,160,64,0.12);
+}
+
+/* Gelap: Purple ungu medium */
+[data-theme="purple"] {
+  --bg:        #1a1628;
+  --bg2:       #222038;
+  --bg3:       #2a2845;
+  --surface:   #323055;
+  --surface2:  #3c3868;
+  --border:    rgba(160,100,220,0.1);
+  --border2:   rgba(160,100,220,0.18);
+  --ink:       #ece8f8;
+  --ink2:      #a898d8;
+  --ink3:      #7868a8;
+  --ink4:      #484878;
+  --gold:      #a878d8;
+  --gold2:     #c098f0;
+  --gold-dim:  rgba(168,120,216,0.15);
+  --green:     #78d898;
+  --green-dim: rgba(120,216,152,0.12);
+  --red:       #f87898;
+  --red-dim:   rgba(248,120,152,0.12);
+  --blue:      #78a8f8;
+  --blue-dim:  rgba(120,168,248,0.12);
+  --orange:    #f0a060;
+  --orange-dim:rgba(240,160,96,0.12);
+}
+
+/* Gelap: Rose pink medium */
+[data-theme="rose"] {
+  --bg:        #201418;
+  --bg2:       #2c1c22;
+  --bg3:       #38242c;
+  --surface:   #422c36;
+  --surface2:  #503440;
+  --border:    rgba(220,100,130,0.1);
+  --border2:   rgba(220,100,130,0.18);
+  --ink:       #f8e8ec;
+  --ink2:      #d898a8;
+  --ink3:      #a86878;
+  --ink4:      #784858;
+  --gold:      #e05c8a;
+  --gold2:     #f080a8;
+  --gold-dim:  rgba(224,92,138,0.15);
+  --green:     #78c8a0;
+  --green-dim: rgba(120,200,160,0.12);
+  --red:       #f88888;
+  --red-dim:   rgba(248,136,136,0.12);
+  --blue:      #88b8f8;
+  --blue-dim:  rgba(136,184,248,0.12);
+  --orange:    #f0a868;
+  --orange-dim:rgba(240,168,104,0.12);
+}
+
+/* Terang: Putih bersih dengan tint abu */
 [data-theme="warm"] {
-  --bg:        #fdf6ee;
-  --bg2:       #ffffff;
-  --bg3:       #f5ede0;
-  --surface:   #ffffff;
-  --surface2:  #f8f0e4;
-  --border:    rgba(180,120,60,0.12);
-  --border2:   rgba(180,120,60,0.2);
-  --ink:       #2d1f0e;
-  --ink2:      #6b4f2e;
-  --ink3:      #a07a55;
-  --ink4:      #d4b89a;
-  --gold:      #c07a2a;
-  --gold2:     #e09840;
-  --gold-dim:  rgba(192,122,42,0.12);
-  --green:     #2e7d4f;
-  --green-dim: rgba(46,125,79,0.1);
-  --red:       #c0392b;
-  --red-dim:   rgba(192,57,43,0.1);
-  --blue:      #1a6fa8;
-  --blue-dim:  rgba(26,111,168,0.1);
-  --orange:    #c96a18;
-  --orange-dim:rgba(201,106,24,0.1);
+  --bg:        #f5f0e8;
+  --bg2:       #fdf8f0;
+  --bg3:       #ede5d8;
+  --surface:   #fdf8f0;
+  --surface2:  #f0e8d8;
+  --border:    rgba(140,100,50,0.12);
+  --border2:   rgba(140,100,50,0.22);
+  --ink:       #2a1e10;
+  --ink2:      #5c4030;
+  --ink3:      #8c7060;
+  --ink4:      #c0a888;
+  --gold:      #9a6820;
+  --gold2:     #c08830;
+  --gold-dim:  rgba(154,104,32,0.12);
+  --green:     #2a7840;
+  --green-dim: rgba(42,120,64,0.1);
+  --red:       #b83030;
+  --red-dim:   rgba(184,48,48,0.1);
+  --blue:      #1a50a0;
+  --blue-dim:  rgba(26,80,160,0.1);
+  --orange:    #b85820;
+  --orange-dim:rgba(184,88,32,0.1);
 }
 
+/* Terang: Mint segar */
 [data-theme="mint"] {
-  --bg:        #f0faf5;
-  --bg2:       #ffffff;
-  --bg3:       #e2f5ec;
-  --surface:   #ffffff;
-  --surface2:  #eaf7f1;
-  --border:    rgba(30,130,90,0.1);
-  --border2:   rgba(30,130,90,0.18);
-  --ink:       #0d2b1e;
-  --ink2:      #2d6b4f;
-  --ink3:      #5a9e80;
-  --ink4:      #a8d4be;
-  --gold:      #2a9d6f;
-  --gold2:     #3abf88;
-  --gold-dim:  rgba(42,157,111,0.12);
-  --green:     #1a7a4a;
-  --green-dim: rgba(26,122,74,0.1);
-  --red:       #c0392b;
-  --red-dim:   rgba(192,57,43,0.1);
-  --blue:      #1a6fa8;
-  --blue-dim:  rgba(26,111,168,0.1);
-  --orange:    #d4851a;
-  --orange-dim:rgba(212,133,26,0.1);
+  --bg:        #eaf5ef;
+  --bg2:       #f5fdf8;
+  --bg3:       #d8ede0;
+  --surface:   #f5fdf8;
+  --surface2:  #e0f0e8;
+  --border:    rgba(30,120,70,0.12);
+  --border2:   rgba(30,120,70,0.22);
+  --ink:       #0e2818;
+  --ink2:      #285838;
+  --ink3:      #508860;
+  --ink4:      #90b898;
+  --gold:      #1a8848;
+  --gold2:     #28a858;
+  --gold-dim:  rgba(26,136,72,0.12);
+  --green:     #1a8848;
+  --green-dim: rgba(26,136,72,0.12);
+  --red:       #b83030;
+  --red-dim:   rgba(184,48,48,0.1);
+  --blue:      #1a58a8;
+  --blue-dim:  rgba(26,88,168,0.1);
+  --orange:    #b87820;
+  --orange-dim:rgba(184,120,32,0.1);
 }
 
+/* Terang: Langit biru muda */
 [data-theme="sky"] {
-  --bg:        #f0f6ff;
-  --bg2:       #ffffff;
-  --bg3:       #e2edff;
-  --surface:   #ffffff;
-  --surface2:  #eaf2ff;
-  --border:    rgba(30,90,180,0.1);
-  --border2:   rgba(30,90,180,0.18);
-  --ink:       #0d1e3a;
-  --ink2:      #2d4e7a;
-  --ink3:      #5a7aaa;
-  --ink4:      #a0b8d8;
-  --gold:      #1a5cbf;
-  --gold2:     #2a7adf;
-  --gold-dim:  rgba(26,92,191,0.12);
-  --green:     #1a7a4a;
-  --green-dim: rgba(26,122,74,0.1);
-  --red:       #c0392b;
-  --red-dim:   rgba(192,57,43,0.1);
-  --blue:      #1a5cbf;
-  --blue-dim:  rgba(26,92,191,0.1);
-  --orange:    #c07a1a;
-  --orange-dim:rgba(192,122,26,0.1);
+  --bg:        #e8f0fa;
+  --bg2:       #f5f8ff;
+  --bg3:       #d8e4f5;
+  --surface:   #f5f8ff;
+  --surface2:  #deeaff;
+  --border:    rgba(30,80,180,0.12);
+  --border2:   rgba(30,80,180,0.22);
+  --ink:       #0e1c38;
+  --ink2:      #284878;
+  --ink3:      #5070a0;
+  --ink4:      #8aa0c8;
+  --gold:      #1a50b0;
+  --gold2:     #2868d0;
+  --gold-dim:  rgba(26,80,176,0.12);
+  --green:     #1a8040;
+  --green-dim: rgba(26,128,64,0.1);
+  --red:       #b83030;
+  --red-dim:   rgba(184,48,48,0.1);
+  --blue:      #1a50b0;
+  --blue-dim:  rgba(26,80,176,0.1);
+  --orange:    #b87020;
+  --orange-dim:rgba(184,112,32,0.1);
 }
 
 /* ============================================================
@@ -3692,17 +3865,18 @@ function printBuktiTerima(pay, ev) {
 // THEME SYSTEM
 // ============================================================
 const THEMES = [
-  // ── Gelap ───────────────────────────────
-  { id:'navy',   name:'Navy',    bg:'#0a0f1e', bg2:'#0d1528', accent:'#4d9ef7',  dark:true },
-  { id:'earthy', name:'Earthy',  bg:'#0f0e0c', bg2:'#1a1814', accent:'#d4a843',  dark:true },
-  { id:'forest', name:'Forest',  bg:'#0a1208', bg2:'#0f1a0c', accent:'#5cb85c',  dark:true },
-  { id:'purple', name:'Purple',  bg:'#0e0a1e', bg2:'#150d28', accent:'#9b59b6',  dark:true },
-  { id:'rose',   name:'Rose',    bg:'#1a0a0e', bg2:'#280d15', accent:'#e05c8a',  dark:true },
-  // ── Terang ──────────────────────────────
-  { id:'light',  name:'Putih',   bg:'#f5f5f7', bg2:'#ffffff', accent:'#2563eb',  dark:false },
-  { id:'warm',   name:'Kopi',    bg:'#fdf6ee', bg2:'#ffffff', accent:'#c07a2a',  dark:false },
-  { id:'mint',   name:'Mint',    bg:'#f0faf5', bg2:'#ffffff', accent:'#2a9d6f',  dark:false },
-  { id:'sky',    name:'Langit',  bg:'#f0f6ff', bg2:'#ffffff', accent:'#1a5cbf',  dark:false },
+  // ── Gelap medium — tidak terlalu gelap ──
+  { id:'dark',   name:'Default', bg:'#1e2128', bg2:'#2a2d38', accent:'#e8b84b',  dark:true },
+  { id:'navy',   name:'Navy',    bg:'#212a40', bg2:'#2e3a55', accent:'#5ba4f5',  dark:true },
+  { id:'earthy', name:'Earthy',  bg:'#28221a', bg2:'#3c3228', accent:'#d4a843',  dark:true },
+  { id:'forest', name:'Forest',  bg:'#1a2820', bg2:'#283c30', accent:'#5cb85c',  dark:true },
+  { id:'purple', name:'Purple',  bg:'#222038', bg2:'#323055', accent:'#a878d8',  dark:true },
+  { id:'rose',   name:'Rose',    bg:'#2c1c22', bg2:'#422c36', accent:'#e05c8a',  dark:true },
+  // ── Terang medium — tidak terlalu terang ─
+  { id:'light',  name:'Abu',     bg:'#e4e7ef', bg2:'#f0f2f7', accent:'#1a5ccc',  dark:false },
+  { id:'warm',   name:'Kopi',    bg:'#ede5d8', bg2:'#f5f0e8', accent:'#9a6820',  dark:false },
+  { id:'mint',   name:'Mint',    bg:'#d8ede0', bg2:'#eaf5ef', accent:'#1a8848',  dark:false },
+  { id:'sky',    name:'Langit',  bg:'#d8e4f5', bg2:'#e8f0fa', accent:'#1a50b0',  dark:false },
 ];
 
 function applyTheme(id) {
