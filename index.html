@@ -81,7 +81,7 @@ body {
   background: var(--bg2);
   border-top: 1px solid var(--border);
   display: flex;
-  padding: 6px 0 env(safe-area-inset-bottom);
+  padding: 6px 0;
 }
 .nav-item {
   flex: 1; display: flex; flex-direction: column;
@@ -96,16 +96,13 @@ body {
 
 /* ---- MAIN CONTENT ---- */
 .main {
-  position: fixed;
-  top: 57px;
-  bottom: calc(52px + env(safe-area-inset-bottom));
-  left: 0; right: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  padding-top: 58px;
+  padding-bottom: 62px;
+  min-height: 100vh;
 }
 
-@media (min-width: 480px) {
-  .main { left: calc(50% - 240px); right: calc(50% - 240px); }
+@media (min-width: 480px) and (max-width: 767px) {
+  .main { max-width: 480px; margin: 0 auto; }
 }
 
 .page { display: none; min-height: 100%; }
@@ -113,9 +110,12 @@ body {
 
 /* ---- DASHBOARD ---- */
 .dash-header {
-  padding: 16px;
+  padding: 16px 0;
   background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
   border-bottom: 1px solid var(--border);
+}
+.dash-greeting, .dash-title, .dash-period {
+  padding-left: 16px; padding-right: 16px;
 }
 .dash-greeting { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
 .dash-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--cream); }
@@ -651,8 +651,7 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 .breakdown-cat { font-size: 10px; color: var(--text3); }
 
 /* Responsive tweaks */
-@media (min-width: 480px) {
-  .main { left: calc(50% - 240px); right: calc(50% - 240px); }
+@media (min-width: 480px) and (max-width: 767px) {
   .topbar, .nav { max-width: 480px; left: 50%; transform: translateX(-50%); }
   .overlay .sheet { max-width: 480px; margin: 0 auto; }
   .fab { right: calc(50% - 240px + 16px); }
@@ -824,6 +823,88 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   display: inline-block; padding: 2px 8px;
   border-radius: 10px; font-size: 10px;
   margin-right: 4px;
+}
+
+
+/* ============================================================
+   PC / DESKTOP LAYOUT (min-width: 768px)
+   Sidebar nav kiri, konten kanan, header full width
+   ============================================================ */
+@media (min-width: 768px) {
+
+  /* Topbar full width */
+  .topbar {
+    max-width: 100%;
+    left: 0; right: 0;
+    transform: none;
+    padding: 12px 24px;
+  }
+
+  /* Sidebar nav */
+  .nav {
+    top: 57px; bottom: 0;
+    left: 0; right: auto;
+    width: 200px;
+    flex-direction: column;
+    border-top: none;
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    justify-content: flex-start;
+    transform: none;
+    max-width: none;
+  }
+  .nav-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    border-bottom: none;
+    border-left: 3px solid transparent;
+    width: 100%;
+  }
+  .nav-item.active {
+    border-left-color: var(--gold);
+    background: rgba(77,158,247,0.08);
+  }
+  .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+
+  /* Main content — shift right of sidebar */
+  .main {
+    padding-top: 58px;
+    padding-bottom: 20px;
+    padding-left: 200px;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  /* Content max width for readability */
+  .page { max-width: 900px; }
+
+  /* FAB position */
+  .fab { right: 24px; bottom: 24px; }
+
+  /* Sheet/overlay centered */
+  .overlay .sheet { max-width: 520px; margin: 0 auto; }
+  .toast { max-width: 400px; }
+
+  /* Header full width no side padding issue */
+  .dash-header { padding: 20px 24px; }
+  .dash-greeting, .dash-title, .dash-period {
+    padding-left: 0; padding-right: 0;
+  }
+
+  /* Summary grid wider on PC */
+  .summary-grid { grid-template-columns: repeat(4, 1fr); }
+  .summary-card-wide { grid-column: 1 / -1; }
+
+  /* Event list 2 columns on PC */
+  .event-list { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 8px;
+    padding: 0 14px;
+  }
 }
 
 </style>
@@ -1069,9 +1150,6 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   </div>
   <div id="laporanContent">
     <div class="loading"><div class="spinner"></div>Memuat laporan...</div>
-  </div>
-  <div style="padding:0 14px 14px;">
-    <button class="btn-submit" onclick="printLaporan()">🖨️ Print / Share Laporan</button>
   </div>
 </div>
 
@@ -3461,7 +3539,9 @@ function renderLaporan() {
       </div>
     </div>
 
-    <div style="height:8px;"></div>
+    <div style="padding:0 14px 80px;">
+      <button class="btn-submit" onclick="printLaporan()">🖨️ Print / Share Laporan</button>
+    </div>
   `;
 }
 
