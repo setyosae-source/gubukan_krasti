@@ -506,19 +506,28 @@ body {
 }
 .action-card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border2);
   border-radius: var(--radius-lg);
   padding: 16px;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s, box-shadow 0.15s;
   display: flex;
   flex-direction: column;
   gap: 6px;
   text-align: left;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
-.action-card:hover { border-color: var(--border2); background: var(--surface2); }
-.action-card.red   { border-top: 2px solid var(--red); }
-.action-card.green { border-top: 2px solid var(--green); }
+.action-card:hover  { border-color: var(--gold); background: var(--surface2); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.action-card:active { transform: scale(0.97); box-shadow: none; }
+.action-card.red    { border-top: 3px solid var(--red);   border-color: var(--border2); }
+.action-card.green  { border-top: 3px solid var(--green); border-color: var(--border2); }
+.action-card.active-type {
+  border-color: var(--gold) !important;
+  background: var(--gold-dim) !important;
+  box-shadow: 0 0 0 2px var(--gold-dim);
+}
 .action-icon { font-size: 22px; }
 .action-title { font-size: 13px; font-weight: 600; color: var(--ink); }
 .action-desc  { font-size: 11px; color: var(--ink3); }
@@ -4491,7 +4500,11 @@ function setKasInputType(type) {
   ['stok','ops','terima_event','terima_tokba'].forEach(t=>{
     const btn = document.getElementById('ki_'+t);
     const frm = document.getElementById('ki_form_'+t);
-    if(btn) btn.className = 'quick-btn' + (t===type?' keluar':'');
+    if(btn) {
+      btn.className = 'action-card' + (t===type?' active-type':'');
+      // preserve color class
+      if(t==='stok') btn.classList.add('red');
+    }
     if(frm) frm.style.display = t===type?'block':'none';
   });
   // Populate event dropdowns
