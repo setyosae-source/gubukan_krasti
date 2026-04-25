@@ -907,6 +907,72 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   }
 }
 
+
+/* ---- KAS TABLE ---- */
+.kas-table-wrap { overflow-x: auto; }
+.kas-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px;
+}
+.kas-table th {
+  background: var(--bg3);
+  color: var(--text2);
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 2px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.kas-table th:hover { color: var(--gold); }
+.kas-table th.sort-asc::after  { content: ' ↑'; color: var(--gold); }
+.kas-table th.sort-desc::after { content: ' ↓'; color: var(--gold); }
+.kas-table th.debit  { text-align: right; color: var(--green); }
+.kas-table th.kredit { text-align: right; color: var(--red); }
+
+.kas-date-row {
+  background: var(--bg2);
+  cursor: pointer;
+}
+.kas-date-row td {
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+.kas-date-toggle {
+  float: right; color: var(--text3);
+  transition: transform 0.2s;
+}
+.kas-date-toggle.collapsed { transform: rotate(-90deg); }
+
+.kas-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.kas-table tr.kas-data-row:hover { background: var(--bg3); }
+.kas-table tr.kas-data-row.collapsed-row { display: none; }
+.kas-table .td-icon { width: 28px; font-size: 14px; }
+.kas-table .td-desc { max-width: 180px; }
+.kas-table .td-desc-main { color: var(--cream); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kas-table .td-desc-meta { font-size: 10px; color: var(--text3); }
+.kas-table .td-debit  { text-align: right; color: var(--green); font-weight: 600; white-space: nowrap; }
+.kas-table .td-kredit { text-align: right; color: var(--red);   font-weight: 600; white-space: nowrap; }
+.kas-table .td-empty  { text-align: right; color: var(--text3); }
+.kas-table tfoot td {
+  padding: 9px 10px;
+  background: var(--bg3);
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+  white-space: nowrap;
+}
+
 </style>
 </head>
 <body>
@@ -1010,18 +1076,22 @@ textarea.form-control { resize: vertical; min-height: 70px; }
     </div>
 
     <!-- Summary strip -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 14px 0;">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px 14px 0;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Saldo Awal</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text2)" id="kasSaldoAwal">Rp 0</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Saldo Akhir</div>
+        <div style="font-size:12px;font-weight:600;color:var(--gold)" id="kasSaldo">Rp 0</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;">
         <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Terima</div>
-        <div style="font-size:13px;font-weight:600;color:var(--green)" id="kasIn">Rp 0</div>
+        <div style="font-size:12px;font-weight:600;color:var(--green)" id="kasIn">Rp 0</div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;">
         <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Keluar</div>
-        <div style="font-size:13px;font-weight:600;color:var(--red)" id="kasOut">Rp 0</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">Saldo</div>
-        <div style="font-size:13px;font-weight:600;color:var(--gold)" id="kasSaldo">Rp 0</div>
+        <div style="font-size:12px;font-weight:600;color:var(--red)" id="kasOut">Rp 0</div>
       </div>
     </div>
 
@@ -1034,8 +1104,8 @@ textarea.form-control { resize: vertical; min-height: 70px; }
       <div class="filter-chip" data-kasfilter="tokba" onclick="filterKas('tokba')">🛒 Tokba</div>
     </div>
 
-    <!-- Journal list -->
-    <div class="trans-list" id="kasJurnalList" style="padding:0 14px;">
+    <!-- Journal table -->
+    <div id="kasJurnalList" style="padding:0 14px 80px;">
       <div class="loading"><div class="spinner"></div>Memuat...</div>
     </div>
   </div>
@@ -2399,7 +2469,24 @@ function renderDetailTab(tab) {
 function renderKas() {
   document.getElementById('kasTitle').textContent  = monthName(currentMonth);
   document.getElementById('kasPeriod').textContent = 'Jurnal Keuangan Bulanan';
-  filterKas(window._kasFilter||'all');
+  window._kasFilter  = window._kasFilter  || 'all';
+  window._kasSort    = window._kasSort    || 'tgl_desc';
+  filterKas(window._kasFilter);
+}
+
+function getSaldoAkhirBulan(bulan) {
+  // Hitung saldo akhir untuk bulan tertentu dari semua data
+  const journal = buildKasJournalByMonth(bulan);
+  const totalIn  = journal.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
+  const totalOut = journal.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
+  return totalIn - totalOut;
+}
+
+function getPrevMonth(m) {
+  const [y, mo] = m.split('-').map(Number);
+  const d = new Date(y, mo-1, 1);
+  d.setMonth(d.getMonth()-1);
+  return d.toISOString().slice(0,7);
 }
 
 function filterKas(filter) {
@@ -2407,127 +2494,172 @@ function filterKas(filter) {
   document.querySelectorAll('[data-kasfilter]').forEach(c=>
     c.classList.toggle('active', c.dataset.kasfilter===filter));
 
-  // Build unified journal from all sources
-  const journal = buildKasJournal();
-  const filtered = filter==='all' ? journal :
-    journal.filter(j=>j.type===filter);
+  const journal  = buildKasJournal();
+  const filtered = filter==='all' ? journal : journal.filter(j=>j.type===filter);
 
-  // Summary
-  const totalIn  = journal.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
-  const totalOut = journal.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
-  const saldo    = totalIn - totalOut;
-  const kasInEl = document.getElementById('kasIn');
-  const kasOutEl = document.getElementById('kasOut');
-  const kasSaldoEl = document.getElementById('kasSaldo');
-  if (kasInEl) kasInEl.textContent = rp(totalIn);
-  if (kasOutEl) kasOutEl.textContent = rp(totalOut);
-  if (kasSaldoEl) {
-    kasSaldoEl.textContent = rp(saldo);
-    kasSaldoEl.style.color = saldo>=0?'var(--green)':'var(--red)';
-  }
+  // Saldo awal = saldo akhir bulan sebelumnya
+  const prevMonth  = getPrevMonth(currentMonth);
+  const saldoAwal  = getSaldoAkhirBulan(prevMonth);
+  const totalIn    = filtered.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
+  const totalOut   = filtered.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
+  const saldoAkhir = saldoAwal + totalIn - totalOut;
 
+  const set = (id,val,color) => {
+    const el=document.getElementById(id);
+    if(el){el.textContent=rp(val);if(color)el.style.color=color;}
+  };
+  set('kasSaldoAwal', saldoAwal);
+  set('kasIn',        totalIn);
+  set('kasOut',       totalOut);
+  set('kasSaldo',     saldoAkhir, saldoAkhir>=0?'var(--green)':'var(--red)');
+
+  renderKasTable(filtered, totalIn, totalOut, saldoAwal, saldoAkhir);
+}
+
+function renderKasTable(data, totalIn, totalOut, saldoAwal, saldoAkhir) {
   const el = document.getElementById('kasJurnalList');
   if (!el) return;
-  if (!filtered.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada transaksi</div>';
+
+  if (!data.length) {
+    el.innerHTML = '<div class="empty" style="padding:40px 0;"><div class="empty-icon">📭</div>Belum ada transaksi</div>';
     return;
   }
 
+  // Sort
+  const sort = window._kasSort || 'tgl_desc';
+  const sorted = [...data].sort((a,b) => {
+    if (sort === 'tgl_asc')  return (a.tanggal||'').localeCompare(b.tanggal||'');
+    if (sort === 'tgl_desc') return (b.tanggal||'').localeCompare(a.tanggal||'');
+    if (sort === 'debit_desc') return b.debit - a.debit;
+    if (sort === 'kredit_desc') return b.kredit - a.kredit;
+    return (b.tanggal||'').localeCompare(a.tanggal||'');
+  });
+
   // Group by date
   const byDate = {};
-  filtered.forEach(j=>{
-    const d = j.tanggal||'';
+  sorted.forEach(j => {
+    const d = j.tanggal||'unknown';
     if (!byDate[d]) byDate[d] = [];
     byDate[d].push(j);
   });
 
-  el.innerHTML = Object.entries(byDate)
-    .sort(([a],[b])=>b.localeCompare(a))
-    .map(([date, items])=>`
-      <div style="padding:6px 0 3px;font-size:11px;color:var(--text3);font-weight:600;
-        border-bottom:1px solid var(--border);margin-bottom:4px;">
-        ${fmtDate(date)||date}
-      </div>
-      ${items.map(j=>`
-        <div class="trans-item" style="margin-bottom:6px;">
-          <div class="trans-icon ${j.dir==='in'?'in':'out'}" style="font-size:16px;">${j.icon}</div>
-          <div class="trans-info">
-            <div class="trans-desc">${j.label}</div>
-            <div class="trans-meta">${j.meta}</div>
-          </div>
-          <div class="trans-amount ${j.dir==='in'?'in':'out'}">
-            ${j.dir==='in'?'+':'-'}${rp(j.amount)}
-          </div>
-        </div>`).join('')}
-    `).join('');
+  const thClass = (col) => {
+    if (sort===col+'_asc') return 'sort-asc';
+    if (sort===col+'_desc') return 'sort-desc';
+    return '';
+  };
+  const sortBy = (col) => {
+    window._kasSort = (window._kasSort===col+'_desc') ? col+'_asc' : col+'_desc';
+    filterKas(window._kasFilter);
+  };
+
+  let rows = '';
+  Object.entries(byDate).forEach(([date, items]) => {
+    const dateIn  = items.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
+    const dateOut = items.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
+    const gid = 'dg_'+date.replace(/-/g,'');
+    rows += `<tr class="kas-date-row" onclick="toggleKasGroup('${gid}')">
+      <td colspan="4" style="font-size:11px;font-weight:600;color:var(--text2);">
+        📅 ${fmtDate(date)||date}
+        <span style="float:right;font-size:10px;color:var(--text3);">
+          ${dateIn>0?'<span style=color:var(--green)>+'+rp(dateIn)+'</span>':''}
+          ${dateOut>0?'<span style=color:var(--red);margin-left:6px>-'+rp(dateOut)+'</span>':''}
+        </span>
+        <span class="kas-date-toggle" id="tog_${gid}">▼</span>
+      </td>
+    </tr>`;
+    items.forEach((j,idx) => {
+      rows += `<tr class="kas-data-row" data-group="${gid}">
+        <td class="td-icon">${j.icon}</td>
+        <td class="td-desc">
+          <div class="td-desc-main">${j.label}</div>
+          <div class="td-desc-meta">${j.meta}</div>
+        </td>
+        <td class="td-debit">${j.dir==='in' ? rp(j.amount) : '<span class="td-empty">—</span>'}</td>
+        <td class="td-kredit">${j.dir==='out' ? rp(j.amount) : '<span class="td-empty">—</span>'}</td>
+      </tr>`;
+    });
+  });
+
+  el.innerHTML = `
+    <div class="kas-table-wrap">
+      <table class="kas-table">
+        <thead>
+          <tr>
+            <th style="width:28px;"></th>
+            <th class="${thClass('tgl')}" onclick="kasSortBy('tgl')">Tgl / Deskripsi</th>
+            <th class="debit ${thClass('debit')}" onclick="kasSortBy('debit')" style="width:90px;">Debit</th>
+            <th class="kredit ${thClass('kredit')}" onclick="kasSortBy('kredit')" style="width:90px;">Kredit</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="color:var(--text2);font-size:11px;">
+              Saldo Awal: ${rp(saldoAwal)}
+            </td>
+            <td style="text-align:right;color:var(--green);">${rp(totalIn)}</td>
+            <td style="text-align:right;color:var(--red);">${rp(totalOut)}</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="color:var(--cream);font-size:13px;">Saldo Akhir</td>
+            <td colspan="2" style="text-align:right;font-size:14px;
+              color:${saldoAkhir>=0?'var(--green)':'var(--red)'};">${rp(saldoAkhir)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
+}
+
+function toggleKasGroup(gid) {
+  const rows = document.querySelectorAll(`[data-group="${gid}"]`);
+  const tog  = document.getElementById('tog_'+gid);
+  const isCollapsed = rows.length && rows[0].classList.contains('collapsed-row');
+  rows.forEach(r => r.classList.toggle('collapsed-row', !isCollapsed));
+  if (tog) tog.classList.toggle('collapsed', !isCollapsed);
+}
+
+function kasSortBy(col) {
+  window._kasSort = (window._kasSort===col+'_desc') ? col+'_asc' : col+'_desc';
+  filterKas(window._kasFilter);
+}
+
+function buildKasJournalByMonth(m) {
+  const journal = [];
+  const allSources = [
+    ...(state.penerimaan||[]).filter(r=>r.bulan===m).map(r=>{
+      const ev=state.events.find(e=>e.id===r.event_id);
+      return {type:'terima',dir:'in',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💰',
+        label:r.label||r.jenis,meta:(ev?ev.customer+' · ':'')+r.metode};
+    }),
+    ...(state.stok_masuk||[]).filter(r=>r.bulan===m).map(r=>({
+      type:'stok',dir:'out',amount:Number(r.total_nilai)||0,tanggal:r.tanggal,icon:'📦',
+      label:r.nama+' '+r.qty+' '+r.satuan,meta:r.toko||r.kategori,
+    })),
+    ...(state.pengeluaran||[]).filter(r=>r.bulan===m).map(r=>{
+      const ev=state.events.find(e=>e.id===r.event_id);
+      return {type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'🚗',
+        label:r.keterangan,meta:r.kategori+(ev?' · '+ev.customer:' · Umum')};
+    }),
+    ...(state.tokba||[]).filter(r=>r.bulan===m).flatMap(r=>{
+      const res=[];
+      if(Number(r.masuk)>0) res.push({type:'tokba',dir:'in',amount:Number(r.masuk),tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
+      if(Number(r.keluar)>0) res.push({type:'tokba',dir:'out',amount:Number(r.keluar),tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
+      return res;
+    }),
+  ];
+  // fallback expenses
+  if (!(state.pengeluaran||[]).filter(r=>r.bulan===m).length) {
+    (state.expenses||[]).filter(r=>r.bulan===m).forEach(r=>{
+      allSources.push({type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💸',
+        label:r.keterangan,meta:r.kategori+(r.toko?' · '+r.toko:'')});
+    });
+  }
+  return allSources;
 }
 
 function buildKasJournal() {
-  const journal = [];
-  const m = currentMonth;
-
-  // Penerimaan event
-  (state.penerimaan||[]).filter(r=>r.bulan===m).forEach(r=>{
-    const ev = state.events.find(e=>e.id===r.event_id);
-    journal.push({
-      type:'terima', dir:'in', amount:Number(r.jumlah)||0,
-      tanggal:r.tanggal, icon:'💰',
-      label: r.label||r.jenis,
-      meta: (ev?ev.customer+' · ':'')+r.metode,
-    });
-  });
-
-  // Stok masuk (pengeluaran)
-  (state.stok_masuk||[]).filter(r=>r.bulan===m).forEach(r=>{
-    journal.push({
-      type:'stok', dir:'out', amount:Number(r.total_nilai)||0,
-      tanggal:r.tanggal, icon:'📦',
-      label: r.nama + ' ' + r.qty + ' ' + r.satuan,
-      meta: r.toko||r.kategori,
-    });
-  });
-
-  // Pengeluaran ops
-  (state.pengeluaran||[]).filter(r=>r.bulan===m).forEach(r=>{
-    const ev = state.events.find(e=>e.id===r.event_id);
-    journal.push({
-      type:'biaya', dir:'out', amount:Number(r.jumlah)||0,
-      tanggal:r.tanggal, icon:'🚗',
-      label: r.keterangan,
-      meta: r.kategori + (ev?' · '+ev.customer:' · Umum'),
-    });
-  });
-
-  // Fallback: expenses lama
-  if (!(state.pengeluaran||[]).filter(r=>r.bulan===m).length) {
-    (state.expenses||[]).filter(r=>r.bulan===m).forEach(r=>{
-      journal.push({
-        type:'biaya', dir:'out', amount:Number(r.jumlah)||0,
-        tanggal:r.tanggal, icon:'💸',
-        label: r.keterangan,
-        meta: r.kategori + (r.toko?' · '+r.toko:''),
-      });
-    });
-  }
-
-  // Tokba
-  (state.tokba||[]).filter(r=>r.bulan===m).forEach(r=>{
-    const masuk = Number(r.masuk)||0;
-    const keluar= Number(r.keluar)||0;
-    if (masuk>0) journal.push({
-      type:'tokba', dir:'in', amount:masuk,
-      tanggal:r.tanggal, icon:'🛒',
-      label: r.keterangan, meta:'Toko Online',
-    });
-    if (keluar>0) journal.push({
-      type:'tokba', dir:'out', amount:keluar,
-      tanggal:r.tanggal, icon:'🛒',
-      label: r.keterangan, meta:'Toko Online',
-    });
-  });
-
-  return journal.sort((a,b)=>(b.tanggal||'').localeCompare(a.tanggal||''));
-}
+  return buildKasJournalByMonth(currentMonth);}
 
 function switchKasTab(tab) {
   document.querySelectorAll('.kas-tab').forEach(t=>t.classList.remove('active'));
