@@ -556,6 +556,8 @@ body {
 .kas-table th.debit  { text-align: right; color: var(--green); }
 .kas-table th.kredit { text-align: right; color: var(--red); }
 .kas-date-row { background: var(--bg3); cursor: pointer; }
+.kas-date-toggle { float:right; margin-left:6px; display:inline-block; transition:transform 0.2s; }
+.kas-date-toggle.collapsed { transform: rotate(-90deg); }
 .kas-date-row td {
   padding: 8px 12px;
   font-size: 11px;
@@ -1242,8 +1244,16 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
       <!-- ==================== KAS ==================== -->
       <div class="page" id="page-kas">
         <div class="page-header">
-          <div class="page-title" id="kasTitle">Kas</div>
-          <div class="page-subtitle" id="kasPeriod">Jurnal Keuangan Bulanan</div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+              <div class="page-title" id="kasTitle">Kas &amp; Jurnal</div>
+              <div class="page-subtitle" id="kasPeriod">—</div>
+            </div>
+            <div class="topbar-period" onclick="openMonthPicker()" style="flex-shrink:0;margin-top:4px;">
+              <div class="topbar-period-label" id="monthLabelKas">—</div>
+              <span style="color:var(--ink3);font-size:10px;margin-left:4px;">&#9662;</span>
+            </div>
+          </div>
         </div>
 
         <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
@@ -1942,7 +1952,7 @@ function setPeriod(type, opts={}) {
 
 function updatePeriodLabel() {
   const label = currentPeriod.label || monthName(currentMonth);
-  ['monthLabel','monthLabelLap'].forEach(id => {
+  ['monthLabel','monthLabelLap','monthLabelKas'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = label;
   });
@@ -2551,10 +2561,16 @@ function renderDetailTab(tab) {
 // KAS
 // ============================================================
 function renderKas() {
-  const kasTitleEl=document.getElementById('kasTitle'); if(kasTitleEl) kasTitleEl.textContent = monthName(currentMonth);
-  document.getElementById('kasPeriod').textContent = 'Jurnal Keuangan Bulanan';
-  window._kasFilter  = window._kasFilter  || 'all';
-  window._kasSort    = window._kasSort    || 'tgl_desc';
+  const label = currentPeriod.label || monthName(currentMonth);
+  const range = computePeriodRange(currentPeriod);
+  const el_title = document.getElementById('kasTitle');
+  if (el_title) el_title.textContent = 'Kas & Jurnal';
+  const el_period = document.getElementById('kasPeriod');
+  if (el_period) el_period.textContent = label + ' · ' + fmtDate(range.from) + ' s/d ' + fmtDate(range.to);
+  const el_label = document.getElementById('monthLabelKas');
+  if (el_label) el_label.textContent = label;
+  window._kasFilter = window._kasFilter || 'all';
+  window._kasSort   = window._kasSort   || 'tgl_desc';
   filterKas(window._kasFilter);
 }
 
@@ -2641,11 +2657,11 @@ function renderKasTable(data, totalIn, totalOut, saldoAwal, saldoAkhir) {
           ${dateIn>0?'<span style=color:var(--green)>+'+rp(dateIn)+'</span>':''}
           ${dateOut>0?'<span style=color:var(--red);margin-left:6px>-'+rp(dateOut)+'</span>':''}
         </span>
-        <span class="kas-date-toggle" id="tog_${gid}">▼</span>
+        <span class="kas-date-toggle collapsed" id="tog_${gid}">▼</span>
       </td>
     </tr>`;
     items.forEach((j,idx) => {
-      rows += `<tr class="kas-data-row" data-group="${gid}">
+      rows += `<tr class="kas-data-row collapsed-row" data-group="${gid}">
         <td class="td-icon">${j.icon}</td>
         <td class="td-desc">
           <div class="td-desc-main">${j.label}</div>
