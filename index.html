@@ -3198,9 +3198,8 @@ async function saveEvent() {
   });
 
   const tanggal = document.getElementById('fDate').value;
-  const bulan   = tanggal.slice(0,7);
   const eventData = {
-    bulan, tanggal,
+    tanggal,
     no_event:  document.getElementById('fEventNo').value,
     customer,
     lokasi:    document.getElementById('fLocation').value,
@@ -3228,14 +3227,14 @@ async function saveEvent() {
 
     // Save items
     for (const item of items) {
-      const res = await apiWrite('insert', 'event_items', {...item, event_id:eventId, bulan});
-      state.items.push({...item, event_id:eventId, bulan, id:res.id});
+      const res = await apiWrite('insert', 'event_items', {...item, event_id:eventId, tanggal});
+      state.items.push({...item, event_id:eventId, tanggal, id:res.id});
     }
 
     // Save expenses
     for (const exp of expenses) {
-      const res = await apiWrite('insert', 'expenses', {...exp, event_id:eventId, bulan, tanggal});
-      state.expenses.push({...exp, event_id:eventId, bulan, tanggal, id:res.id});
+      const res = await apiWrite('insert', 'expenses', {...exp, event_id:eventId, tanggal});
+      state.expenses.push({...exp, event_id:eventId, tanggal, id:res.id});
     }
 
     cacheState();
@@ -3319,8 +3318,7 @@ async function saveTokba() {
   const tanggal= document.getElementById('tDate').value;
   if (!ket || (!masuk && !keluar)) { toast('⚠️ Isi keterangan & jumlah!'); return; }
   try {
-    const bulan = tanggal.slice(0,7);
-    const data = { bulan, tanggal, keterangan:ket, masuk, keluar };
+    const data = { tanggal, keterangan:ket, masuk, keluar };
     const res = await apiWrite('insert', 'tokba', data);
     state.tokba.push({...data, id:res.id});
     cacheState();
@@ -3337,9 +3335,7 @@ async function saveRT() {
   const tanggal= document.getElementById('rDate').value;
   if (!item || !jumlah) { toast('⚠️ Isi keterangan & jumlah!'); return; }
   try {
-    const bulan = tanggal.slice(0,7);
-    const data = {
-      bulan, tanggal, item,
+    const data = { tanggal, item,
       masuk:          kat==='masuk'  ? jumlah : 0,
       rutin:          kat==='rutin'  ? jumlah : 0,
       jajan:          kat==='jajan'  ? jumlah : 0,
@@ -3637,7 +3633,7 @@ async function saveStokMasuk() {
   const newAvg   = (oldNilai + total) / (oldQty + qtyKecil);
 
   const data = {
-    bulan: tgl.slice(0,7), tanggal: tgl,
+    tanggal: tgl,
     nama, kategori: document.getElementById('stokKat').value,
     qty, satuan: document.getElementById('stokSatuan').value,
     satuan_kecil: document.getElementById('stokSatuanKecil').value,
@@ -3664,7 +3660,7 @@ async function savePengeluaran() {
   if (!ket||!jumlah||!tgl) { toast('⚠️ Lengkapi data biaya!'); return; }
 
   const data = {
-    bulan: tgl.slice(0,7), tanggal: tgl,
+    tanggal: tgl,
     event_id: document.getElementById('opsEventRef').value||'',
     kategori: document.getElementById('opsKat').value,
     keterangan: ket, jumlah,
@@ -3769,7 +3765,7 @@ async function savePenerimaan(printAfter=false) {
   const labelMap = { booking:'Booking Fee', dp:'DP 50%', pelunasan:'Pelunasan', umum:'Penerimaan Umum' };
   const data = {
     event_id: document.getElementById('terimaEventRef').value||'',
-    bulan: tgl.slice(0,7), tanggal: tgl,
+    tanggal: tgl,
     jenis, label: labelMap[jenis]||jenis,
     jumlah, metode: document.getElementById('terimaMetode').value,
     catatan: document.getElementById('terimaCatatan').value,
@@ -4733,7 +4729,7 @@ async function kiSaveStok() {
   const oldQ = ex?ex.total_qty_kecil:0;
   const newAvg = (oldV+total)/(oldQ+qtyK);
   const data = {
-    bulan:tgl.slice(0,7),tanggal:tgl,nama,
+    tanggal:tgl,nama,
     kategori:document.getElementById('ki_stok_kat')?.value,
     qty,satuan:sat,satuan_kecil:satK,konversi:konv,
     harga_beli:qtyK>0?total/qtyK:0,harga_avg:newAvg,
@@ -4756,7 +4752,7 @@ async function kiSaveOps() {
   const tgl    = document.getElementById('ki_ops_tgl')?.value;
   if(!ket||!jumlah||!tgl){toast('⚠️ Lengkapi data biaya!');return;}
   const data = {
-    bulan:tgl.slice(0,7),tanggal:tgl,
+    tanggal:tgl,
     event_id:document.getElementById('ki_ops_event')?.value||'',
     kategori:document.getElementById('ki_ops_kat')?.value,
     keterangan:ket,jumlah,
@@ -4781,7 +4777,7 @@ async function kiSaveTerimaEvent(printAfter=false) {
   if(!eventId||!jumlah||!tgl){toast('⚠️ Lengkapi data penerimaan!');return;}
   const labelMap={booking:'Booking Fee',dp:'DP 50%',pelunasan:'Pelunasan',custom:'Pembayaran'};
   const data = {
-    event_id:eventId,bulan:tgl.slice(0,7),tanggal:tgl,
+    event_id:eventId,tanggal:tgl,
     jenis,label:labelMap[jenis]||jenis,jumlah,
     metode:document.getElementById('ki_te_metode')?.value,
     catatan:document.getElementById('ki_te_catatan')?.value||'',
@@ -4813,7 +4809,7 @@ async function kiSaveTokba(printAfter=false) {
   const sumber = document.getElementById('ki_tt_sumber')?.value||'';
   if(!ket||(!masuk&&!keluar)||!tgl){toast('⚠️ Lengkapi data!');return;}
   const data = {
-    bulan:tgl.slice(0,7), tanggal:tgl,
+    tanggal:tgl,
     keterangan:ket, sumber,
     masuk, keluar, saldo:masuk-keluar,
     no_trans:'', qty:0, satuan:'',
@@ -4962,7 +4958,7 @@ async function saveEventForm(eventId) {
   if (!customer||!tgl) { toast('⚠️ Isi Customer dan Tanggal!'); return; }
   const data = {
     no_event: no, customer, lokasi, tanggal: tgl,
-    bulan: tgl.slice(0,7), status, omzet,
+    status, omzet,
     isrun: omzet*0.1, catatan,
   };
   try {
