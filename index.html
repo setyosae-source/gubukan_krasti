@@ -2575,9 +2575,10 @@ function filterKas(filter) {
   const range2     = computePeriodRange(currentPeriod);
   const prevEnd    = new Date(new Date(range2.from) - 86400000).toISOString().slice(0,10);
   const jPrev = buildKasJournalByRange("2000-01-01", prevEnd);
-  const saldoAwal = jPrev.filter(j=>j.dir==="in").reduce((s,j)=>s+j.amount,0) - jPrev.filter(j=>j.dir==="out").reduce((s,j)=>s+j.amount,0);
-  const totalIn    = filtered.filter(j=>j.dir==='in').reduce((s,j)=>s+j.amount,0);
-  const totalOut   = filtered.filter(j=>j.dir==='out').reduce((s,j)=>s+j.amount,0);
+  const saldoAwal = jPrev.filter(j=>j.dir==="in" && j.type!=="tokba").reduce((s,j)=>s+j.amount,0) - jPrev.filter(j=>j.dir==="out" && j.type!=="tokba").reduce((s,j)=>s+j.amount,0);
+  // totalIn/Out: exclude tokba (punya tab sendiri, tidak sama dengan dashboard HPP+Ops)
+  const totalIn    = filtered.filter(j=>j.dir==='in'  && j.type!=='tokba').reduce((s,j)=>s+j.amount,0);
+  const totalOut   = filtered.filter(j=>j.dir==='out' && j.type!=='tokba').reduce((s,j)=>s+j.amount,0);
   const saldoAkhir = saldoAwal + totalIn - totalOut;
 
   const set = (id,val,color) => {
