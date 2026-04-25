@@ -96,11 +96,19 @@ body {
 
 /* ---- MAIN CONTENT ---- */
 .main {
-  padding: 70px 0 90px;
-  min-height: 100vh;
+  position: fixed;
+  top: 57px;
+  bottom: calc(52px + env(safe-area-inset-bottom));
+  left: 0; right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.page { display: none; }
+@media (min-width: 480px) {
+  .main { left: calc(50% - 240px); right: calc(50% - 240px); }
+}
+
+.page { display: none; min-height: 100%; }
 .page.active { display: block; }
 
 /* ---- DASHBOARD ---- */
@@ -644,7 +652,7 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 
 /* Responsive tweaks */
 @media (min-width: 480px) {
-  .main { max-width: 480px; margin: 0 auto; }
+  .main { left: calc(50% - 240px); right: calc(50% - 240px); }
   .topbar, .nav { max-width: 480px; left: 50%; transform: translateX(-50%); }
   .overlay .sheet { max-width: 480px; margin: 0 auto; }
   .fab { right: calc(50% - 240px + 16px); }
