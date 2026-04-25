@@ -1398,15 +1398,45 @@ textarea.form-control { resize: vertical; min-height: 70px; }
   </div>
 </div>
 
-<!-- Month Picker Sheet -->
+<!-- Period Picker Sheet -->
 <div class="overlay" id="monthSheet" onclick="overlayClose(event,'monthSheet')">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
-      <div class="sheet-title">Pilih Bulan</div>
+      <div class="sheet-title">Filter Periode</div>
       <div class="sheet-close" onclick="closeSheet('monthSheet')">✕</div>
     </div>
-    <div class="month-picker-scroll" id="monthGrid"></div>
+    <div style="padding:14px;">
+      <!-- Quick periods -->
+      <div class="form-section-title">Periode Cepat</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div class="month-btn" id="pp_this_month"  onclick="setPeriod('this_month')">📅 Bulan Ini</div>
+        <div class="month-btn" id="pp_last_month"  onclick="setPeriod('last_month')">◀ Bulan Lalu</div>
+        <div class="month-btn" id="pp_last_3months" onclick="setPeriod('last_3months')">📊 3 Bulan</div>
+        <div class="month-btn" id="pp_last_6months" onclick="setPeriod('last_6months')">📊 6 Bulan</div>
+        <div class="month-btn" id="pp_this_year"   onclick="setPeriod('this_year')">📆 Tahun Ini</div>
+        <div class="month-btn" id="pp_last_year"   onclick="setPeriod('last_year')">📆 Tahun Lalu</div>
+        <div class="month-btn" style="grid-column:1/-1;" id="pp_all_time" onclick="setPeriod('all_time')">🗂️ All Time</div>
+      </div>
+
+      <!-- Custom month -->
+      <div class="form-section-title">Pilih Bulan Tertentu</div>
+      <div class="month-picker-scroll" id="monthGrid" style="max-height:220px;padding:0;margin-bottom:16px;"></div>
+
+      <!-- Custom range -->
+      <div class="form-section-title">Custom Range</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Dari</label>
+          <input type="date" class="form-control" id="customFrom">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sampai</label>
+          <input type="date" class="form-control" id="customTo">
+        </div>
+      </div>
+      <button class="btn-submit" style="margin-top:4px;" onclick="applyCustomRange()">Terapkan Range</button>
+    </div>
   </div>
 </div>
 
@@ -1934,6 +1964,100 @@ textarea.form-control { resize: vertical; min-height: 70px; }
 // ============================================================
 let API_URL = localStorage.getItem('gubukan_api_url') || '';
 let currentMonth = localStorage.getItem('gubukan_month') || getCurrentMonth();
+
+// Period filter system
+let currentPeriod = JSON.parse(localStorage.getItem('gubukan_period') || 'null') || {
+  type: 'this_month',
+  label: 'Bulan Ini',
+  from: null, // will be computed
+  to: null,
+};
+
+function computePeriodRange(period) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  let from, to;
+  switch(period.type) {
+    case 'this_month':
+      from = new Date(y, m, 1);
+      to   = new Date(y, m+1, 0);
+      break;
+    case 'last_month':
+      from = new Date(y, m-1, 1);
+      to   = new Date(y, m, 0);
+      break;
+    case 'this_year':
+      from = new Date(y, 0, 1);
+      to   = new Date(y, 11, 31);
+      break;
+    case 'last_year':
+      from = new Date(y-1, 0, 1);
+      to   = new Date(y-1, 11, 31);
+      break;
+    case 'last_3months':
+      from = new Date(y, m-2, 1);
+      to   = new Date(y, m+1, 0);
+      break;
+    case 'last_6months':
+      from = new Date(y, m-5, 1);
+      to   = new Date(y, m+1, 0);
+      break;
+    case 'all_time':
+      from = new Date(2025, 0, 1);
+      to   = new Date(2099, 11, 31);
+      break;
+    case 'custom_month':
+      // period.month = 'YYYY-MM'
+      const [cy, cm] = (period.month||getCurrentMonth()).split('-').map(Number);
+      from = new Date(cy, cm-1, 1);
+      to   = new Date(cy, cm, 0);
+      break;
+    case 'custom_range':
+      from = new Date(period.from);
+      to   = new Date(period.to);
+      break;
+    default:
+      from = new Date(y, m, 1);
+      to   = new Date(y, m+1, 0);
+  }
+  return {
+    from: from.toISOString().slice(0,10),
+    to:   to.toISOString().slice(0,10),
+  };
+}
+
+function filterByPeriod(arr, dateField='tanggal') {
+  const range = computePeriodRange(currentPeriod);
+  return arr.filter(r => {
+    const d = (r[dateField]||'').slice(0,10);
+    return d >= range.from && d <= range.to;
+  });
+}
+
+function setPeriod(type, opts={}) {
+  const labels = {
+    this_month:'Bulan Ini', last_month:'Bln Lalu',
+    this_year:'Tahun Ini', last_year:'Tahun Lalu',
+    last_3months:'3 Bulan', last_6months:'6 Bulan',
+    all_time:'Semua', custom_month:'', custom_range:'Custom',
+  };
+  currentPeriod = { type, label: labels[type]||type, ...opts };
+  if (type==='custom_month' && opts.month) {
+    currentPeriod.label = monthName(opts.month);
+    currentMonth = opts.month; // keep for compatibility
+    localStorage.setItem('gubukan_month', opts.month);
+  }
+  localStorage.setItem('gubukan_period', JSON.stringify(currentPeriod));
+  updatePeriodLabel();
+  closeSheet('monthSheet');
+  renderPage(currentPage);
+}
+
+function updatePeriodLabel() {
+  const range = computePeriodRange(currentPeriod);
+  const el = document.getElementById('monthLabel');
+  if (el) el.textContent = currentPeriod.label || monthName(currentMonth);
+}
 let state = {
   events: [], items: [], expenses: [],
   tokba: [], rt: [], vendors: [],
@@ -2076,10 +2200,10 @@ function fmtDate(d) {
 // DASHBOARD
 // ============================================================
 function renderDash() {
-  const mEvents   = state.events.filter(e => e.bulan === currentMonth);
-  const mExpenses = state.expenses.filter(e => e.bulan === currentMonth);
-  const mTokba    = state.tokba.filter(e => e.bulan === currentMonth);
-  const mRT       = state.rt.filter(e => e.bulan === currentMonth);
+  const mEvents   = state.events;
+  const mExpenses = state.expenses;
+  const mTokba    = state.tokba;
+  const mRT       = state.rt;
 
   const omzet   = mEvents.reduce((s,e) => s + (Number(e.omzet)||0), 0);
   const hpp     = mExpenses.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
@@ -2097,7 +2221,8 @@ function renderDash() {
   const rtSaldo = rtMasuk - rtKeluar;
 
   document.getElementById('dashTitle').textContent = monthName(currentMonth);
-  document.getElementById('dashPeriod').textContent = mEvents.length + ' event terdaftar';
+  const range = computePeriodRange(currentPeriod);
+  document.getElementById('dashPeriod').textContent = mEvents.length + ' event · ' + fmtDate(range.from) + ' s/d ' + fmtDate(range.to);
   document.getElementById('monthLabel').textContent = monthName(currentMonth);
 
   document.getElementById('dOmzet').textContent = rp(omzet);
@@ -2106,9 +2231,9 @@ function renderDash() {
   document.getElementById('dMargin').textContent = 'margin ' + margin + '%';
   document.getElementById('dMarginBar').style.width = Math.min(margin, 100) + '%';
   // New v3 stats
-  const mStokKeluar  = (state.stok_keluar||[]).filter(e=>e.bulan===currentMonth);
-  const mPengeluaran = (state.pengeluaran||[]).filter(e=>e.bulan===currentMonth);
-  const mPenerimaan  = (state.penerimaan||[]).filter(e=>e.bulan===currentMonth);
+  const mStokKeluar  = filterByPeriod(state.stok_keluar||[]);
+  const mPengeluaran = filterByPeriod(state.pengeluaran||[]);
+  const mPenerimaan  = filterByPeriod(state.penerimaan||[]);
   const hppV3  = mStokKeluar.reduce((s,r)=>s+(Number(r.total_hpp)||0),0);
   const opsV3  = mPengeluaran.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
   const terimaV3 = mPenerimaan.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
@@ -2164,8 +2289,8 @@ function renderBarChart() {
     months.push(d.toISOString().slice(0,7));
   }
   const data = months.map(m => {
-    const evs = state.events.filter(e=>e.bulan===m);
-    const exps = state.expenses.filter(e=>e.bulan===m);
+    const evs = state.events.filter(e=>(e.tanggal||'').slice(0,7)===m);
+    const exps = state.expenses.filter(e=>(e.tanggal||'').slice(0,7)===m);
     const inc = evs.reduce((s,e)=>s+(Number(e.omzet)||0),0);
     const out = exps.reduce((s,e)=>s+(Number(e.jumlah)||0),0);
     return { m, inc, out };
@@ -2189,7 +2314,7 @@ function renderBarChart() {
 // EVENTS
 // ============================================================
 function renderEvents() {
-  const mEvents = state.events.filter(e => e.bulan === currentMonth);
+  const mEvents = state.events;
   const el = document.getElementById('eventsList');
   if (!mEvents.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Belum ada event<br>Tekan + untuk tambah</div>';
@@ -2634,21 +2759,21 @@ function kasSortBy(col) {
 function buildKasJournalByMonth(m) {
   const journal = [];
   const allSources = [
-    ...(state.penerimaan||[]).filter(r=>r.bulan===m).map(r=>{
+    ...(state.penerimaan||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).map(r=>{
       const ev=state.events.find(e=>e.id===r.event_id);
       return {type:'terima',dir:'in',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💰',
         label:r.label||r.jenis,meta:(ev?ev.customer+' · ':'')+r.metode};
     }),
-    ...(state.stok_masuk||[]).filter(r=>r.bulan===m).map(r=>({
+    ...(state.stok_masuk||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).map(r=>({
       type:'stok',dir:'out',amount:Number(r.total_nilai)||0,tanggal:r.tanggal,icon:'📦',
       label:r.nama+' '+r.qty+' '+r.satuan,meta:r.toko||r.kategori,
     })),
-    ...(state.pengeluaran||[]).filter(r=>r.bulan===m).map(r=>{
+    ...(state.pengeluaran||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).map(r=>{
       const ev=state.events.find(e=>e.id===r.event_id);
       return {type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'🚗',
         label:r.keterangan,meta:r.kategori+(ev?' · '+ev.customer:' · Umum')};
     }),
-    ...(state.tokba||[]).filter(r=>r.bulan===m).flatMap(r=>{
+    ...(state.tokba||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).flatMap(r=>{
       const res=[];
       if(Number(r.masuk)>0) res.push({type:'tokba',dir:'in',amount:Number(r.masuk),tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
       if(Number(r.keluar)>0) res.push({type:'tokba',dir:'out',amount:Number(r.keluar),tanggal:r.tanggal,icon:'🛒',label:r.keterangan,meta:'Toko Online'});
@@ -2656,8 +2781,8 @@ function buildKasJournalByMonth(m) {
     }),
   ];
   // fallback expenses
-  if (!(state.pengeluaran||[]).filter(r=>r.bulan===m).length) {
-    (state.expenses||[]).filter(r=>r.bulan===m).forEach(r=>{
+  if (!(state.pengeluaran||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).length) {
+    (state.expenses||[]).filter(r=>(r.tanggal||'').slice(0,7)===m).forEach(r=>{
       allSources.push({type:'biaya',dir:'out',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💸',
         label:r.keterangan,meta:r.kategori+(r.toko?' · '+r.toko:'')});
     });
@@ -2679,7 +2804,7 @@ function switchKasTab(tab) {
 // RT
 // ============================================================
 function renderRT() {
-  const mRT = state.rt.filter(e=>e.bulan===currentMonth);
+  const mRT = filterByPeriod(state.rt);
   const masuk  = mRT.reduce((s,x)=>s+(Number(x.masuk)||0),0);
   const rutin  = mRT.reduce((s,x)=>s+(Number(x.rutin)||0),0);
   const jajan  = mRT.reduce((s,x)=>s+(Number(x.jajan)||0),0);
@@ -3031,7 +3156,14 @@ function saveApiUrl() {
 // ============================================================
 // MONTH PICKER
 // ============================================================
-function openMonthPicker() { openSheet('monthSheet'); buildMonthGrid(); }
+function openMonthPicker() {
+  openSheet('monthSheet');
+  buildMonthGrid();
+  // Highlight active period
+  document.querySelectorAll('[id^="pp_"]').forEach(el=>{
+    el.classList.toggle('active', el.id==='pp_'+currentPeriod.type);
+  });
+}
 
 function buildMonthGrid() {
   const now = new Date();
@@ -3104,12 +3236,8 @@ function toggleYear(year) {
 }
 
 function selectMonth(m) {
-  currentMonth = m;
-  localStorage.setItem('gubukan_month', m);
-  closeSheet('monthSheet');
-  document.getElementById('monthLabel').textContent = monthName(m);
+  setPeriod('custom_month', { month: m });
   populateEventDropdowns();
-  renderPage(currentPage);
 }
 
 // ============================================================
@@ -3161,7 +3289,7 @@ function exportMonth() {
 
 // --- Dropdown population ---
 function populateEventDropdowns() {
-  const mEvents = state.events.filter(e=>e.bulan===currentMonth)
+  const mEvents = filterByPeriod(state.events)
     .sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
   const options = '<option value="">— Pilih Event —</option>' +
     mEvents.map(e=>`<option value="${e.id}">${e.no_event||''} · ${e.customer} (${fmtDate(e.tanggal)})</option>`).join('');
@@ -3696,15 +3824,16 @@ const _origOpenSheet = window.openSheet;
 // ============================================================
 function renderLaporan() {
   document.getElementById('laporanTitle').textContent = monthName(currentMonth);
-  document.getElementById('laporanPeriod').textContent = 'Laporan Keuangan Bulanan';
+  const lapRange = computePeriodRange(currentPeriod);
+  document.getElementById('laporanPeriod').textContent = fmtDate(lapRange.from) + ' s/d ' + fmtDate(lapRange.to);
 
-  const mEvents  = state.events.filter(e => e.bulan === currentMonth);
-  const mSK      = (state.stok_keluar||[]).filter(r => r.bulan === currentMonth);
-  const mPeng    = (state.pengeluaran||[]).filter(r => r.bulan === currentMonth);
-  const mTerima  = (state.penerimaan||[]).filter(r => r.bulan === currentMonth);
-  const mExp     = (state.expenses||[]).filter(r => r.bulan === currentMonth);
-  const mTokba   = (state.tokba||[]).filter(r => r.bulan === currentMonth);
-  const mRT      = (state.rt||[]).filter(r => r.bulan === currentMonth);
+  const mEvents  = state.events;
+  const mSK      = (state.stok_keluar||[]);
+  const mPeng    = (state.pengeluaran||[]);
+  const mTerima  = (state.penerimaan||[]);
+  const mExp     = (state.expenses||[]);
+  const mTokba   = (state.tokba||[]);
+  const mRT      = (state.rt||[]);
 
   // ---- PENERIMAAN ----
   const omzetEvent = mEvents.reduce((s,e) => s+(Number(e.omzet)||0), 0);
@@ -3714,7 +3843,7 @@ function renderLaporan() {
 
   // ---- PENGELUARAN ----
   // HPP: dari stok_masuk (beli stok), fallback expenses
-  const hppStok  = (state.stok_masuk||[]).filter(r=>r.bulan===currentMonth)
+  const hppStok  = filterByPeriod(state.stok_masuk||[])
                     .reduce((s,r)=>s+(Number(r.total_nilai)||0),0);
   const hppExp   = mExp.filter(x=>x.kategori==='HPP').reduce((s,x)=>s+(Number(x.jumlah)||0),0);
   const hppTotal = hppStok > 0 ? hppStok : hppExp;
@@ -4012,12 +4141,12 @@ function toggleLapSection(id) {
 }
 
 function printLaporan() {
-  const mEvents  = state.events.filter(e => e.bulan === currentMonth);
-  const mSK      = (state.stok_keluar||[]).filter(r => r.bulan === currentMonth);
-  const mPeng    = (state.pengeluaran||[]).filter(r => r.bulan === currentMonth);
-  const mTerima  = (state.penerimaan||[]).filter(r => r.bulan === currentMonth);
-  const mExp     = (state.expenses||[]).filter(r => r.bulan === currentMonth);
-  const mTokba   = (state.tokba||[]).filter(r => r.bulan === currentMonth);
+  const mEvents  = state.events;
+  const mSK      = (state.stok_keluar||[]);
+  const mPeng    = (state.pengeluaran||[]);
+  const mTerima  = (state.penerimaan||[]);
+  const mExp     = (state.expenses||[]);
+  const mTokba   = (state.tokba||[]);
 
   const omzetEvent = mEvents.reduce((s,e)=>s+(Number(e.omzet)||0),0);
   const hppStok    = mSK.reduce((s,r)=>s+(Number(r.total_hpp)||0),0);
@@ -4533,6 +4662,14 @@ function openKasInput() {
 }
 
 
+function applyCustomRange() {
+  const from = document.getElementById('customFrom')?.value;
+  const to   = document.getElementById('customTo')?.value;
+  if (!from || !to) { toast('⚠️ Pilih tanggal dari dan sampai!'); return; }
+  setPeriod('custom_range', { from, to, label: fmtDate(from)+' – '+fmtDate(to) });
+  closeSheet('monthSheet');
+}
+
 function init() {
   // Apply saved theme
   const savedTheme = localStorage.getItem('gubukan_theme') || 'navy';
@@ -4550,6 +4687,7 @@ function init() {
     if (el) el.textContent = label;
   };
   updateToday();
+  updatePeriodLabel();
   setInterval(updateToday, 60000);
   // Load API URL into settings
   if (API_URL) document.getElementById('apiUrlInput').value = API_URL;
