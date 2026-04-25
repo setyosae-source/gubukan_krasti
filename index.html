@@ -1940,8 +1940,9 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
 // ============================================================
 // SUPABASE CONFIG
 // ============================================================
-const SUPA_URL  = 'https://skltbmcrqutevmtcxqxj.supabase.co';
-const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrbHRibWNycXV0ZXZtdGN4cXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzM5ODIsImV4cCI6MjA5MTI0OTk4Mn0._nogUZg5UylVyP45QTGYw69u76pNxGryj9hZORIfE_A';
+const SUPA_URL   = 'https://skltbmcrqutevmtcxqxj.supabase.co';
+const SUPA_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrbHRibWNycXV0ZXZtdGN4cXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzM5ODIsImV4cCI6MjA5MTI0OTk4Mn0._nogUZg5UylVyP45QTGYw69u76pNxGryj9hZORIfE_A';
+const PROXY_URL  = 'https://skltbmcrqutevmtcxqxj.supabase.co/functions/v1/gubukan-proxy';
 const SUPA_HEADERS = {
   'apikey': SUPA_KEY,
   'Authorization': 'Bearer ' + SUPA_KEY,
@@ -2164,45 +2165,80 @@ async function api(params) {
 
 async function apiWrite(action, sheet, data, id) {
   const table = TABLE_MAP[sheet] || ('gubukan_' + sheet);
-  let url, method, body;
+  let restUrl, proxyUrl, method, body;
 
   if (action === 'insert') {
-    // Generate UUID if no id
     if (!data.id) data.id = crypto.randomUUID();
     if (!data.created_at) data.created_at = new Date().toISOString();
-    url    = SUPA_URL + '/rest/v1/' + table;
-    method = 'POST';
-    body   = JSON.stringify(data);
+    restUrl  = SUPA_URL + '/rest/v1/' + table;
+    proxyUrl = PROXY_URL + '/' + table;
+    method   = 'POST';
+    body     = JSON.stringify(data);
   } else if (action === 'update') {
-    url    = SUPA_URL + '/rest/v1/' + table + '?id=eq.' + (id || data.id);
-    method = 'PATCH';
-    body   = JSON.stringify(data);
+    const eid = id || data.id;
+    restUrl  = SUPA_URL + '/rest/v1/' + table + '?id=eq.' + eid;
+    proxyUrl = PROXY_URL + '/' + table + '?id=eq.' + eid;
+    method   = 'PATCH';
+    body     = JSON.stringify(data);
   } else if (action === 'delete') {
-    url    = SUPA_URL + '/rest/v1/' + table + '?id=eq.' + id;
-    method = 'DELETE';
-    body   = null;
+    restUrl  = SUPA_URL + '/rest/v1/' + table + '?id=eq.' + id;
+    proxyUrl = PROXY_URL + '/' + table + '?id=eq.' + id;
+    method   = 'DELETE';
+    body     = null;
   }
 
-  const res = await fetch(url, { method, headers: SUPA_HEADERS, body });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error('Supabase ' + action + ' error: ' + err);
+  // Coba REST langsung, fallback ke proxy
+  async function tryFetch(url, useProxyHeaders) {
+    const headers = useProxyHeaders
+      ? { 'Content-Type': 'application/json' }
+      : SUPA_HEADERS;
+    const res = await fetch(url, { method, headers, body });
+    if (!res.ok) {
+      const err = await res.text();
+      if (err.includes('allowlist') || res.status === 403) return null; // signal fallback
+      throw new Error('Supabase ' + action + ': ' + err);
+    }
+    if (method === 'DELETE') return data;
+    const result = await res.json().catch(() => ({}));
+    return Array.isArray(result) ? (result[0] || data) : (result || data);
   }
-  const result = await res.json().catch(() => ({}));
-  // Return first item or data with id
-  return Array.isArray(result) ? (result[0] || data) : (result || data);
+
+  let result = await tryFetch(restUrl, false);
+  if (result === null) result = await tryFetch(proxyUrl, true);
+  if (result === null) throw new Error('Gagal: host not allowed & proxy juga gagal');
+  return result;
 }
 
 async function supaFetch(table, extraParams='', retry=2) {
-  const url = SUPA_URL + '/rest/v1/' + table + '?select=*&limit=10000' + extraParams;
+  // Coba REST langsung dulu, fallback ke proxy edge function
+  const urlRest  = SUPA_URL + '/rest/v1/' + table + '?select=*&limit=10000' + extraParams;
+  const urlProxy = PROXY_URL + '/' + table + '?select=*&limit=10000' + extraParams;
+
   for (let i = 0; i <= retry; i++) {
     try {
-      const res = await fetch(url, { headers: SUPA_HEADERS });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      // Coba REST API langsung
+      const res = await fetch(urlRest, { headers: SUPA_HEADERS });
+      if (!res.ok) {
+        // Jika 403 host_not_allowed, langsung coba proxy
+        const txt = await res.text();
+        if (txt.includes('allowlist') || res.status === 403) {
+          const res2 = await fetch(urlProxy);
+          if (!res2.ok) throw new Error('HTTP ' + res2.status);
+          return await res2.json();
+        }
+        throw new Error('HTTP ' + res.status);
+      }
       return await res.json();
     } catch(e) {
-      if (i === retry) throw new Error(table + ': ' + (e.message||'gagal'));
-      await new Promise(r => setTimeout(r, 1000 * (i+1))); // wait 1s, 2s
+      // Jika fetch gagal (CORS/network), coba proxy
+      try {
+        const res2 = await fetch(urlProxy);
+        if (!res2.ok) throw new Error('proxy HTTP ' + res2.status);
+        return await res2.json();
+      } catch(e2) {
+        if (i === retry) throw new Error(table + ': ' + (e2.message||'gagal'));
+        await new Promise(r => setTimeout(r, 1000 * (i+1)));
+      }
     }
   }
 }
@@ -2606,7 +2642,7 @@ function renderDetailTab(tab) {
         </div>
       </div>
       ${ev.catatan?`<div style="padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--ink3);margin-bottom:10px;">📝 ${ev.catatan}</div>`:''}
-      <button class="btn btn-primary" onclick="editEvent('${ev.id}')">✏️ Edit Event</button>
+      <button class="btn btn-primary" onclick="closeSheet('detailSheet');setTimeout(()=>{renderEventForm('${ev.id}');openSheet('eventFormSheet');},200)">✏️ Edit Event</button>
       <button class="btn btn-secondary" style="color:var(--red);border-color:var(--red);" onclick="deleteEvent('${ev.id}')">🗑️ Hapus</button>
     </div>`;
 
@@ -3073,10 +3109,10 @@ function renderRT() {
 let itemCount = 0;
 let expCount  = 0;
 
-function openAddSheet() { renderEventForm(null);
+function openAddSheet() {
   if (currentPage === 'events') {
-    resetEventForm();
-    openSheet('eventSheet');
+    renderEventForm(null);
+    openSheet('eventFormSheet');
   } else if (currentPage === 'kas') {
     openSheet('tokbaSheet');
   } else if (currentPage === 'rt') {
@@ -3084,215 +3120,16 @@ function openAddSheet() { renderEventForm(null);
   }
 }
 
-function resetEventForm() {
-  document.getElementById('editEventId').value = '';
-  { const _e_eventSheetTitle=document.getElementById('eventSheetTitle'); if(_e_eventSheetTitle) _e_eventSheetTitle.textContent='Tambah Event'; }
-  document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
-  document.getElementById('fEventNo').value = '';
-  document.getElementById('fCustomer').value = '';
-  document.getElementById('fLocation').value = '';
-  document.getElementById('fStatus').value = 'lunas';
-  document.getElementById('fNote').value = '';
-  document.getElementById('itemRows').innerHTML = '';
-  document.getElementById('expenseRows').innerHTML = '';
-  itemCount = 0; expCount = 0;
-  addItemRow(); addItemRow();
-  addExpenseRow('HPP'); addExpenseRow('Operasional');
-  calcTotals();
-}
-
-function addItemRow() {
-  itemCount++;
-  const id = 'item_' + itemCount;
-  const row = document.createElement('div');
-  row.className = 'item-row';
-  row.id = id;
-  row.innerHTML = `
-    <input type="text" placeholder="Menu (Zuppa, Waffle...)" class="item-menu">
-    <input type="number" placeholder="Qty" class="item-qty" oninput="calcTotals()">
-    <input type="number" placeholder="Harga" class="item-price" oninput="calcTotals()">
-    <button class="item-del" onclick="this.closest('.item-row').remove();calcTotals()">✕</button>`;
-  document.getElementById('itemRows').appendChild(row);
-}
-
-function addExpenseRow(defaultKat='HPP') {
-  expCount++;
-  const id = 'exp_' + expCount;
-  const row = document.createElement('div');
-  row.className = 'expense-row';
-  row.id = id;
-  const cats = ['HPP','Operasional','Overhead'];
-  row.innerHTML = `
-    <div class="expense-row-top">
-      <input type="text" placeholder="Keterangan biaya..." class="exp-ket">
-      <select class="expense-cat ${defaultKat}" onchange="this.className='expense-cat '+this.value;calcTotals()" >
-        ${cats.map(c=>`<option value="${c}" ${c===defaultKat?'selected':''}>${c}</option>`).join('')}
-      </select>
-      <button class="item-del" onclick="this.closest('.expense-row').remove();calcTotals()">✕</button>
-    </div>
-    <input type="number" placeholder="Jumlah (Rp)" class="form-control exp-jumlah"
-      style="margin-top:6px;" oninput="calcTotals()">`;
-  document.getElementById('expenseRows').appendChild(row);
-}
-
-function calcTotals() {
-  // Omzet from items
-  let omzet = 0;
-  document.querySelectorAll('.item-row').forEach(row => {
-    const qty   = Number(row.querySelector('.item-qty')?.value)||0;
-    const price = Number(row.querySelector('.item-price')?.value)||0;
-    omzet += qty * price;
-  });
-
-  // Expenses
-  let hpp=0, ops=0, ovh=0;
-  document.querySelectorAll('.expense-row').forEach(row => {
-    const kat    = row.querySelector('select')?.value;
-    const jumlah = Number(row.querySelector('.exp-jumlah')?.value)||0;
-    if (kat==='HPP')         hpp += jumlah;
-    else if (kat==='Operasional') ops += jumlah;
-    else                          ovh += jumlah;
-  });
-
-  const labaKotor = omzet - hpp - ops;
-  const labaBersih = labaKotor - ovh;
-  const margin = omzet > 0 ? (labaBersih/omzet*100).toFixed(1) : 0;
-  const isrun = omzet * 0.1;
-
-  { const _e_tOmzet=document.getElementById('tOmzet'); if(_e_tOmzet) _e_tOmzet.textContent=rpFull(omzet); }
-  { const _e_tHPP=document.getElementById('tHPP'); if(_e_tHPP) _e_tHPP.textContent=rpFull(hpp); }
-  { const _e_tOps=document.getElementById('tOps'); if(_e_tOps) _e_tOps.textContent=rpFull(ops); }
-  { const _e_tOvh=document.getElementById('tOvh'); if(_e_tOvh) _e_tOvh.textContent=rpFull(ovh); }
-  { const _e_tLabaKotor=document.getElementById('tLabaKotor'); if(_e_tLabaKotor) _e_tLabaKotor.textContent=rpFull(labaKotor); }
-  { const _e_tLaba=document.getElementById('tLaba'); if(_e_tLaba) _e_tLaba.textContent=rpFull(labaBersih); }
-  { const _e_tMargin=document.getElementById('tMargin'); if(_e_tMargin) _e_tMargin.textContent=margin + '%'; }
-  { const _e_tIsrun=document.getElementById('tIsrun'); if(_e_tIsrun) _e_tIsrun.textContent=rpFull(isrun); }
-
-  const lRow = document.getElementById('tLabaRow');
-  lRow.className = 'total-row ' + (labaBersih >= 0 ? 'profit' : 'loss');
-}
-
-async function saveEvent() {
-  const customer = document.getElementById('fCustomer').value.trim();
-  if (!customer) { toast('⚠️ Isi nama customer dulu!'); return; }
-
-  // Calc omzet
-  let omzet = 0;
-  const items = [];
-  document.querySelectorAll('.item-row').forEach(row => {
-    const menu  = row.querySelector('.item-menu')?.value.trim();
-    const qty   = Number(row.querySelector('.item-qty')?.value)||0;
-    const price = Number(row.querySelector('.item-price')?.value)||0;
-    if (menu && qty > 0) {
-      omzet += qty * price;
-      items.push({ menu, qty, harga_satuan: price, total: qty*price });
-    }
-  });
-
-  const expenses = [];
-  document.querySelectorAll('.expense-row').forEach(row => {
-    const ket    = row.querySelector('.exp-ket')?.value.trim();
-    const kat    = row.querySelector('select')?.value;
-    const jumlah = Number(row.querySelector('.exp-jumlah')?.value)||0;
-    if (ket && jumlah > 0) expenses.push({ keterangan: ket, kategori: kat, jumlah });
-  });
-
-  const tanggal = document.getElementById('fDate').value;
-  const eventData = {
-    tanggal,
-    no_event:  document.getElementById('fEventNo').value,
-    customer,
-    lokasi:    document.getElementById('fLocation').value,
-    status:    document.getElementById('fStatus').value,
-    catatan:   document.getElementById('fNote').value,
-    omzet,
-    isrun:     omzet * 0.1,
-  };
-
-  const editId = document.getElementById('editEventId').value;
-
-  try {
-    let eventId;
-    if (editId) {
-      await apiWrite('update', 'events', eventData, editId);
-      eventId = editId;
-      state.events = state.events.map(e => e.id===editId ? {...e,...eventData} : e);
-      state.items    = state.items.filter(x=>x.event_id!==editId);
-      state.expenses = state.expenses.filter(x=>x.event_id!==editId);
-    } else {
-      const res = await apiWrite('insert', 'events', eventData);
-      eventId = res.id;
-      state.events.push({...eventData, id:eventId});
-    }
-
-    // Save items
-    for (const item of items) {
-      const res = await apiWrite('insert', 'event_items', {...item, event_id:eventId, tanggal});
-      state.items.push({...item, event_id:eventId, tanggal, id:res.id});
-    }
-
-    // Save expenses
-    for (const exp of expenses) {
-      const res = await apiWrite('insert', 'expenses', {...exp, event_id:eventId, tanggal});
-      state.expenses.push({...exp, event_id:eventId, tanggal, id:res.id});
-    }
-
-    cacheState();
-    closeSheet('eventSheet');
-    renderPage(currentPage);
-    toast('✅ Event berhasil disimpan!');
-  } catch(e) {
-    toast('❌ ' + e.message);
-  }
-}
 
 function editEvent(id) {
-  const ev = state.events.find(e=>e.id===id);
-  if (!ev) return;
+  // Redirect ke form baru
   closeSheet('detailSheet');
   setTimeout(() => {
-    resetEventForm();
-    document.getElementById('editEventId').value = id;
-    { const _e_eventSheetTitle=document.getElementById('eventSheetTitle'); if(_e_eventSheetTitle) _e_eventSheetTitle.textContent='Edit Event'; }
-    document.getElementById('fDate').value     = ev.tanggal?.slice(0,10)||'';
-    document.getElementById('fEventNo').value  = ev.no_event||'';
-    document.getElementById('fCustomer').value = ev.customer||'';
-    document.getElementById('fLocation').value = ev.lokasi||'';
-    document.getElementById('fStatus').value   = ev.status||'lunas';
-    document.getElementById('fNote').value     = ev.catatan||'';
-
-    // Load existing items
-    const evItems = state.items.filter(x=>x.event_id===id);
-    document.getElementById('itemRows').innerHTML = '';
-    itemCount = 0;
-    if (evItems.length) {
-      evItems.forEach(it => {
-        addItemRow();
-        const rows = document.querySelectorAll('.item-row');
-        const row  = rows[rows.length-1];
-        row.querySelector('.item-menu').value  = it.menu||'';
-        row.querySelector('.item-qty').value   = it.qty||'';
-        row.querySelector('.item-price').value = it.harga_satuan||'';
-      });
-    } else { addItemRow(); }
-
-    const evExp = state.expenses.filter(x=>x.event_id===id);
-    document.getElementById('expenseRows').innerHTML = '';
-    expCount = 0;
-    if (evExp.length) {
-      evExp.forEach(ex => {
-        addExpenseRow(ex.kategori||'HPP');
-        const rows = document.querySelectorAll('.expense-row');
-        const row  = rows[rows.length-1];
-        row.querySelector('.exp-ket').value    = ex.keterangan||'';
-        row.querySelector('.exp-jumlah').value = ex.jumlah||'';
-      });
-    } else { addExpenseRow('HPP'); }
-
-    calcTotals();
-    openSheet('eventSheet');
-  }, 300);
+    renderEventForm(id);
+    openSheet('eventFormSheet');
+  }, 200);
 }
+
 
 async function deleteEvent(id) {
   if (!confirm('Hapus event ini?')) return;
