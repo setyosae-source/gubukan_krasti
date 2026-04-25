@@ -1541,9 +1541,9 @@ function renderDash() {
   document.getElementById('dMargin').textContent = 'margin ' + margin + '%';
   document.getElementById('dMarginBar').style.width = Math.min(margin, 100) + '%';
   // New v3 stats
-  const mStokKeluar  = state.stok_keluar.filter(e=>e.bulan===currentMonth);
-  const mPengeluaran = state.pengeluaran.filter(e=>e.bulan===currentMonth);
-  const mPenerimaan  = state.penerimaan.filter(e=>e.bulan===currentMonth);
+  const mStokKeluar  = (state.stok_keluar||[]).filter(e=>e.bulan===currentMonth);
+  const mPengeluaran = (state.pengeluaran||[]).filter(e=>e.bulan===currentMonth);
+  const mPenerimaan  = (state.penerimaan||[]).filter(e=>e.bulan===currentMonth);
   const hppV3  = mStokKeluar.reduce((s,r)=>s+(Number(r.total_hpp)||0),0);
   const opsV3  = mPengeluaran.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
   const terimaV3 = mPenerimaan.reduce((s,r)=>s+(Number(r.jumlah)||0),0);
@@ -2218,7 +2218,7 @@ function populateEventDropdowns() {
 }
 
 function populateStokDatalist() {
-  const names = [...new Set(state.stok_masuk.map(s=>s.nama).filter(Boolean))];
+  const names = [...new Set((state.stok_masuk||[]).map(s=>s.nama).filter(Boolean))];
   const dl = document.getElementById('stokNamaList');
   if (dl) dl.innerHTML = names.map(n=>`<option value="${n}">`).join('');
 
@@ -2234,7 +2234,7 @@ function populateStokDatalist() {
 
 function calcStokSummary() {
   const summary = {};
-  state.stok_masuk.forEach(r=>{
+  (state.stok_masuk||[]).forEach(r=>{
     const nama = r.nama;
     if (!summary[nama]) summary[nama] = {
       nama, kategori:r.kategori,
@@ -2246,7 +2246,7 @@ function calcStokSummary() {
     summary[nama].total_qty_kecil += qtyKecil;
     summary[nama].total_nilai     += Number(r.total_nilai)||0;
   });
-  state.stok_keluar.forEach(r=>{
+  (state.stok_keluar||[]).forEach(r=>{
     if (summary[r.nama]) summary[r.nama].total_qty_kecil -= Number(r.qty)||0;
   });
   return Object.values(summary).map(s=>({
@@ -2257,8 +2257,8 @@ function calcStokSummary() {
 }
 
 function getEventHPP(eventId) {
-  const keluar = state.stok_keluar.filter(r=>r.event_id===eventId);
-  const ops    = state.pengeluaran.filter(r=>r.event_id===eventId);
+  const keluar = (state.stok_keluar||[]).filter(r=>r.event_id===eventId);
+  const ops    = (state.pengeluaran||[]).filter(r=>r.event_id===eventId);
   return {
     hpp:    keluar.reduce((s,r)=>s+(Number(r.total_hpp)||0),0),
     ops:    ops.reduce((s,r)=>s+(Number(r.jumlah)||0),0),
@@ -2267,7 +2267,7 @@ function getEventHPP(eventId) {
 }
 
 function getEventPenerimaan(eventId) {
-  const items = state.penerimaan.filter(r=>r.event_id===eventId);
+  const items = (state.penerimaan||[]).filter(r=>r.event_id===eventId);
   return {
     items,
     total: items.reduce((s,r)=>s+(Number(r.jumlah)||0),0),
@@ -2483,7 +2483,7 @@ async function savePenerimaan(printAfter=false) {
     if (data.event_id) {
       const ev = state.events.find(e=>e.id===data.event_id);
       if (ev) {
-        const totalTerima = state.penerimaan.filter(p=>p.event_id===data.event_id).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+        const totalTerima = (state.penerimaan||[]).filter(p=>p.event_id===data.event_id).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
         const omzet = Number(ev.omzet)||0;
         const newStatus = totalTerima >= omzet ? 'lunas' : totalTerima >= omzet*0.5 ? 'dp' : 'booking';
         if (newStatus !== ev.status) {
@@ -2506,7 +2506,7 @@ async function savePenerimaan(printAfter=false) {
 }
 
 function printBuktiTerima(pay, ev) {
-  const totalPaid = state.penerimaan.filter(p=>p.event_id===ev.id).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
+  const totalPaid = (state.penerimaan||[]).filter(p=>p.event_id===ev.id).reduce((s,p)=>s+(Number(p.jumlah)||0),0);
   const sisa = (Number(ev.omzet)||0) - totalPaid;
   const no = 'BKT/' + (ev.no_event||'000') + '/' + new Date().getTime().toString().slice(-6);
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bukti</title>
