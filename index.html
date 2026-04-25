@@ -1056,15 +1056,25 @@ function renderPage(page) {
 // ============================================================
 // API
 // ============================================================
-async function api(params, body=null) {
+async function api(params) {
   if (!API_URL) throw new Error('URL API belum diset. Buka Settings!');
   const url = new URL(API_URL);
   if (params) Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+  // Semua pakai GET untuk bypass CORS Google Apps Script
+  const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
+  const json = await res.json();
+  if (json.status !== 'ok') throw new Error(json.message);
+  return json.data;
+}
 
-  const opts = { method: body ? 'POST' : 'GET' };
-  if (body) { opts.body = JSON.stringify(body); opts.headers = {'Content-Type':'application/json'}; }
-
-  const res = await fetch(url, opts);
+async function apiWrite(action, sheet, data, id) {
+  if (!API_URL) throw new Error('URL API belum diset. Buka Settings!');
+  const url = new URL(API_URL);
+  url.searchParams.set('action', action);
+  if (sheet) url.searchParams.set('sheet', sheet);
+  if (id)    url.searchParams.set('id', id);
+  if (data)  url.searchParams.set('data', encodeURIComponent(JSON.stringify(data)));
+  const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
   const json = await res.json();
   if (json.status !== 'ok') throw new Error(json.message);
   return json.data;
@@ -1581,26 +1591,26 @@ async function saveEvent() {
   try {
     let eventId;
     if (editId) {
-      await api(null, { action:'update', sheet:'events', id:editId, data:eventData });
+      await apiWrite('update', 'events', eventData, editId);
       eventId = editId;
       state.events = state.events.map(e => e.id===editId ? {...e,...eventData} : e);
       state.items    = state.items.filter(x=>x.event_id!==editId);
       state.expenses = state.expenses.filter(x=>x.event_id!==editId);
     } else {
-      const res = await api(null, { action:'insert', sheet:'events', data:eventData });
+      const res = await apiWrite('insert', 'events', eventData);
       eventId = res.id;
       state.events.push({...eventData, id:eventId});
     }
 
     // Save items
     for (const item of items) {
-      const res = await api(null, { action:'insert', sheet:'event_items', data:{...item, event_id:eventId, bulan} });
+      const res = await apiWrite('insert', 'event_items', {...item, event_id:eventId, bulan});
       state.items.push({...item, event_id:eventId, bulan, id:res.id});
     }
 
     // Save expenses
     for (const exp of expenses) {
-      const res = await api(null, { action:'insert', sheet:'expenses', data:{...exp, event_id:eventId, bulan, tanggal} });
+      const res = await apiWrite('insert', 'expenses', {...exp, event_id:eventId, bulan, tanggal});
       state.expenses.push({...exp, event_id:eventId, bulan, tanggal, id:res.id});
     }
 
@@ -1664,7 +1674,7 @@ function editEvent(id) {
 async function deleteEvent(id) {
   if (!confirm('Hapus event ini?')) return;
   try {
-    await api(null, { action:'delete', sheet:'events', id });
+    await apiWrite('delete', 'events', null, id);
     state.events   = state.events.filter(e=>e.id!==id);
     state.items     = state.items.filter(x=>x.event_id!==id);
     state.expenses  = state.expenses.filter(x=>x.event_id!==id);
@@ -1687,7 +1697,7 @@ async function saveTokba() {
   try {
     const bulan = tanggal.slice(0,7);
     const data = { bulan, tanggal, keterangan:ket, masuk, keluar };
-    const res = await api(null, { action:'insert', sheet:'tokba', data });
+    const res = await apiWrite('insert', 'tokba', data);
     state.tokba.push({...data, id:res.id});
     cacheState();
     closeSheet('tokbaSheet');
@@ -1712,7 +1722,7 @@ async function saveRT() {
       extraordinary:  kat==='extraordinary' ? jumlah : 0,
       catatan: document.getElementById('rNote').value,
     };
-    const res = await api(null, { action:'insert', sheet:'rumah_tangga', data });
+    const res = await apiWrite('insert', 'rumah_tangga', data);
     state.rt.push({...data, id:res.id});
     cacheState();
     closeSheet('rtSheet');
