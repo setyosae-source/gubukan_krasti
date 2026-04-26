@@ -767,9 +767,10 @@ select.form-control { appearance: none; }
     <!-- ═══════════════════════════════════════════ -->
     <div class="page" id="page-kas">
       <!-- Sub tab -->
-      <div style="display:flex;gap:8px;margin-bottom:14px;">
-        <button class="chip active" data-ktab="mutasi" onclick="switchKasTab(this)">Riwayat</button>
-        <button class="chip" data-ktab="transfer" onclick="switchKasTab(this)">Transfer</button>
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none">
+        <button class="chip active" data-ktab="bb-usaha" onclick="switchKasTab(this)">📒 Usaha</button>
+        <button class="chip" data-ktab="bb-rt" onclick="switchKasTab(this)">🏠 RT</button>
+        <button class="chip" data-ktab="transfer" onclick="switchKasTab(this)">💸 Transfer</button>
       </div>
 
       <!-- Ringkasan Kas -->
@@ -784,10 +785,54 @@ select.form-control { appearance: none; }
         </div>
       </div>
 
-      <!-- Riwayat Mutasi RT -->
-      <div id="kas-mutasi-tab">
-        <div class="section-title">Riwayat Kas RT</div>
-        <div id="kas-mutasi-list">
+      <!-- Buku Besar Kas Usaha -->
+      <div id="kas-bb-usaha-tab">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="section-title" style="margin:0">Buku Besar Kas Usaha</div>
+          <div style="font-size:11px;color:var(--ink3)" id="bb-usaha-period">—</div>
+        </div>
+        <!-- Summary row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
+          <div class="stat-card" style="padding:9px">
+            <div class="stat-label" style="font-size:9px">Masuk</div>
+            <div class="stat-val green" style="font-size:13px" id="bb-usaha-masuk">—</div>
+          </div>
+          <div class="stat-card" style="padding:9px">
+            <div class="stat-label" style="font-size:9px">Keluar</div>
+            <div class="stat-val red" style="font-size:13px" id="bb-usaha-keluar">—</div>
+          </div>
+          <div class="stat-card gold" style="padding:9px">
+            <div class="stat-label" style="font-size:9px">Saldo Akhir</div>
+            <div class="stat-val gold" style="font-size:13px" id="bb-usaha-saldo-akhir">—</div>
+          </div>
+        </div>
+        <div id="bb-usaha-list">
+          <div class="empty"><div class="empty-icon">📒</div><div class="empty-text">Belum ada data</div></div>
+        </div>
+      </div>
+
+      <!-- Buku Besar Kas RT -->
+      <div id="kas-bb-rt-tab" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="section-title" style="margin:0">Buku Besar Kas RT</div>
+          <div style="font-size:11px;color:var(--ink3)" id="bb-rt-period">—</div>
+        </div>
+        <!-- Summary row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
+          <div class="stat-card" style="padding:9px">
+            <div class="stat-label" style="font-size:9px">Masuk</div>
+            <div class="stat-val green" style="font-size:13px" id="bb-rt-masuk">—</div>
+          </div>
+          <div class="stat-card" style="padding:9px">
+            <div class="stat-label" style="font-size:9px">Keluar</div>
+            <div class="stat-val red" style="font-size:13px" id="bb-rt-keluar">—</div>
+          </div>
+          <div class="stat-card gold" style="padding:9px">
+            <div class="stat-label" style="font-size:9px">Saldo Akhir</div>
+            <div class="stat-val gold" style="font-size:13px" id="bb-rt-saldo-akhir">—</div>
+          </div>
+        </div>
+        <div id="bb-rt-list">
           <div class="empty"><div class="empty-icon">🏠</div><div class="empty-text">Belum ada data</div></div>
         </div>
       </div>
@@ -2366,7 +2411,7 @@ async function saveOnline() {
     }
     onlineEditId = '';
     closeSheet('sheetOnline');
-    await loadTokba();
+    await Promise.all([loadTokba(), updateSaldoUsaha()]);
   } catch(e) { toast('❌ ' + e.message); }
 }
 
@@ -2421,6 +2466,7 @@ async function saveOffline() {
       closeSheet('sheetOffline');
       renderPesananDetail();
       toast('✅ Pesanan diperbarui');
+      updateSaldoUsaha();
     } else {
       data.status = 'proses';
       await sbInsert('gk_tokba_pesanan', data);
@@ -2854,6 +2900,7 @@ async function saveOpsEvent() {
     closeSheet('sheetOpsEvent');
     renderEventDetail();
     toast('✅ Biaya ops ditambah');
+    updateSaldoUsaha();
   } catch(e) { toast('❌ ' + e.message); }
 }
 
@@ -2961,26 +3008,81 @@ function switchKasTab(el) {
   document.querySelectorAll('[data-ktab]').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   const tab = el.dataset.ktab;
-  document.getElementById('kas-mutasi-tab').style.display   = tab==='mutasi'   ? '' : 'none';
+  document.getElementById('kas-bb-usaha-tab').style.display = tab==='bb-usaha' ? '' : 'none';
+  document.getElementById('kas-bb-rt-tab').style.display    = tab==='bb-rt'    ? '' : 'none';
   document.getElementById('kas-transfer-tab').style.display = tab==='transfer' ? '' : 'none';
+  if (tab==='bb-usaha') loadBukuBesar('usaha');
+  if (tab==='bb-rt')    loadBukuBesar('rt');
 }
 
 async function loadKas() {
   try {
-    const [kas, mutasi] = await Promise.all([
-      sbGet('gk_kas', 'select=*'),
-      sbGet('gk_kas_mutasi', 'order=tanggal.desc&limit=100&select=*'),
-    ]);
-    // Saldo
+    const kas = await sbGet('gk_kas', 'select=*');
     const usaha = kas.find(k=>k.jenis==='usaha');
     const rt    = kas.find(k=>k.jenis==='rt');
     set('kas-usaha-saldo', rpFull(usaha?.saldo||0));
     set('kas-rt-saldo',    rpFull(rt?.saldo||0));
-    // Set tanggal default transfer
     const tgl = document.getElementById('transfer-tanggal');
     if (tgl && !tgl.value) tgl.value = new Date().toISOString().slice(0,10);
-    // Render mutasi
-    renderKasMutasi(mutasi);
+    // Load buku besar usaha by default (tab aktif)
+    await loadBukuBesar('usaha');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function loadBukuBesar(jenis) {
+  const s = periodStart(), e = periodEnd();
+  const label = new Date(state.period.year, state.period.month-1, 1)
+    .toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  const prefix = jenis==='usaha' ? 'bb-usaha' : 'bb-rt';
+  set(`${prefix}-period`, label);
+
+  try {
+    // Query buku besar untuk periode ini
+    const rows = await sbGet('gk_buku_besar',
+      `kas_jenis=eq.${jenis}&tanggal=gte.${s}&tanggal=lte.${e}&order=tanggal.asc,created_at.asc&select=*`);
+
+    // Summary
+    const totalMasuk  = rows.reduce((sum,r)=>sum+Number(r.masuk||0), 0);
+    const totalKeluar = rows.reduce((sum,r)=>sum+Number(r.keluar||0), 0);
+    const saldoAkhir  = rows.length ? Number(rows[rows.length-1].saldo_berjalan||0) : 0;
+
+    set(`${prefix}-masuk`,       rp(totalMasuk));
+    set(`${prefix}-keluar`,      rp(totalKeluar));
+    set(`${prefix}-saldo-akhir`, rp(saldoAkhir));
+
+    // Render rows
+    const listEl = document.getElementById(`${prefix}-list`);
+    if (!rows.length) {
+      listEl.innerHTML = `<div class="empty"><div class="empty-icon">${jenis==='usaha'?'📒':'🏠'}</div><div class="empty-text">Tidak ada transaksi bulan ini</div></div>`;
+      return;
+    }
+
+    // Tampilkan dari terbaru ke terlama (reverse untuk tampilan)
+    const reversed = [...rows].reverse();
+    listEl.innerHTML = reversed.map(r=>{
+      const isIn  = Number(r.masuk||0) > 0;
+      const jumlah= isIn ? Number(r.masuk) : Number(r.keluar);
+      const color = isIn ? 'var(--green)' : 'var(--red)';
+      const sign  = isIn ? '+' : '-';
+      const saldo = Number(r.saldo_berjalan||0);
+      const tipeLabel = {
+        masuk:'Masuk', keluar:'Keluar',
+        transfer_masuk:'Transfer Masuk', transfer_keluar:'Transfer Keluar'
+      }[r.tipe] || r.tipe;
+
+      return `<div class="card" style="margin-bottom:6px;padding:10px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:500;color:var(--ink)">${r.keterangan||tipeLabel}</div>
+            <div style="font-size:10px;color:var(--ink3);margin-top:1px">${fmtDate(r.tanggal)} · ${tipeLabel}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:700;color:${color};font-family:var(--mono)">${sign}${rp(jumlah)}</div>
+            <div style="font-size:10px;color:var(--ink3);font-family:var(--mono)">Saldo: ${rp(saldo)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
   } catch(e) { toast('❌ ' + e.message); }
 }
 
@@ -3082,6 +3184,17 @@ async function hitungSaldoKas(kasId) {
   const rows = await sbGet('gk_kas_mutasi', `kas_id=eq.${kasId}&select=tipe,jumlah`);
   return rows.reduce((s,r)=>
     s + ((['masuk','transfer_masuk'].includes(r.tipe)) ? Number(r.jumlah) : -Number(r.jumlah)), 0);
+}
+
+async function updateSaldoUsaha() {
+  try {
+    const kas = await sbGet('gk_kas','jenis=eq.usaha&select=id').then(r=>r[0]);
+    if (!kas) return;
+    const saldo = await hitungSaldoKas(kas.id);
+    await sbUpdate('gk_kas', kas.id, {saldo});
+    set('kas-usaha-saldo', rpFull(saldo));
+    set('d-kas-usaha', rpFull(saldo));
+  } catch(e) { console.error('updateSaldoUsaha:', e); }
 }
 
 async function saveTransfer() {
