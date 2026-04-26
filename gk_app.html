@@ -430,6 +430,17 @@ select.form-control { appearance: none; }
   border-color: var(--gold);
   color: var(--gold);
 }
+.suggest-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--ink2);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.suggest-item:last-child { border-bottom: none; }
+.suggest-item:active, .suggest-item:hover { background: var(--surface); }
+.suggest-highlight { color: var(--gold); font-weight: 600; }
 /* ── AUTOCOMPLETE MODAL ───────────────────────────────────── */
 .ac-trigger {
   width: 100%;
@@ -752,6 +763,57 @@ select.form-control { appearance: none; }
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
+    <!-- PAGE: KAS RT                                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="page" id="page-kas">
+      <!-- Sub tab -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="chip active" data-ktab="mutasi" onclick="switchKasTab(this)">Riwayat</button>
+        <button class="chip" data-ktab="transfer" onclick="switchKasTab(this)">Transfer</button>
+      </div>
+
+      <!-- Ringkasan Kas -->
+      <div class="stat-grid" style="margin-bottom:14px">
+        <div class="stat-card gold">
+          <div class="stat-label">Kas Usaha</div>
+          <div class="stat-val gold" style="font-size:16px" id="kas-usaha-saldo">—</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Kas RT</div>
+          <div class="stat-val green" style="font-size:16px" id="kas-rt-saldo">—</div>
+        </div>
+      </div>
+
+      <!-- Riwayat Mutasi RT -->
+      <div id="kas-mutasi-tab">
+        <div class="section-title">Riwayat Kas RT</div>
+        <div id="kas-mutasi-list">
+          <div class="empty"><div class="empty-icon">🏠</div><div class="empty-text">Belum ada data</div></div>
+        </div>
+      </div>
+
+      <!-- Transfer -->
+      <div id="kas-transfer-tab" style="display:none">
+        <div class="section-title">Transfer Kas Usaha → RT</div>
+        <div class="card">
+          <div class="form-group">
+            <label class="form-label">Jumlah Transfer (Rp)</label>
+            <input type="number" class="form-control" id="transfer-jumlah" placeholder="0" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tanggal</label>
+            <input type="date" class="form-control" id="transfer-tanggal">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Catatan</label>
+            <input type="text" class="form-control" id="transfer-catatan" placeholder="Opsional">
+          </div>
+          <button class="btn btn-primary" onclick="saveTransfer()">💸 Transfer Sekarang</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
     <!-- PAGE: LAPORAN                               -->
     <!-- ═══════════════════════════════════════════ -->
     <div class="page" id="page-laporan">
@@ -776,6 +838,9 @@ select.form-control { appearance: none; }
     </button>
     <button class="tab-item" data-page="tokba" onclick="switchTab(this)">
       <span class="ti">🛍️</span><span>Tokba</span>
+    </button>
+    <button class="tab-item" data-page="kas" onclick="switchTab(this)">
+      <span class="ti">🏠</span><span>Kas RT</span>
     </button>
     <button class="tab-item" data-page="laporan" onclick="switchTab(this)">
       <span class="ti">📊</span><span>Laporan</span>
@@ -817,7 +882,16 @@ select.form-control { appearance: none; }
     <div class="sheet-body">
       <div class="form-group">
         <label class="form-label">Customer / Nama Acara</label>
-        <input type="text" class="form-control" id="ev-customer" placeholder="Nama customer atau acara">
+        <div style="position:relative">
+          <input type="text" class="form-control" id="ev-customer"
+            placeholder="Nama customer atau acara"
+            oninput="showCustomerSuggest(this.value)"
+            onblur="setTimeout(()=>hideCustomerSuggest(),200)"
+            autocomplete="off">
+          <div id="customer-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;
+            background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+            z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.3)"></div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1189,6 +1263,7 @@ function loadPage(page) {
   else if (page==='event') loadEvents();
   else if (page==='bahan') loadBahan();
   else if (page==='tokba') loadTokba();
+  else if (page==='kas') loadKas();
   else if (page==='laporan') loadLaporan();
 }
 
@@ -1204,6 +1279,7 @@ function fabAction() {
     if (state.currentTokbaTab==='online') openAddOnline();
     else openAddOffline();
   }
+  else if (t==='kas') openAddMutasiRT();
   else if (t==='dashboard') openAddEvent();
 }
 
@@ -2399,6 +2475,11 @@ function renderLaporan(list) {
       <div class="prog-wrap" style="margin-top:6px">
         <div class="prog-bar ${total>=0?'green':'red'}" style="width:${Math.min(Math.abs(margin),100)}%"></div>
       </div>
+      <button onclick="loadLaporanEvent('${r.bulan}')"
+        style="margin-top:10px;width:100%;background:var(--bg3);border:1px solid var(--border);
+               border-radius:6px;color:var(--blue);font-size:11px;font-weight:600;padding:7px">
+        📋 Detail per Event
+      </button>
     </div>`;
   }).join('');
 }
@@ -2839,6 +2920,256 @@ function openInvoice() {
     </div>
     <div style="margin-top:16px;padding:12px;background:var(--bg3);border-radius:8px;font-size:11px;color:var(--ink3);text-align:center">Gubukan Krasti - Catering dan Kuliner</div>`;
   openSheet('sheetInvoice');
+}
+
+
+// ══════════════════════════════════════════════════════════
+// PREDICTIVE CUSTOMER
+// ══════════════════════════════════════════════════════════
+function showCustomerSuggest(val) {
+  const box = document.getElementById('customer-suggest');
+  if (!val || val.length < 1) { box.style.display='none'; return; }
+  const q = val.toLowerCase();
+  // Ambil dari eventsData yang sudah ada di state
+  const matches = [...new Set(
+    (eventsData||[])
+      .map(e=>e.customer)
+      .filter(c=>c && c.toLowerCase().includes(q))
+  )].slice(0,6);
+  if (!matches.length) { box.style.display='none'; return; }
+  box.innerHTML = matches.map(c=>{
+    const hi = c.replace(new RegExp(`(${val})`, 'gi'),
+      '<span class="suggest-highlight">$1</span>');
+    return `<div class="suggest-item" onmousedown="selectCustomer('${c.replace(/'/g,"\'")}')">
+      ${hi}</div>`;
+  }).join('');
+  box.style.display='block';
+}
+function hideCustomerSuggest() {
+  const box = document.getElementById('customer-suggest');
+  if (box) box.style.display='none';
+}
+function selectCustomer(name) {
+  document.getElementById('ev-customer').value = name;
+  hideCustomerSuggest();
+}
+
+// ══════════════════════════════════════════════════════════
+// KAS RT
+// ══════════════════════════════════════════════════════════
+function switchKasTab(el) {
+  document.querySelectorAll('[data-ktab]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const tab = el.dataset.ktab;
+  document.getElementById('kas-mutasi-tab').style.display   = tab==='mutasi'   ? '' : 'none';
+  document.getElementById('kas-transfer-tab').style.display = tab==='transfer' ? '' : 'none';
+}
+
+async function loadKas() {
+  try {
+    const [kas, mutasi] = await Promise.all([
+      sbGet('gk_kas', 'select=*'),
+      sbGet('gk_kas_mutasi', 'order=tanggal.desc&limit=100&select=*'),
+    ]);
+    // Saldo
+    const usaha = kas.find(k=>k.jenis==='usaha');
+    const rt    = kas.find(k=>k.jenis==='rt');
+    set('kas-usaha-saldo', rpFull(usaha?.saldo||0));
+    set('kas-rt-saldo',    rpFull(rt?.saldo||0));
+    // Set tanggal default transfer
+    const tgl = document.getElementById('transfer-tanggal');
+    if (tgl && !tgl.value) tgl.value = new Date().toISOString().slice(0,10);
+    // Render mutasi
+    renderKasMutasi(mutasi);
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function renderKasMutasi(list) {
+  const el = document.getElementById('kas-mutasi-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🏠</div><div class="empty-text">Belum ada mutasi</div></div>';
+    return;
+  }
+  el.innerHTML = list.map(m=>{
+    const isIn  = m.tipe==='masuk'||m.tipe==='transfer_masuk';
+    const color = isIn ? 'var(--green)' : 'var(--red)';
+    const sign  = isIn ? '+' : '-';
+    return `<div class="card" style="margin-bottom:8px;padding:11px 14px;cursor:pointer"
+        onclick="openEditMutasi('${m.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${m.keterangan||m.tipe}</div>
+          <div style="font-size:11px;color:var(--ink3)">${fmtDate(m.tanggal)} · <span style="text-transform:capitalize">${m.tipe.replace('_',' ')}</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:13px;font-weight:700;color:${color};font-family:var(--mono)">${sign}${rpFull(m.jumlah)}</span>
+          <span style="color:var(--ink3);font-size:12px">✏️</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddMutasiRT() {
+  const delBtn = document.getElementById('mutasi-delete-btn');
+  if (delBtn) delBtn.style.display = 'none';
+  document.getElementById('mutasi-id').value = '';
+  document.getElementById('mutasi-tipe').value = 'keluar';
+  document.getElementById('mutasi-ket').value = '';
+  document.getElementById('mutasi-jumlah').value = '';
+  document.getElementById('mutasi-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('mutasi-catatan').value = '';
+  document.querySelector('#sheetMutasi .sheet-title').textContent = 'Tambah Kas RT';
+  openSheet('sheetMutasi');
+}
+
+function openEditMutasi(id) {
+  const delBtn = document.getElementById('mutasi-delete-btn');
+  if (delBtn) delBtn.style.display = '';
+  openSheet('sheetMutasi');
+  sbGet('gk_kas_mutasi', `id=eq.${id}&select=*`).then(res=>{
+    if (!res.length) return;
+    const m = res[0];
+    document.getElementById('mutasi-id').value = m.id;
+    document.getElementById('mutasi-tipe').value = m.tipe;
+    document.getElementById('mutasi-ket').value = m.keterangan||'';
+    document.getElementById('mutasi-jumlah').value = m.jumlah||'';
+    document.getElementById('mutasi-tanggal').value = m.tanggal||'';
+    document.getElementById('mutasi-catatan').value = m.referensi||'';
+    document.querySelector('#sheetMutasi .sheet-title').textContent = 'Edit Kas RT';
+  });
+}
+
+async function saveMutasi() {
+  const id      = document.getElementById('mutasi-id').value;
+  const tipe    = document.getElementById('mutasi-tipe').value;
+  const ket     = document.getElementById('mutasi-ket').value.trim();
+  const jumlah  = Number(document.getElementById('mutasi-jumlah').value)||0;
+  const tanggal = document.getElementById('mutasi-tanggal').value;
+  const catatan = document.getElementById('mutasi-catatan').value.trim();
+  if (!ket||!jumlah) { toast('⚠️ Isi keterangan dan jumlah'); return; }
+  const kasRt = await sbGet('gk_kas','jenis=eq.rt&select=id').then(r=>r[0]?.id);
+  if (!kasRt) { toast('❌ Kas RT tidak ditemukan'); return; }
+  try {
+    if (id) {
+      await sbUpdate('gk_kas_mutasi', id, {tipe, keterangan:ket, jumlah, tanggal, referensi:catatan});
+      toast('✅ Mutasi diperbarui');
+    } else {
+      await sbInsert('gk_kas_mutasi', {kas_id:kasRt, tipe, keterangan:ket, jumlah, tanggal, referensi:catatan});
+      toast('✅ Mutasi dicatat');
+    }
+    // Update saldo
+    await sbUpdate('gk_kas', kasRt, {saldo: await hitungSaldoKas(kasRt)});
+    closeSheet('sheetMutasi');
+    await loadKas();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function deleteMutasi() {
+  const id = document.getElementById('mutasi-id').value;
+  if (!id||!confirm('Hapus mutasi ini?')) return;
+  try {
+    await sbDelete('gk_kas_mutasi', id);
+    const kasRt = await sbGet('gk_kas','jenis=eq.rt&select=id').then(r=>r[0]?.id);
+    if (kasRt) await sbUpdate('gk_kas', kasRt, {saldo: await hitungSaldoKas(kasRt)});
+    closeSheet('sheetMutasi');
+    toast('✅ Mutasi dihapus');
+    await loadKas();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function hitungSaldoKas(kasId) {
+  const rows = await sbGet('gk_kas_mutasi', `kas_id=eq.${kasId}&select=tipe,jumlah`);
+  return rows.reduce((s,r)=>
+    s + ((['masuk','transfer_masuk'].includes(r.tipe)) ? Number(r.jumlah) : -Number(r.jumlah)), 0);
+}
+
+async function saveTransfer() {
+  const jumlah  = Number(document.getElementById('transfer-jumlah').value)||0;
+  const tanggal = document.getElementById('transfer-tanggal').value;
+  const catatan = document.getElementById('transfer-catatan').value.trim();
+  if (!jumlah) { toast('⚠️ Isi jumlah transfer'); return; }
+  try {
+    const [kasUsaha, kasRt] = await Promise.all([
+      sbGet('gk_kas','jenis=eq.usaha&select=id,saldo').then(r=>r[0]),
+      sbGet('gk_kas','jenis=eq.rt&select=id,saldo').then(r=>r[0]),
+    ]);
+    if (Number(kasUsaha.saldo) < jumlah) { toast('⚠️ Saldo Kas Usaha tidak cukup'); return; }
+    const ket = catatan || 'Transfer ke Kas RT';
+    await Promise.all([
+      sbInsert('gk_kas_mutasi', {kas_id:kasUsaha.id, tipe:'transfer_keluar', keterangan:ket, jumlah, tanggal, referensi:'transfer'}),
+      sbInsert('gk_kas_mutasi', {kas_id:kasRt.id,    tipe:'transfer_masuk',  keterangan:ket, jumlah, tanggal, referensi:'transfer'}),
+    ]);
+    // Update saldo keduanya
+    await Promise.all([
+      sbUpdate('gk_kas', kasUsaha.id, {saldo: Number(kasUsaha.saldo) - jumlah}),
+      sbUpdate('gk_kas', kasRt.id,    {saldo: Number(kasRt.saldo)    + jumlah}),
+    ]);
+    document.getElementById('transfer-jumlah').value = '';
+    document.getElementById('transfer-catatan').value = '';
+    toast('✅ Transfer berhasil');
+    await loadKas();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════
+// LAPORAN PER EVENT
+// ══════════════════════════════════════════════════════════
+async function loadLaporanEvent(bulan) {
+  try {
+    // Ambil semua event bulan tsb dari gk_pl_event
+    const bulanLabel = new Date(bulan).toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+    const bulanEnd   = new Date(new Date(bulan).getFullYear(), new Date(bulan).getMonth()+1, 0)
+                         .toISOString().slice(0,10);
+    const events = await sbGet('gk_pl_event',
+      `tanggal=gte.${bulan}&tanggal=lte.${bulanEnd}&order=tanggal.asc&select=*`);
+    renderLaporanEvent(bulanLabel, events);
+    openSheet('sheetLapEvent');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function renderLaporanEvent(bulanLabel, events) {
+  const el = document.getElementById('lap-event-body');
+  if (!events.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Tidak ada event</div></div>';
+    return;
+  }
+  let totalOmzet=0, totalHpp=0, totalOps=0, totalLaba=0;
+  const rows = events.map(e=>{
+    const omzet = Number(e.omzet||0);
+    const hpp   = Number(e.hpp||0);
+    const ops   = Number(e.ops||0);
+    const laba  = Number(e.laba||0);
+    const margin= Number(e.margin_pct||0);
+    totalOmzet+=omzet; totalHpp+=hpp; totalOps+=ops; totalLaba+=laba;
+    return `<div class="card" style="margin-bottom:8px;padding:12px 14px;cursor:pointer"
+        onclick="openEventDetail('${e.id}');closeSheet('sheetLapEvent')">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <div>
+          <div style="font-size:13px;font-weight:600">${e.customer}</div>
+          <div style="font-size:10px;color:var(--ink3)">${fmtDate(e.tanggal)}${e.lokasi?' · '+e.lokasi:''}</div>
+        </div>
+        <span class="badge ${e.status}">${e.status}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:11px">
+        <div><div style="color:var(--ink3)">Omzet</div><div style="font-weight:600;color:var(--gold);font-family:var(--mono)">${rp(omzet)}</div></div>
+        <div><div style="color:var(--ink3)">HPP+Ops</div><div style="font-weight:600;color:var(--red);font-family:var(--mono)">${rp(hpp+ops)}</div></div>
+        <div><div style="color:var(--ink3)">Laba (${margin}%)</div><div style="font-weight:600;color:${laba>=0?'var(--green)':'var(--red)'};font-family:var(--mono)">${rp(laba)}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  // Total row
+  const totalMargin = totalOmzet>0 ? Math.round(totalLaba/totalOmzet*100) : 0;
+  el.innerHTML = `
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px">${bulanLabel}</div>
+    ${rows}
+    <div class="card" style="background:var(--surface);margin-top:4px;padding:12px 14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:12px">
+        <div><div style="color:var(--ink3)">Total Omzet</div><div style="font-weight:700;color:var(--gold);font-family:var(--mono)">${rp(totalOmzet)}</div></div>
+        <div><div style="color:var(--ink3)">Total HPP+Ops</div><div style="font-weight:700;color:var(--red);font-family:var(--mono)">${rp(totalHpp+totalOps)}</div></div>
+        <div><div style="color:var(--ink3)">Total Laba (${totalMargin}%)</div><div style="font-weight:700;color:${totalLaba>=0?'var(--green)':'var(--red)'};font-family:var(--mono)">${rp(totalLaba)}</div></div>
+      </div>
+    </div>`;
 }
 
 init();
@@ -3488,6 +3819,61 @@ function updateSatuanAc() {
 
 initAcFields();
 </script>
+
+
+<!-- SHEET: Tambah/Edit Mutasi Kas RT -->
+<div class="overlay" id="sheetMutasi" onclick="overlayClose(event,'sheetMutasi')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Tambah Kas RT</span>
+      <span class="sheet-close" onclick="closeSheet('sheetMutasi')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="mutasi-id">
+      <div class="form-group">
+        <label class="form-label">Tipe</label>
+        <select class="form-control" id="mutasi-tipe">
+          <option value="masuk">Masuk (Pemasukan)</option>
+          <option value="keluar">Keluar (Rutin/Jajan/Extra)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <input type="text" class="form-control" id="mutasi-ket" placeholder="Gaji, listrik, belanja, dll">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-control" id="mutasi-jumlah" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="mutasi-tanggal">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input type="text" class="form-control" id="mutasi-catatan" placeholder="Opsional">
+      </div>
+      <button class="btn btn-primary" onclick="saveMutasi()">💾 Simpan</button>
+      <button class="btn btn-danger" id="mutasi-delete-btn" onclick="deleteMutasi()">🗑️ Hapus</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetMutasi')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Laporan per Event -->
+<div class="overlay" id="sheetLapEvent" onclick="overlayClose(event,'sheetLapEvent')">
+  <div class="sheet" onclick="e=>e.stopPropagation()" style="max-height:95dvh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Detail per Event</span>
+      <span class="sheet-close" onclick="closeSheet('sheetLapEvent')">✕</span>
+    </div>
+    <div class="sheet-body" id="lap-event-body"></div>
+  </div>
+</div>
 
 </body>
 </html>
