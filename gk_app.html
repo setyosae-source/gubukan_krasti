@@ -669,6 +669,23 @@ select.form-control { appearance: none; }
 /* ac-wrap masih dipakai sbg container */
 .ac-wrap { display: block; }
 
+/* ── PRINT / PDF ──────────────────────────────────────────── */
+@media print {
+  body > * { display: none !important; }
+  #invoice-print-area { display: block !important; }
+}
+#invoice-print-area {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #fff;
+  padding: 32px 28px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  color: #1a1a1a;
+  overflow-y: auto;
+}
+
 /* ── PULL TO REFRESH ──────────────────────────────────────── */
 #ptr-indicator {
   position: absolute;
@@ -696,6 +713,7 @@ select.form-control { appearance: none; }
 </style>
 </head>
 <body>
+<div id="invoice-print-area"></div>
 <div id="app">
 
   <!-- TOPBAR -->
@@ -3143,9 +3161,96 @@ function openInvoice() {
   openSheet('sheetInvoice');
 }
 
+function downloadInvoicePDF() {
+  const ev       = currentEvent;
+  const omzet    = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
+  const terbayar = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
+  const sisa     = omzet - terbayar;
+  const invNo    = 'INV/GK/' + (ev.tanggal||'').replace(/-/g,'').slice(2) + '/' + ev.id.slice(-4).toUpperCase();
 
-// ══════════════════════════════════════════════════════════
-// PREDICTIVE CUSTOMER
+  const printArea = document.getElementById('invoice-print-area');
+  printArea.innerHTML = `
+    <div style="max-width:480px;margin:0 auto">
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #e0e0e0">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px">INVOICE</div>
+          <div style="font-size:11px;color:#888;margin-top:3px;font-family:monospace">${invNo}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:700;color:#c9a227">Gubukan Krasti</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">Catering dan Kuliner</div>
+        </div>
+      </div>
+
+      <!-- Info customer -->
+      <div style="background:#f7f7f7;border-radius:10px;padding:14px 16px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #e8e8e8">
+          <span style="font-size:12px;color:#666">Customer</span>
+          <span style="font-size:13px;font-weight:700">${ev.customer}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #e8e8e8">
+          <span style="font-size:12px;color:#666">Tanggal Event</span>
+          <span style="font-size:12px">${fmtDate(ev.tanggal)}</span>
+        </div>
+        ${ev.lokasi ? `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #e8e8e8">
+          <span style="font-size:12px;color:#666">Lokasi</span>
+          <span style="font-size:12px">${ev.lokasi}</span>
+        </div>` : ''}
+        ${ev.kontak ? `<div style="display:flex;justify-content:space-between;padding:5px 0">
+          <span style="font-size:12px;color:#666">Kontak</span>
+          <span style="font-size:12px">${ev.kontak}</span>
+        </div>` : ''}
+      </div>
+
+      <!-- Menu items -->
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Item Menu</div>
+      ${currentEventMenus.map(m=>`
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0f0f0">
+          <div>
+            <div style="font-size:13px;font-weight:500">${m.nama}</div>
+            <div style="font-size:11px;color:#888">${m.qty} pax × ${rpFull(m.harga)}</div>
+          </div>
+          <div style="font-size:13px;font-weight:600;font-family:monospace">${rpFull(Number(m.total)||0)}</div>
+        </div>`).join('')}
+
+      <!-- Total -->
+      <div style="border-top:2px solid #1a1a1a;margin-top:16px;padding-top:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:15px;font-weight:700">TOTAL</span>
+          <span style="font-size:17px;font-weight:800;color:#c9a227;font-family:monospace">${rpFull(omzet)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:12px;color:#666">Terbayar</span>
+          <span style="font-size:13px;color:#27ae60;font-family:monospace">${rpFull(terbayar)}</span>
+        </div>
+        ${sisa > 0
+          ? `<div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span style="font-size:12px;color:#e74c3c">Sisa Tagihan</span>
+              <span style="font-size:14px;font-weight:700;color:#e74c3c;font-family:monospace">${rpFull(sisa)}</span>
+            </div>`
+          : `<div style="text-align:center;padding:10px 0;font-size:15px;font-weight:700;color:#27ae60;letter-spacing:1px">✓ LUNAS</div>`}
+      </div>
+
+      <!-- Catatan -->
+      ${ev.catatan ? `<div style="margin-top:16px;padding:10px 12px;background:#fffbf0;border:1px solid #f0e0a0;border-radius:8px;font-size:11px;color:#666">
+        <b>Catatan:</b> ${ev.catatan}
+      </div>` : ''}
+
+      <!-- Footer -->
+      <div style="margin-top:28px;padding-top:14px;border-top:1px solid #e0e0e0;text-align:center;font-size:11px;color:#aaa">
+        Gubukan Krasti · Catering dan Kuliner<br>
+        Terima kasih atas kepercayaan Anda
+      </div>
+    </div>`;
+
+  // Tampilkan dan print
+  printArea.style.display = 'block';
+  setTimeout(() => {
+    window.print();
+    printArea.style.display = 'none';
+  }, 200);
+}
 // ══════════════════════════════════════════════════════════
 function showCustomerSuggest(val) {
   const box = document.getElementById('customer-suggest');
@@ -3730,7 +3835,10 @@ loadSavedTheme();
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <span class="sheet-title">Invoice</span>
-      <span class="sheet-close" onclick="closeSheet('sheetInvoice')">✕</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="downloadInvoicePDF()" style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-size:12px;font-weight:600;padding:5px 12px">⬇️ PDF</button>
+        <span class="sheet-close" onclick="closeSheet('sheetInvoice')">✕</span>
+      </div>
     </div>
     <div class="sheet-body" id="invoice-body"></div>
   </div>
