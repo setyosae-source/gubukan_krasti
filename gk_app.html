@@ -2760,6 +2760,32 @@ function init() {
 
   // Baseline history — agar back pertama tidak langsung keluar app
   history.replaceState({ base: true }, '');
+  // Push satu state lagi sebagai buffer — back pertama balik ke base, bukan keluar
+  history.pushState({ home: true }, '');
+
+  // Warning saat mau keluar app (browser desktop)
+  window.addEventListener('beforeunload', e => {
+    e.preventDefault();
+    e.returnValue = '';
+  });
+
+  // Warning saat back di Android melewati semua sheet & kembali ke base
+  window.addEventListener('popstate', function appExitGuard(e) {
+    // Kalau masih ada sheet/modal terbuka, biarkan popstate handler sheet yang handle
+    if (document.querySelector('.overlay.open') ||
+        document.getElementById('acModal').classList.contains('open')) return;
+    // Kalau sudah di base state (tidak ada history lagi), tanya konfirmasi
+    if (!history.state || history.state.base) {
+      const keluar = confirm('Keluar dari Gubukan Krasti?');
+      if (keluar) {
+        window.removeEventListener('popstate', appExitGuard);
+        history.back();
+      } else {
+        // Dorong state lagi agar back berikutnya masih tertangkap
+        history.pushState({ home: true }, '');
+      }
+    }
+  });
 
   // Pull to refresh
   initPullToRefresh();
