@@ -2681,6 +2681,23 @@ async function saveBeli() {
       toast('✅ Pembelian diperbarui');
     } else {
       await sbInsert('gk_pembelian', data);
+      // Otomatis catat ke kas usaha sebagai keluar
+      try {
+        const kasUsaha = await sbGet('gk_kas','jenis=eq.usaha&select=id').then(r=>r[0]);
+        if (kasUsaha) {
+          const ket = `Beli: ${data.nama_bahan}${data.toko?' ('+data.toko+')':''}`;
+          await sbInsert('gk_kas_mutasi', {
+            kas_id: kasUsaha.id,
+            tipe: 'keluar',
+            keterangan: ket,
+            jumlah: data.total,
+            tanggal: data.tanggal,
+            referensi: 'pembelian',
+          });
+          const saldo = await hitungSaldoKas(kasUsaha.id);
+          await sbUpdate('gk_kas', kasUsaha.id, { saldo });
+        }
+      } catch(e2) { console.warn('Gagal catat kas:', e2.message); }
       toast(bahanVal === '__baru__' ? '✅ Bahan baru + pembelian disimpan' : '✅ Pembelian dicatat');
     }
     closeSheet('sheetBeli');
@@ -2759,7 +2776,22 @@ function openEditBeli(id) {
 async function deleteBeli(id) {
   if (!confirm('Hapus data pembelian ini?')) return;
   try {
+    // Cari data pembelian dulu untuk keterangan
+    const b = beliData.find(x=>x.id===id);
     await sbDelete('gk_pembelian', id);
+    // Hapus kas_mutasi terkait
+    try {
+      const kasUsaha = await sbGet('gk_kas','jenis=eq.usaha&select=id').then(r=>r[0]);
+      if (kasUsaha && b) {
+        const mutasis = await sbGet('gk_kas_mutasi',
+          `kas_id=eq.${kasUsaha.id}&referensi=eq.pembelian&jumlah=eq.${b.total}&tanggal=eq.${b.tanggal}&select=id`);
+        if (mutasis.length) {
+          await sbDelete('gk_kas_mutasi', mutasis[0].id);
+          const saldo = await hitungSaldoKas(kasUsaha.id);
+          await sbUpdate('gk_kas', kasUsaha.id, { saldo });
+        }
+      }
+    } catch(e2) { console.warn('Gagal hapus kas mutasi:', e2.message); }
     toast('✅ Pembelian dihapus');
     await loadBahan();
   } catch(e) { toast('❌ ' + e.message); }
