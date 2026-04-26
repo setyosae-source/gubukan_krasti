@@ -542,6 +542,31 @@ select.form-control { appearance: none; }
 }
 /* ac-wrap masih dipakai sbg container */
 .ac-wrap { display: block; }
+
+/* ── PULL TO REFRESH ──────────────────────────────────────── */
+#ptr-indicator {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 0;
+  overflow: hidden;
+  background: var(--bg2);
+  color: var(--ink3);
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 5;
+  border-bottom: 1px solid var(--border);
+}
+#ptr-indicator .ptr-icon {
+  font-size: 18px;
+  display: inline-block;
+  transition: transform 0.3s;
+}
+#ptr-indicator.ready .ptr-icon { transform: rotate(180deg); }
+#ptr-indicator.loading .ptr-icon { animation: spin 0.8s linear infinite; }
 </style>
 </head>
 <body>
@@ -563,7 +588,11 @@ select.form-control { appearance: none; }
   </div>
 
   <!-- BODY -->
-  <div class="body" id="mainBody">
+  <div class="body" id="mainBody" style="position:relative">
+    <div id="ptr-indicator">
+      <span class="ptr-icon">↓</span>
+      <span id="ptr-text">Tarik untuk refresh</span>
+    </div>
 
     <!-- ═══════════════════════════════════════════ -->
     <!-- PAGE: DASHBOARD                             -->
@@ -1184,6 +1213,75 @@ async function syncAll() {
     toast('❌ Gagal: ' + e.message);
   }
   btn.classList.remove('spin');
+}
+
+// ── PULL TO REFRESH ─────────────────────────────────────────
+function initPullToRefresh() {
+  const body    = document.getElementById('mainBody');
+  const ind     = document.getElementById('ptr-indicator');
+  const ptrText = document.getElementById('ptr-text');
+  const THRESHOLD = 70; // px tarik sebelum trigger
+  let startY = 0, currentY = 0, pulling = false, triggered = false;
+
+  body.addEventListener('touchstart', e => {
+    // Hanya aktif kalau di paling atas
+    if (body.scrollTop > 0) return;
+    // Jangan aktif kalau ada modal/sheet terbuka
+    if (document.querySelector('.overlay.open') || document.getElementById('acModal').classList.contains('open')) return;
+    startY   = e.touches[0].clientY;
+    pulling  = true;
+    triggered = false;
+  }, { passive: true });
+
+  body.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    currentY = e.touches[0].clientY;
+    const dist = Math.max(0, currentY - startY);
+    if (dist <= 0) return;
+
+    // Rubber-band: semakin jauh semakin lambat
+    const pull = Math.min(dist * 0.45, 60);
+    ind.style.height = pull + 'px';
+
+    if (dist > THRESHOLD) {
+      ind.classList.add('ready');
+      ind.classList.remove('loading');
+      ptrText.textContent = 'Lepas untuk refresh';
+    } else {
+      ind.classList.remove('ready', 'loading');
+      ptrText.textContent = 'Tarik untuk refresh';
+    }
+  }, { passive: true });
+
+  body.addEventListener('touchend', async () => {
+    if (!pulling) return;
+    pulling = false;
+    const dist = currentY - startY;
+
+    if (dist > THRESHOLD && !triggered) {
+      triggered = true;
+      // Tunjukkan loading state
+      ind.style.height = '44px';
+      ind.classList.remove('ready');
+      ind.classList.add('loading');
+      ptrText.textContent = 'Memperbarui...';
+      document.getElementById('ptr-indicator').querySelector('.ptr-icon').textContent = '⟳';
+
+      try {
+        await loadPage(state.currentTab);
+        toast('✅ Data diperbarui');
+      } catch(e) {
+        toast('❌ ' + e.message);
+      }
+    }
+
+    // Sembunyikan indicator
+    ind.style.height = '0';
+    ind.classList.remove('ready', 'loading');
+    ptrText.textContent = 'Tarik untuk refresh';
+    document.getElementById('ptr-indicator').querySelector('.ptr-icon').textContent = '↓';
+    startY = 0; currentY = 0;
+  });
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2297,6 +2395,9 @@ function init() {
 
   // Baseline history — agar back pertama tidak langsung keluar app
   history.replaceState({ base: true }, '');
+
+  // Pull to refresh
+  initPullToRefresh();
 
   // Load dashboard
   loadDashboard();
