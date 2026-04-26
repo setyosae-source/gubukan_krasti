@@ -2502,7 +2502,7 @@ let tokbaOnlineData = [];
 
 function openAddOnline() {
   onlineEditId = '';
-  acSet('on-platform', 'Shopee');
+  acSet('on-platform', 'shopee');
   document.getElementById('on-jumlah').value = '';
   document.getElementById('on-catatan').value = '';
   document.getElementById('on-tanggal').value = new Date().toISOString().slice(0,10);
@@ -2514,7 +2514,7 @@ function openEditOnline(id) {
   const r = tokbaOnlineData.find(x => x.id === id);
   if (!r) return;
   onlineEditId = id;
-  acSet('on-platform', r.platform || 'Shopee');
+  acSet('on-platform', r.platform || 'shopee');
   document.getElementById('on-jumlah').value = r.jumlah || '';
   document.getElementById('on-catatan').value = r.catatan || '';
   document.getElementById('on-tanggal').value = r.tanggal || '';
@@ -3374,6 +3374,8 @@ async function loadBukuBesar(jenis) {
         masuk:'Masuk', keluar:'Keluar',
         transfer_masuk:'Transfer Masuk', transfer_keluar:'Transfer Keluar'
       }[r.tipe] || r.tipe;
+      // id mutasi untuk edit — bisa dari kolom kas_mutasi_id atau id
+      const mutasiId = r.kas_mutasi_id || r.id || '';
 
       return `<div class="card" style="margin-bottom:6px;padding:10px 14px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
@@ -3381,9 +3383,15 @@ async function loadBukuBesar(jenis) {
             <div style="font-size:12px;font-weight:500;color:var(--ink)">${r.keterangan||tipeLabel}</div>
             <div style="font-size:10px;color:var(--ink3);margin-top:1px">${fmtDate(r.tanggal)} · ${tipeLabel}</div>
           </div>
-          <div style="text-align:right">
-            <div style="font-size:13px;font-weight:700;color:${color};font-family:var(--mono)">${sign}${rp(jumlah)}</div>
-            <div style="font-size:10px;color:var(--ink3);font-family:var(--mono)">Saldo: ${rp(saldo)}</div>
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <div style="text-align:right">
+              <div style="font-size:13px;font-weight:700;color:${color};font-family:var(--mono)">${sign}${rp(jumlah)}</div>
+              <div style="font-size:10px;color:var(--ink3);font-family:var(--mono)">Saldo: ${rp(saldo)}</div>
+            </div>
+            ${mutasiId ? `<div style="display:flex;flex-direction:column;gap:4px;margin-top:1px">
+              <button onclick="openEditMutasiJenis('${mutasiId}','${jenis}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:10px;padding:2px 6px">✏️</button>
+              <button onclick="deleteMutasiJenis('${mutasiId}','${jenis}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:10px;padding:2px 6px">🗑️</button>
+            </div>` : ''}
           </div>
         </div>
       </div>`;
@@ -3455,18 +3463,21 @@ async function saveMutasi() {
   const tanggal = document.getElementById('mutasi-tanggal').value;
   const catatan = document.getElementById('mutasi-catatan').value.trim();
   if (!ket||!jumlah) { toast('⚠️ Isi keterangan dan jumlah'); return; }
-  const kasRt = await sbGet('gk_kas','jenis=eq.rt&select=id').then(r=>r[0]?.id);
-  if (!kasRt) { toast('❌ Kas RT tidak ditemukan'); return; }
+
+  // Tentukan kas yang dipakai: dari _editMutasiJenis kalau edit, default RT kalau add
+  const jenis = id ? _editMutasiJenis : 'rt';
+  const kasObj = await sbGet('gk_kas', `jenis=eq.${jenis}&select=id`).then(r=>r[0]);
+  if (!kasObj) { toast('❌ Kas tidak ditemukan'); return; }
+
   try {
     if (id) {
       await sbUpdate('gk_kas_mutasi', id, {tipe, keterangan:ket, jumlah, tanggal, referensi:catatan});
       toast('✅ Mutasi diperbarui');
     } else {
-      await sbInsert('gk_kas_mutasi', {kas_id:kasRt, tipe, keterangan:ket, jumlah, tanggal, referensi:catatan});
+      await sbInsert('gk_kas_mutasi', {kas_id:kasObj.id, tipe, keterangan:ket, jumlah, tanggal, referensi:catatan});
       toast('✅ Mutasi dicatat');
     }
-    // Update saldo
-    await sbUpdate('gk_kas', kasRt, {saldo: await hitungSaldoKas(kasRt)});
+    await sbUpdate('gk_kas', kasObj.id, {saldo: await hitungSaldoKas(kasObj.id)});
     closeSheet('sheetMutasi');
     await loadKas();
   } catch(e) { toast('❌ ' + e.message); }
@@ -3481,6 +3492,40 @@ async function deleteMutasi() {
     if (kasRt) await sbUpdate('gk_kas', kasRt, {saldo: await hitungSaldoKas(kasRt)});
     closeSheet('sheetMutasi');
     toast('✅ Mutasi dihapus');
+    await loadKas();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// Edit/hapus dari buku besar — support usaha & RT
+let _editMutasiJenis = 'rt';
+
+function openEditMutasiJenis(id, jenis) {
+  _editMutasiJenis = jenis;
+  const delBtn = document.getElementById('mutasi-delete-btn');
+  if (delBtn) delBtn.style.display = '';
+  document.querySelector('#sheetMutasi .sheet-title').textContent =
+    jenis === 'usaha' ? 'Edit Kas Usaha' : 'Edit Kas RT';
+  openSheet('sheetMutasi');
+  sbGet('gk_kas_mutasi', `id=eq.${id}&select=*`).then(res=>{
+    if (!res.length) { toast('❌ Data tidak ditemukan'); return; }
+    const m = res[0];
+    document.getElementById('mutasi-id').value      = m.id;
+    document.getElementById('mutasi-tipe').value    = m.tipe;
+    document.getElementById('mutasi-ket').value     = m.keterangan||'';
+    document.getElementById('mutasi-jumlah').value  = m.jumlah||'';
+    document.getElementById('mutasi-tanggal').value = m.tanggal||'';
+    document.getElementById('mutasi-catatan').value = m.referensi||'';
+  });
+}
+
+async function deleteMutasiJenis(id, jenis) {
+  if (!confirm('Hapus transaksi ini?')) return;
+  try {
+    await sbDelete('gk_kas_mutasi', id);
+    // Update saldo kas yang bersangkutan
+    const kasObj = await sbGet('gk_kas', `jenis=eq.${jenis}&select=id`).then(r=>r[0]);
+    if (kasObj) await sbUpdate('gk_kas', kasObj.id, {saldo: await hitungSaldoKas(kasObj.id)});
+    toast('✅ Transaksi dihapus');
     await loadKas();
   } catch(e) { toast('❌ ' + e.message); }
 }
@@ -4232,7 +4277,7 @@ window.addEventListener('popstate', function(e) {
 // ── INIT AC FIELDS ─────────────────────────────────────────
 function initAcFields() {
   acRegister('ev-status',        ['inquiry','booking','dp','lunas','selesai','cancel'], false, 'Status Event');
-  acRegister('on-platform',      ['Shopee','Tokopedia','TikTok Shop','Lazada','Lainnya'], true, 'Platform Marketplace');
+  acRegister('on-platform',      ['shopee','tokped','tiktok','lazada','lainnya'], true, 'Platform Marketplace');
   const metodes = ['Cash','Transfer','QRIS'];
   acRegister('ops-metode',       metodes, true, 'Metode Pembayaran');
   acRegister('ops-edit-metode',  metodes, true, 'Metode Pembayaran');
@@ -4254,7 +4299,7 @@ function initAcFields() {
   acSet('bayar-metode',      'Transfer');
   acSet('bayar-edit-tahap',  'DP');
   acSet('bayar-edit-metode', 'Transfer');
-  acSet('on-platform',       'Shopee');
+  acSet('on-platform',       'shopee');
 }
 
 // Update satuan options dari master bahan
