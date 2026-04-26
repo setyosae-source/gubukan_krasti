@@ -1818,9 +1818,10 @@ function renderEventDetail() {
           <div style="font-size:13px;font-weight:500">${m.nama}</div>
           <div style="font-size:11px;color:var(--ink3)">${m.qty} pax × ${rpFull(m.harga)}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:13px;font-weight:600;color:var(--gold);font-family:var(--mono)">${rpFull(m.total)}</span>
-          <button onclick="deleteMenu('${m.id}')" style="background:none;color:var(--ink4);font-size:16px;padding:2px">×</button>
+          <button onclick="openEditMenu('${m.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:2px 7px">✏️</button>
+          <button onclick="deleteMenu('${m.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:2px 7px">🗑️</button>
         </div>
       </div>`).join('');
   }
