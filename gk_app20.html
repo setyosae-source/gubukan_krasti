@@ -3323,7 +3323,8 @@ function openKasMutasiPicker() {
 }
 
 async function openKasForm(tipe) {
-  closeSheet('sheetKasPicker');
+  // Tutup picker langsung tanpa trigger history.back
+  document.getElementById('sheetKasPicker').classList.remove('open');
   const titles = {
     'beli-bahan':    '🥕 Beli Bahan',
     'ops-event':     '⚙️ Biaya Ops Event',
