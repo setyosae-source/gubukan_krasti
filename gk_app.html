@@ -1874,37 +1874,38 @@ let eventsData = [];
 
 async function loadEvents() {
   try {
-    const data = await sbGet('gk_event', 'order=tanggal.desc&select=*');
-    // Fetch summary per event dari view gk_event_summary kalau ada,
-    // atau hitung dari sub-tables
+    const data = await sbGet('gk_event', 'order=tanggal.asc&select=*');
     const [menus, bahans, opss, bayars] = await Promise.all([
       sbGet('gk_event_menu',  'select=event_id,total'),
       sbGet('gk_event_bahan', 'select=event_id,total'),
-      sbGet('gk_biaya_ops', 'select=event_id,jumlah'),
+      sbGet('gk_biaya_ops',   'select=event_id,jumlah'),
       sbGet('gk_event_bayar', 'select=event_id,jumlah'),
     ]);
-
-    // Index by event_id
     const sumBy = (arr, idKey, valKey) => arr.reduce((m,r)=>{
       m[r[idKey]] = (m[r[idKey]]||0) + Number(r[valKey]||0); return m;
     }, {});
-    const omzetMap   = sumBy(menus,  'event_id', 'total');
-    const hppMap     = sumBy(bahans, 'event_id', 'total');
-    const opsMap     = sumBy(opss,   'event_id', 'jumlah');
-    const bayarMap   = sumBy(bayars, 'event_id', 'jumlah');
+    const omzetMap = sumBy(menus,  'event_id', 'total');
+    const hppMap   = sumBy(bahans, 'event_id', 'total');
+    const opsMap   = sumBy(opss,   'event_id', 'jumlah');
+    const bayarMap = sumBy(bayars, 'event_id', 'jumlah');
 
-    eventsData = data.map(ev => {
+    const today = new Date().toISOString().slice(0,10);
+    const enriched = data.map(ev => {
       const omzet    = omzetMap[ev.id]||0;
       const hppOps   = (hppMap[ev.id]||0) + (opsMap[ev.id]||0);
       const laba     = omzet - hppOps;
       const terbayar = bayarMap[ev.id]||0;
       const sisa     = omzet - terbayar;
       const margin   = omzet>0 ? Math.round(laba/omzet*100) : 0;
-      return { ...ev, summary: { omzet, hppOps, laba, terbayar, sisa, margin } };
+      return { ...ev, _omzet: omzet, _terbayar: terbayar, summary: { omzet, hppOps, laba, terbayar, sisa, margin } };
     });
+
+    // Upcoming (tanggal >= today) asc terdekat dulu, lalu past desc terbaru dulu
+    const upcoming = enriched.filter(e => e.tanggal >= today).sort((a,b)=>a.tanggal.localeCompare(b.tanggal));
+    const past     = enriched.filter(e => e.tanggal <  today).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
+    eventsData = [...upcoming, ...past];
     renderEvents();
   } catch(e) {
-    // Fallback: load tanpa summary
     try {
       const data = await sbGet('gk_event', 'order=tanggal.desc&select=*');
       eventsData = data;
@@ -2054,17 +2055,21 @@ function renderCalEventList(dateStr, events) {
 }
 
 function renderEvents() {
-  const f = state.eventFilter;
-  const list = f==='all' ? eventsData : eventsData.filter(e=>e.status===f);
-  const el = document.getElementById('ev-list');
-  if (!list.length) {
+  const f    = state.eventFilter;
+  const today = new Date().toISOString().slice(0,10);
+  const all  = f==='all' ? eventsData : eventsData.filter(e=>e.status===f);
+  const el   = document.getElementById('ev-list');
+  if (!all.length) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">Tidak ada event</div></div>`;
     return;
   }
-  el.innerHTML = list.map(ev => {
-    const isUpcoming = ev.tanggal >= new Date().toISOString().slice(0,10);
+
+  const upcoming = all.filter(e => e.tanggal >= today);
+  const past     = all.filter(e => e.tanggal <  today);
+
+  const renderCard = ev => {
+    const isUpcoming = ev.tanggal >= today;
     const showWA = isUpcoming && ev.summary && ['inquiry','booking','dp'].includes(ev.status);
-    const tipeWA = ev.summary && ev._terbayar < Math.round((ev.summary?.omzet||0)*0.5) ? 'dp' : 'pelunasan';
     return `
     <div class="ev-item" onclick="openEventDetail('${ev.id}')">
       <div class="ev-top">
@@ -2094,11 +2099,22 @@ function renderEvents() {
           <div style="font-size:12px;font-weight:700;font-family:var(--mono);color:${ev.summary.sisa<=0?'var(--green)':'var(--red)'}">${ev.summary.sisa<=0?'Lunas':rpFull(ev.summary.sisa)}</div>
         </div>
       </div>
-      <div style="margin-top:5px;display:flex;justify-content:space-between;align-items:center">
+      <div style="margin-top:5px">
         <span style="font-size:10px;color:var(--ink4)">HPP+Ops: <span style="color:var(--red)">${rpFull(ev.summary.hppOps)}</span> · Laba Est: <span style="color:var(--green)">${rpFull(ev.summary.laba)} (${ev.summary.margin}%)</span></span>
-      </div>` : `
-      ${ev.catatan ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px">${ev.catatan}</div>` : ''}`}
-    </div>`}).join('');
+      </div>` : `${ev.catatan ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px">${ev.catatan}</div>` : ''}`}
+    </div>`;
+  };
+
+  let html = '';
+  if (upcoming.length) {
+    html += `<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">📅 Mendatang (${upcoming.length})</div>`;
+    html += upcoming.map(renderCard).join('');
+  }
+  if (past.length) {
+    html += `<div style="font-size:10px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.07em;margin:12px 0 6px">🗂️ Selesai / Lalu (${past.length})</div>`;
+    html += past.map(renderCard).join('');
+  }
+  el.innerHTML = html;
 }
 
 function openAddEvent() {
