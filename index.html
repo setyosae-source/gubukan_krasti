@@ -2617,6 +2617,7 @@ function renderDash() {
   const range = computePeriodRange(currentPeriod);
   document.getElementById('dashTitle').textContent = currentPeriod.label || monthName(currentMonth);
   { const dp=document.getElementById('dashPeriod'); if(dp) dp.textContent = mEvents.length + ' event · ' + fmtDate(range.from) + ' s/d ' + fmtDate(range.to); }
+  { const dt=document.getElementById('dashTitle'); if(dt) dt.textContent = 'Dashboard'; }
   { const ml=document.getElementById('monthLabel'); if(ml) ml.textContent = currentPeriod.label||monthName(currentMonth); }
 
   // ── SET KARTU OMZET ────────────────────────────────────
@@ -4212,9 +4213,9 @@ const _origOpenSheet = window.openSheet;
 // ============================================================
 function renderLaporan() {
   const f = getFiltered();
-  document.getElementById('laporanTitle').textContent = currentPeriod.label || monthName(currentMonth);
+  document.getElementById('laporanTitle').textContent = 'Laporan';
   const lapRange = computePeriodRange(currentPeriod);
-  const lpEl=document.getElementById('laporanPeriod'); if(lpEl) lpEl.textContent = fmtDate(lapRange.from) + ' s/d ' + fmtDate(lapRange.to);
+  const lpEl=document.getElementById('laporanPeriod'); if(lpEl) lpEl.textContent = currentPeriod.label + ' · ' + fmtDate(lapRange.from) + ' s/d ' + fmtDate(lapRange.to);
 
   const mEvents  = f.events;
   const mSK      = f.stok_keluar;
