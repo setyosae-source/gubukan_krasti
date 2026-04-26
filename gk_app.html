@@ -3033,9 +3033,25 @@ async function saveOpsEdit() {
 }
 
 async function deleteBayar(id) {
-  if (!confirm('Hapus pembayaran?')) return;
+  if (!confirm('Hapus pembayaran? Entri kas usaha terkait juga akan dihapus.')) return;
   try {
     await sbDelete('gk_event_bayar', id);
+    // Hapus entri kas_mutasi yg referensinya event ini
+    try {
+      const kasUsaha = await sbGet('gk_kas', 'jenis=eq.usaha&select=id').then(r=>r[0]);
+      if (kasUsaha) {
+        const ref = 'event:' + currentEvent.id;
+        const mutasi = await sbGet('gk_kas_mutasi', `kas_id=eq.${kasUsaha.id}&referensi=eq.${ref}&select=id`);
+        // Hapus yang jumlahnya cocok
+        const b = currentEventBayar.find(x=>x.id===id);
+        if (b && mutasi.length) {
+          const match = mutasi.find(m=>true); // hapus yang pertama ditemukan
+          if (match) await sbDelete('gk_kas_mutasi', match.id);
+          const saldo = await hitungSaldoKas(kasUsaha.id);
+          await sbUpdate('gk_kas', kasUsaha.id, { saldo });
+        }
+      }
+    } catch(e2) { console.warn('Gagal hapus kas mutasi:', e2.message); }
     currentEventBayar = currentEventBayar.filter(b=>b.id!==id);
     renderEventDetail();
     toast('✅ Pembayaran dihapus');
@@ -3271,12 +3287,35 @@ async function saveBayar() {
   try {
     const res = await sbInsert('gk_event_bayar', { event_id: currentEvent.id, tahap, jumlah, metode, tanggal: tgl, catatan });
     currentEventBayar.push(res[0]);
+
+    // Otomatis catat ke kas usaha
+    try {
+      const kasUsaha = await sbGet('gk_kas', 'jenis=eq.usaha&select=id').then(r=>r[0]);
+      if (kasUsaha) {
+        const ket = `${tahapRaw||tahap} - ${currentEvent.customer}${catatan?' ('+catatan+')':''}`;
+        await sbInsert('gk_kas_mutasi', {
+          kas_id: kasUsaha.id,
+          tipe: 'masuk',
+          keterangan: ket,
+          jumlah,
+          tanggal: tgl,
+          referensi: 'event:' + currentEvent.id,
+        });
+        // Update saldo kas usaha
+        const saldo = await hitungSaldoKas(kasUsaha.id);
+        await sbUpdate('gk_kas', kasUsaha.id, { saldo });
+      }
+    } catch(e2) {
+      // Gagal catat kas tidak block pembayaran
+      console.warn('Gagal catat ke kas usaha:', e2.message);
+    }
+
     closeSheet('sheetBayar');
     if (tahap==='booking' && currentEvent.status==='inquiry') await changeEventStatus('booking');
     else if (tahap==='dp' && currentEvent.status==='booking') await changeEventStatus('dp');
     else if (tahap==='pelunasan') await changeEventStatus('lunas');
     renderEventDetail();
-    toast('✅ Pembayaran dicatat');
+    toast('✅ Pembayaran dicatat + masuk kas usaha');
   } catch(e) { toast('❌ ' + e.message); }
 }
 
