@@ -1165,7 +1165,11 @@ function renderEvents() {
           <div class="ev-customer">${ev.customer}</div>
           <div class="ev-date">📅 ${fmtDate(ev.tanggal)}${ev.lokasi ? ' · '+ev.lokasi : ''}</div>
         </div>
-        <span class="badge ${ev.status}">${ev.status}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="badge ${ev.status}">${ev.status}</span>
+          <button onclick="event.stopPropagation();openEditEvent('${ev.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 7px">✏️</button>
+          <button onclick="event.stopPropagation();deleteEvent('${ev.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 7px">🗑️</button>
+        </div>
       </div>
       ${ev.catatan ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px">${ev.catatan}</div>` : ''}
     </div>`).join('');
@@ -1214,6 +1218,15 @@ async function saveEvent() {
     else await sbInsert('gk_event', data);
     closeSheet('sheetEvent');
     toast('✅ Event disimpan');
+    await loadEvents();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Hapus event ini? Semua data menu, bahan, dan pembayaran terkait juga akan dihapus.')) return;
+  try {
+    await sbDelete('gk_event', id);
+    toast('✅ Event dihapus');
     await loadEvents();
   } catch(e) { toast('❌ ' + e.message); }
 }
@@ -1402,15 +1415,22 @@ function renderBahan(list) {
   el.innerHTML = list.map(b => `
     <div class="card" style="margin-bottom:8px;padding:12px 14px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
+        <div style="flex:1">
           <div style="font-size:13px;font-weight:600">${b.nama}</div>
           <div style="font-size:11px;color:var(--ink3);margin-top:2px">
             1 ${b.satuan_besar} = ${b.konversi} ${b.satuan_kecil}
           </div>
+          ${b.catatan?`<div style="font-size:10px;color:var(--ink4);margin-top:2px">${b.catatan}</div>`:''}
         </div>
-        <div style="text-align:right">
-          <div style="font-size:13px;font-weight:600;color:var(--gold);font-family:var(--mono)">${rpFull(b.harga_rata2)}</div>
-          <div style="font-size:10px;color:var(--ink3)">per ${b.satuan_kecil}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:600;color:var(--gold);font-family:var(--mono)">${rpFull(b.harga_rata2)}</div>
+            <div style="font-size:10px;color:var(--ink3)">per ${b.satuan_kecil}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button onclick="openEditBahan('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 8px">✏️ Edit</button>
+            <button onclick="deleteBahan('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 8px">🗑️</button>
+          </div>
         </div>
       </div>
     </div>`).join('');
@@ -1425,13 +1445,19 @@ function renderBeli(list) {
   el.innerHTML = list.map(b => `
     <div class="card" style="margin-bottom:8px;padding:12px 14px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
+        <div style="flex:1">
           <div style="font-size:13px;font-weight:600">${b.nama_bahan}</div>
           <div style="font-size:11px;color:var(--ink3);margin-top:2px">
-            ${b.qty} ${b.satuan} ${b.toko ? '· '+b.toko : ''} · ${fmtDate(b.tanggal)}
+            ${b.qty} ${b.satuan}${b.toko ? ' · '+b.toko : ''} · ${fmtDate(b.tanggal)}
           </div>
         </div>
-        <div style="font-size:13px;font-weight:600;color:var(--red);font-family:var(--mono)">${rpFull(b.total)}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div style="font-size:13px;font-weight:600;color:var(--red);font-family:var(--mono)">${rpFull(b.total)}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="openEditBeli('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 8px">✏️ Edit</button>
+            <button onclick="deleteBeli('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 8px">🗑️</button>
+          </div>
+        </div>
       </div>
     </div>`).join('');
 }
@@ -1515,6 +1541,7 @@ async function saveBeli() {
   const sel = document.getElementById('beli-bahan');
   const opt = sel.options[sel.selectedIndex];
   if (!opt.value) { toast('⚠️ Pilih bahan'); return; }
+  const editId = sel.dataset.editId || '';
   const bahanId = opt.value;
   const satuan  = document.getElementById('beli-satuan').value;
   const qty     = Number(document.getElementById('beli-qty').value)||0;
@@ -1544,9 +1571,88 @@ async function saveBeli() {
     toko:        document.getElementById('beli-toko').value.trim(),
   };
   try {
-    await sbInsert('gk_pembelian', data);
+    if (editId) {
+      await sbUpdate('gk_pembelian', editId, data);
+      sel.dataset.editId = '';
+      toast('✅ Pembelian diperbarui');
+    } else {
+      await sbInsert('gk_pembelian', data);
+      toast('✅ Pembelian dicatat');
+    }
     closeSheet('sheetBeli');
-    toast('✅ Pembelian dicatat');
+    await loadBahan();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ── EDIT / DELETE MASTER BAHAN ────────────────────────────
+let bahanEditData = [];
+
+function openEditBahan(id) {
+  const b = bahanData.find(x => x.id === id);
+  if (!b) return;
+  bahanEditData = b;
+  document.getElementById('bh-id').value = b.id;
+  document.getElementById('bh-nama').value = b.nama || '';
+  document.getElementById('bh-sat-besar').value = b.satuan_besar || '';
+  document.getElementById('bh-sat-kecil').value = b.satuan_kecil || '';
+  document.getElementById('bh-konversi').value = b.konversi || '';
+  document.getElementById('bh-catatan').value = b.catatan || '';
+  document.getElementById('bh-konversi-hint').textContent = `1 ${b.satuan_besar} = ${b.konversi} ${b.satuan_kecil}`;
+  document.getElementById('sheetBahanTitle').textContent = 'Edit Bahan';
+  openSheet('sheetBahan');
+}
+
+async function deleteBahan(id) {
+  if (!confirm('Hapus bahan ini? Data pembelian terkait bahan ini tidak ikut dihapus.')) return;
+  try {
+    await sbDelete('gk_bahan', id);
+    toast('✅ Bahan dihapus');
+    await loadBahan();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ── EDIT / DELETE PEMBELIAN ────────────────────────────────
+let beliData = [];
+
+async function loadBeliData() {
+  beliData = await sbGet('gk_pembelian', 'order=tanggal.desc&limit=200&select=*,gk_bahan(nama)');
+  return beliData;
+}
+
+function openEditBeli(id) {
+  const b = beliData.find(x => x.id === id);
+  if (!b) return;
+
+  // Populate dropdown bahan
+  const sel = document.getElementById('beli-bahan');
+  sel.innerHTML = '<option value="">-- Pilih Bahan --</option>' +
+    bahanData.map(bh => `<option value="${bh.id}" data-sb="${bh.satuan_besar}" data-sk="${bh.satuan_kecil}" data-k="${bh.konversi}" data-h="${bh.harga_rata2}"${bh.id===b.bahan_id?' selected':''}>${bh.nama}</option>`).join('');
+
+  // Populate satuan
+  const satuanSel = document.getElementById('beli-satuan');
+  const selectedBahan = bahanData.find(x => x.id === b.bahan_id);
+  if (selectedBahan) {
+    satuanSel.innerHTML = `<option value="${selectedBahan.satuan_besar}"${b.satuan===selectedBahan.satuan_besar?' selected':''}>${selectedBahan.satuan_besar}</option><option value="${selectedBahan.satuan_kecil}"${b.satuan===selectedBahan.satuan_kecil?' selected':''}>${selectedBahan.satuan_kecil}</option>`;
+  } else {
+    satuanSel.innerHTML = `<option value="${b.satuan}" selected>${b.satuan}</option>`;
+  }
+
+  document.getElementById('beli-qty').value = b.qty || '';
+  document.getElementById('beli-harga').value = b.harga_beli || '';
+  document.getElementById('beli-total').textContent = rpFull((b.qty||0)*(b.harga_beli||0));
+  document.getElementById('beli-tanggal').value = b.tanggal || '';
+  document.getElementById('beli-toko').value = b.toko || '';
+
+  // Store id for save
+  sel.dataset.editId = id;
+  openSheet('sheetBeli');
+}
+
+async function deleteBeli(id) {
+  if (!confirm('Hapus data pembelian ini?')) return;
+  try {
+    await sbDelete('gk_pembelian', id);
+    toast('✅ Pembelian dihapus');
     await loadBahan();
   } catch(e) { toast('❌ ' + e.message); }
 }
@@ -1596,7 +1702,11 @@ function renderTokbaOnline(list) {
           <div style="font-size:13px;font-weight:600;text-transform:capitalize">${r.platform}</div>
           <div style="font-size:11px;color:var(--ink3)">${fmtDate(r.tanggal)}${r.catatan?' · '+r.catatan:''}</div>
         </div>
-        <div style="font-size:14px;font-weight:700;color:var(--green);font-family:var(--mono)">${rpFull(r.jumlah)}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:14px;font-weight:700;color:var(--green);font-family:var(--mono)">${rpFull(r.jumlah)}</div>
+          <button onclick="openEditOnline('${r.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 7px">✏️</button>
+          <button onclick="deleteOnline('${r.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 7px">🗑️</button>
+        </div>
       </div>
     </div>`).join('');
 }
