@@ -1000,6 +1000,8 @@ function toast(msg, dur=2500) {
 // ── SHEET ──────────────────────────────────────────────────
 function openSheet(id) {
   document.getElementById(id).classList.add('open');
+  // Push state agar tombol back Android nutup sheet, bukan keluar app
+  history.pushState({ sheet: id }, '');
 }
 function closeSheet(id) {
   document.getElementById(id).classList.remove('open');
@@ -1007,6 +1009,21 @@ function closeSheet(id) {
 function overlayClose(e, id) {
   if (e.target === document.getElementById(id)) closeSheet(id);
 }
+
+// ── BACK BUTTON HANDLER ─────────────────────────────────────
+window.addEventListener('popstate', function(e) {
+  // Cari sheet yang sedang terbuka, tutup yang paling atas
+  const openSheets = Array.from(document.querySelectorAll('.overlay.open'));
+  if (openSheets.length > 0) {
+    const topSheet = openSheets[openSheets.length - 1];
+    topSheet.classList.remove('open');
+  }
+  // Kalau masih ada sheet lain terbuka, push state lagi agar back berikutnya masih tertangkap
+  const remaining = document.querySelectorAll('.overlay.open');
+  if (remaining.length > 0) {
+    history.pushState({ sheet: remaining[remaining.length-1].id }, '');
+  }
+});
 
 // ── TAB NAVIGATION ─────────────────────────────────────────
 function switchTab(el) {
@@ -2163,6 +2180,9 @@ function init() {
   // Period label
   document.getElementById('periodLabel').textContent =
     now.toLocaleDateString('id-ID',{month:'short',year:'numeric'});
+
+  // Baseline history — agar back pertama tidak langsung keluar app
+  history.replaceState({ base: true }, '');
 
   // Load dashboard
   loadDashboard();
