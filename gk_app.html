@@ -1183,6 +1183,21 @@ function openAddEvent() {
   openSheet('sheetEvent');
 }
 
+function openEditEvent() {
+  if (!currentEvent) return;
+  const ev = currentEvent;
+  document.getElementById('ev-id').value = ev.id;
+  document.getElementById('ev-customer').value = ev.customer || '';
+  document.getElementById('ev-tanggal').value = ev.tanggal || '';
+  document.getElementById('ev-status').value = ev.status || 'inquiry';
+  document.getElementById('ev-lokasi').value = ev.lokasi || '';
+  document.getElementById('ev-kontak').value = ev.kontak || '';
+  document.getElementById('ev-catatan').value = ev.catatan || '';
+  document.getElementById('sheetEventTitle').textContent = 'Edit Event';
+  closeSheet('sheetEventDetail');
+  setTimeout(() => openSheet('sheetEvent'), 200);
+}
+
 async function saveEvent() {
   const id = document.getElementById('ev-id').value;
   const data = {
@@ -1890,6 +1905,33 @@ async function deleteMenu(id) {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+function openEditMenu(id) {
+  const m = currentEventMenus.find(x=>x.id===id);
+  if (!m) return;
+  document.getElementById('menu-edit-id').value = m.id;
+  document.getElementById('menu-edit-nama').value = m.nama || '';
+  document.getElementById('menu-edit-qty').value = m.qty || '';
+  document.getElementById('menu-edit-harga').value = m.harga || '';
+  document.getElementById('menu-edit-total').textContent = rpFull((m.qty||0)*(m.harga||0));
+  openSheet('sheetMenuEdit');
+}
+
+async function saveMenuEdit() {
+  const id    = document.getElementById('menu-edit-id').value;
+  const nama  = document.getElementById('menu-edit-nama').value.trim();
+  const qty   = Number(document.getElementById('menu-edit-qty').value)||0;
+  const harga = Number(document.getElementById('menu-edit-harga').value)||0;
+  if (!nama||!qty||!harga) { toast('⚠️ Lengkapi semua field'); return; }
+  try {
+    await sbUpdate('gk_event_menu', id, {nama, qty, harga});
+    const idx = currentEventMenus.findIndex(x=>x.id===id);
+    if (idx>=0) currentEventMenus[idx] = {...currentEventMenus[idx], nama, qty, harga, total: qty*harga};
+    closeSheet('sheetMenuEdit');
+    renderEventDetail();
+    toast('✅ Menu diperbarui');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
 async function deleteBahanEvent(id) {
   if (!confirm('Hapus bahan ini?')) return;
   try {
@@ -1897,6 +1939,35 @@ async function deleteBahanEvent(id) {
     currentEventBahan = currentEventBahan.filter(b=>b.id!==id);
     renderEventDetail();
     toast('✅ Bahan dihapus');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openEditBahanEvent(id) {
+  const b = currentEventBahan.find(x=>x.id===id);
+  if (!b) return;
+  document.getElementById('evb-edit-id').value = b.id;
+  document.getElementById('evb-edit-nama').value = b.nama_bahan || '';
+  document.getElementById('evb-edit-qty').value = b.qty || '';
+  document.getElementById('evb-edit-satuan').value = b.satuan || '';
+  document.getElementById('evb-edit-harga').value = b.harga_avg || '';
+  document.getElementById('evb-edit-total').textContent = rpFull((b.qty||0)*(b.harga_avg||0));
+  openSheet('sheetBahanEventEdit');
+}
+
+async function saveBahanEventEdit() {
+  const id     = document.getElementById('evb-edit-id').value;
+  const nama   = document.getElementById('evb-edit-nama').value.trim();
+  const qty    = Number(document.getElementById('evb-edit-qty').value)||0;
+  const satuan = document.getElementById('evb-edit-satuan').value.trim();
+  const harga  = Number(document.getElementById('evb-edit-harga').value)||0;
+  if (!nama||!qty||!satuan||!harga) { toast('⚠️ Lengkapi semua field'); return; }
+  try {
+    await sbUpdate('gk_event_bahan', id, {nama_bahan:nama, qty, satuan, harga_avg:harga});
+    const idx = currentEventBahan.findIndex(x=>x.id===id);
+    if (idx>=0) currentEventBahan[idx] = {...currentEventBahan[idx], nama_bahan:nama, qty, satuan, harga_avg:harga, total:qty*harga};
+    closeSheet('sheetBahanEventEdit');
+    renderEventDetail();
+    toast('✅ Bahan diperbarui');
   } catch(e) { toast('❌ ' + e.message); }
 }
 
@@ -1910,6 +1981,34 @@ async function deleteOps(id) {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+function openEditOps(id) {
+  const o = currentEventOps.find(x=>x.id===id);
+  if (!o) return;
+  document.getElementById('ops-edit-id').value = o.id;
+  document.getElementById('ops-edit-ket').value = o.keterangan || '';
+  document.getElementById('ops-edit-jumlah').value = o.jumlah || '';
+  document.getElementById('ops-edit-metode').value = o.metode || 'cash';
+  document.getElementById('ops-edit-tanggal').value = o.tanggal || '';
+  openSheet('sheetOpsEventEdit');
+}
+
+async function saveOpsEdit() {
+  const id     = document.getElementById('ops-edit-id').value;
+  const ket    = document.getElementById('ops-edit-ket').value.trim();
+  const jumlah = Number(document.getElementById('ops-edit-jumlah').value)||0;
+  const metode = document.getElementById('ops-edit-metode').value;
+  const tgl    = document.getElementById('ops-edit-tanggal').value;
+  if (!ket||!jumlah) { toast('⚠️ Isi keterangan dan jumlah'); return; }
+  try {
+    await sbUpdate('gk_biaya_ops', id, {keterangan:ket, jumlah, metode, tanggal:tgl});
+    const idx = currentEventOps.findIndex(x=>x.id===id);
+    if (idx>=0) currentEventOps[idx] = {...currentEventOps[idx], keterangan:ket, jumlah, metode, tanggal:tgl};
+    closeSheet('sheetOpsEventEdit');
+    renderEventDetail();
+    toast('✅ Biaya ops diperbarui');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
 async function deleteBayar(id) {
   if (!confirm('Hapus pembayaran?')) return;
   try {
@@ -1917,6 +2016,36 @@ async function deleteBayar(id) {
     currentEventBayar = currentEventBayar.filter(b=>b.id!==id);
     renderEventDetail();
     toast('✅ Pembayaran dihapus');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openEditBayar(id) {
+  const b = currentEventBayar.find(x=>x.id===id);
+  if (!b) return;
+  document.getElementById('bayar-edit-id').value = b.id;
+  document.getElementById('bayar-edit-tahap').value = b.tahap || 'pelunasan';
+  document.getElementById('bayar-edit-jumlah').value = b.jumlah || '';
+  document.getElementById('bayar-edit-metode').value = b.metode || 'transfer';
+  document.getElementById('bayar-edit-tanggal').value = b.tanggal || '';
+  document.getElementById('bayar-edit-catatan').value = b.catatan || '';
+  openSheet('sheetBayarEdit');
+}
+
+async function saveBayarEdit() {
+  const id     = document.getElementById('bayar-edit-id').value;
+  const tahap  = document.getElementById('bayar-edit-tahap').value;
+  const jumlah = Number(document.getElementById('bayar-edit-jumlah').value)||0;
+  const metode = document.getElementById('bayar-edit-metode').value;
+  const tgl    = document.getElementById('bayar-edit-tanggal').value;
+  const catatan= document.getElementById('bayar-edit-catatan').value.trim();
+  if (!jumlah) { toast('⚠️ Isi jumlah'); return; }
+  try {
+    await sbUpdate('gk_event_bayar', id, {tahap, jumlah, metode, tanggal:tgl, catatan});
+    const idx = currentEventBayar.findIndex(x=>x.id===id);
+    if (idx>=0) currentEventBayar[idx] = {...currentEventBayar[idx], tahap, jumlah, metode, tanggal:tgl, catatan};
+    closeSheet('sheetBayarEdit');
+    renderEventDetail();
+    toast('✅ Pembayaran diperbarui');
   } catch(e) { toast('❌ ' + e.message); }
 }
 
@@ -2102,6 +2231,7 @@ init();
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="badge inquiry" id="evd-status">—</span>
+        <button onclick="openEditEvent()" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600">✏️ Edit</button>
         <span class="sheet-close" onclick="closeSheet('sheetEventDetail')">✕</span>
       </div>
     </div>
@@ -2403,6 +2533,170 @@ init();
       </div>
       <button class="btn btn-primary" onclick="savePesananItem()">💾 Simpan Item</button>
       <button class="btn btn-secondary" onclick="closeSheet('sheetPesananItem')">Batal</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- SHEET: Edit Menu -->
+<div class="overlay" id="sheetMenuEdit" onclick="overlayClose(event,'sheetMenuEdit')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Edit Menu</span>
+      <span class="sheet-close" onclick="closeSheet('sheetMenuEdit')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="menu-edit-id">
+      <div class="form-group">
+        <label class="form-label">Nama Menu</label>
+        <input type="text" class="form-control" id="menu-edit-nama">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty (pax)</label>
+          <input type="number" class="form-control" id="menu-edit-qty" min="1"
+            oninput="document.getElementById('menu-edit-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('menu-edit-harga').value)||0))">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Harga / pax</label>
+          <input type="number" class="form-control" id="menu-edit-harga" min="0"
+            oninput="document.getElementById('menu-edit-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('menu-edit-qty').value)||0))">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total</label>
+        <div class="form-control" id="menu-edit-total" style="color:var(--gold);font-family:var(--mono);font-weight:600">Rp 0</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveMenuEdit()">💾 Simpan Perubahan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetMenuEdit')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Edit Bahan Event -->
+<div class="overlay" id="sheetBahanEventEdit" onclick="overlayClose(event,'sheetBahanEventEdit')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Edit Bahan HPP</span>
+      <span class="sheet-close" onclick="closeSheet('sheetBahanEventEdit')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="evb-edit-id">
+      <div class="form-group">
+        <label class="form-label">Nama Bahan</label>
+        <input type="text" class="form-control" id="evb-edit-nama">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty</label>
+          <input type="number" class="form-control" id="evb-edit-qty" min="0" step="0.001"
+            oninput="document.getElementById('evb-edit-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('evb-edit-harga').value)||0))">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Satuan</label>
+          <input type="text" class="form-control" id="evb-edit-satuan">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Harga / satuan (Rp)</label>
+        <input type="number" class="form-control" id="evb-edit-harga" min="0"
+          oninput="document.getElementById('evb-edit-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('evb-edit-qty').value)||0))">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total HPP</label>
+        <div class="form-control" id="evb-edit-total" style="color:var(--red);font-family:var(--mono);font-weight:600">Rp 0</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveBahanEventEdit()">💾 Simpan Perubahan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetBahanEventEdit')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Edit Biaya Ops -->
+<div class="overlay" id="sheetOpsEventEdit" onclick="overlayClose(event,'sheetOpsEventEdit')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Edit Biaya Ops</span>
+      <span class="sheet-close" onclick="closeSheet('sheetOpsEventEdit')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="ops-edit-id">
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <input type="text" class="form-control" id="ops-edit-ket">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-control" id="ops-edit-jumlah" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Metode</label>
+          <select class="form-control" id="ops-edit-metode">
+            <option value="cash">Cash</option>
+            <option value="transfer">Transfer</option>
+            <option value="qris">QRIS</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tanggal</label>
+        <input type="date" class="form-control" id="ops-edit-tanggal">
+      </div>
+      <button class="btn btn-primary" onclick="saveOpsEdit()">💾 Simpan Perubahan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetOpsEventEdit')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Edit Pembayaran -->
+<div class="overlay" id="sheetBayarEdit" onclick="overlayClose(event,'sheetBayarEdit')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Edit Pembayaran</span>
+      <span class="sheet-close" onclick="closeSheet('sheetBayarEdit')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="bayar-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tahap</label>
+          <select class="form-control" id="bayar-edit-tahap">
+            <option value="booking">Booking Fee</option>
+            <option value="dp">DP</option>
+            <option value="pelunasan">Pelunasan</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-control" id="bayar-edit-jumlah" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Metode</label>
+          <select class="form-control" id="bayar-edit-metode">
+            <option value="transfer">Transfer</option>
+            <option value="cash">Cash</option>
+            <option value="qris">QRIS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="bayar-edit-tanggal">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input type="text" class="form-control" id="bayar-edit-catatan">
+      </div>
+      <button class="btn btn-primary" onclick="saveBayarEdit()">💾 Simpan Perubahan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetBayarEdit')">Batal</button>
     </div>
   </div>
 </div>
