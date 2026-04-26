@@ -1,0 +1,2411 @@
+<!DOCTYPE html>
+<html lang="id" data-tab="dashboard">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Gubukan Krasti</title>
+<style>
+/* ── FONT ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── VARIABLES ────────────────────────────────────── */
+:root {
+  --bg:       #0f1117;
+  --bg2:      #181c27;
+  --bg3:      #1e2333;
+  --surface:  #242840;
+  --border:   #2d3350;
+  --border2:  #3a4060;
+  --ink:      #e8eaf6;
+  --ink2:     #9ea3c0;
+  --ink3:     #6b7194;
+  --ink4:     #444870;
+  --gold:     #f0c060;
+  --gold2:    #e8a820;
+  --gold-dim: rgba(240,192,96,0.12);
+  --green:    #4ecb8d;
+  --green-dim:rgba(78,203,141,0.12);
+  --red:      #f06060;
+  --red-dim:  rgba(240,96,96,0.12);
+  --blue:     #60a0f0;
+  --blue-dim: rgba(96,160,240,0.12);
+  --orange:   #f09060;
+  --font:     'Plus Jakarta Sans', sans-serif;
+  --mono:     'DM Mono', monospace;
+  --radius:   12px;
+  --radius-sm:8px;
+  --tab-h:    60px;
+  --top-h:    52px;
+}
+
+/* ── RESET ────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;-webkit-font-smoothing:antialiased;}
+button{font-family:var(--font);cursor:pointer;border:none;outline:none;}
+input,select,textarea{font-family:var(--font);outline:none;}
+a{color:inherit;text-decoration:none;}
+
+/* ── LAYOUT ───────────────────────────────────────── */
+#app { display:flex; flex-direction:column; height:100dvh; }
+
+/* ── TOPBAR ───────────────────────────────────────── */
+.topbar {
+  height: var(--top-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.topbar-logo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: -0.3px;
+}
+.topbar-sub {
+  font-size: 10px;
+  color: var(--ink3);
+  font-family: var(--mono);
+}
+.topbar-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.topbar-period {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--gold);
+  font-weight: 600;
+  cursor: pointer;
+}
+.topbar-sync {
+  width: 32px; height: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--ink3);
+  font-size: 14px;
+  display: flex; align-items:center; justify-content:center;
+  transition: all 0.2s;
+}
+.topbar-sync:hover { border-color:var(--gold); color:var(--gold); }
+.topbar-sync.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── BODY ─────────────────────────────────────────── */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--tab-h) + 12px);
+}
+
+/* ── TAB BAR ──────────────────────────────────────── */
+.tabbar {
+  height: var(--tab-h);
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  color: var(--ink3);
+  font-size: 10px;
+  font-weight: 500;
+  transition: color 0.2s;
+  padding-top: 2px;
+}
+.tab-item .ti { font-size: 20px; line-height: 1; }
+.tab-item.active { color: var(--gold); }
+
+/* ── PAGE ─────────────────────────────────────────── */
+.page { display:none; padding: 16px; }
+.page.active { display:block; }
+
+/* ── SECTION TITLE ────────────────────────────────── */
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 20px 0 10px;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* ── CARD ─────────────────────────────────────────── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.card-title { font-size: 11px; color: var(--ink3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.card-val { font-size: 22px; font-weight: 700; font-family: var(--mono); }
+.card-val.green { color: var(--green); }
+.card-val.gold  { color: var(--gold); }
+.card-val.red   { color: var(--red); }
+.card-val.blue  { color: var(--blue); }
+
+/* ── STAT GRID ────────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.stat-label { font-size: 10px; color: var(--ink3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.stat-val { font-size: 17px; font-weight: 700; font-family: var(--mono); }
+.stat-sub { font-size: 10px; color: var(--ink3); margin-top: 3px; }
+.stat-card.green { border-color: rgba(78,203,141,0.3); background: linear-gradient(135deg,var(--bg2),rgba(78,203,141,0.05)); }
+.stat-card.gold  { border-color: rgba(240,192,96,0.3);  background: linear-gradient(135deg,var(--bg2),rgba(240,192,96,0.05)); }
+.stat-card.red   { border-color: rgba(240,96,96,0.3);   background: linear-gradient(135deg,var(--bg2),rgba(240,96,96,0.05)); }
+.stat-card.blue  { border-color: rgba(96,160,240,0.3);  background: linear(135deg,var(--bg2),rgba(96,160,240,0.05)); }
+
+/* ── ROW ──────────────────────────────────────────── */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.row:last-child { border-bottom: none; }
+.row-label { font-size: 12px; color: var(--ink2); }
+.row-val { font-size: 13px; font-weight: 600; font-family: var(--mono); }
+.row-val.green { color: var(--green); }
+.row-val.red   { color: var(--red); }
+.row-val.gold  { color: var(--gold); }
+.row-val.muted { color: var(--ink3); font-weight: 400; }
+
+/* ── PROGRESS BAR ─────────────────────────────────── */
+.prog-wrap { background: var(--bg3); border-radius: 4px; height: 5px; margin-top: 8px; overflow: hidden; }
+.prog-bar  { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.prog-bar.green  { background: var(--green); }
+.prog-bar.gold   { background: var(--gold); }
+.prog-bar.red    { background: var(--red); }
+
+/* ── BADGE ────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.badge.inquiry  { background:var(--bg3); color:var(--ink3); }
+.badge.booking  { background:var(--blue-dim); color:var(--blue); }
+.badge.dp       { background:var(--gold-dim); color:var(--gold); }
+.badge.lunas    { background:var(--green-dim); color:var(--green); }
+.badge.selesai  { background:var(--green-dim); color:var(--green); }
+.badge.cancel   { background:var(--red-dim); color:var(--red); }
+
+/* ── EVENT ITEM ───────────────────────────────────── */
+.ev-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.ev-item:active { border-color: var(--gold); }
+.ev-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+.ev-customer { font-size: 13px; font-weight: 600; color: var(--ink); }
+.ev-date { font-size: 11px; color: var(--ink3); font-family: var(--mono); margin-top: 2px; }
+.ev-meta { display:flex; gap:8px; align-items:center; margin-top:4px; }
+.ev-omzet { font-size: 12px; color: var(--gold); font-family: var(--mono); font-weight: 600; }
+
+/* ── FAB ──────────────────────────────────────────── */
+.fab {
+  position: fixed;
+  bottom: calc(var(--tab-h) + 16px);
+  right: 16px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #1a1400;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(240,192,96,0.4);
+  z-index: 20;
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-weight: 700;
+  line-height: 1;
+}
+.fab:active { transform: scale(0.92); box-shadow: 0 2px 10px rgba(240,192,96,0.3); }
+.fab.hidden { display: none; }
+
+/* ── SHEET (BOTTOM MODAL) ─────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 50;
+  display: none;
+  align-items: flex-end;
+  backdrop-filter: blur(2px);
+}
+.overlay.open { display: flex; }
+.sheet {
+  background: var(--bg2);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border2);
+  width: 100%;
+  max-height: 92dvh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+.sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.sheet-title { font-size: 15px; font-weight: 700; }
+.sheet-close {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--bg3);
+  color: var(--ink2);
+  display: flex; align-items:center; justify-content:center;
+  font-size: 16px;
+  cursor: pointer;
+}
+.sheet-body { padding: 16px 18px 32px; }
+
+/* ── FORM ─────────────────────────────────────────── */
+.form-group { margin-bottom: 14px; }
+.form-label { display:block; font-size:11px; font-weight:600; color:var(--ink3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+.form-control {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.form-control:focus { border-color: var(--gold); }
+select.form-control { appearance: none; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.form-hint { font-size: 10px; color: var(--ink4); margin-top: 4px; }
+
+/* ── BTN ──────────────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.btn:active { transform: scale(0.98); opacity: 0.85; }
+.btn-primary { background: var(--gold); color: #1a1400; }
+.btn-secondary { background: var(--bg3); color: var(--ink2); border: 1px solid var(--border); margin-top: 8px; }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,96,96,0.2); margin-top: 8px; }
+
+/* ── EMPTY STATE ──────────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--ink4);
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-text { font-size: 13px; }
+
+/* ── TOAST ────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: calc(var(--tab-h) + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 10px 18px;
+  font-size: 13px;
+  color: var(--ink);
+  z-index: 100;
+  opacity: 0;
+  transition: all 0.3s;
+  white-space: nowrap;
+  pointer-events: none;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── LOADING ──────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--surface) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ── DIVIDER ──────────────────────────────────────── */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── KONTRIBUSI BAR ───────────────────────────────── */
+.contrib-wrap { margin-top: 8px; }
+.contrib-item { margin-bottom: 10px; }
+.contrib-head { display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; }
+.contrib-name { color:var(--ink2); font-weight:500; }
+.contrib-pct  { color:var(--ink3); font-family:var(--mono); }
+
+/* ── SEPARATOR ────────────────────────────────────── */
+.sep { border:none; border-top:1px solid var(--border); margin:12px 0; }
+
+/* ── PERIOD PICKER ────────────────────────────────── */
+.period-sheet .btn-period {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--ink2);
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 8px;
+  transition: all 0.15s;
+}
+.period-sheet .btn-period.active {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-logo">Gubukan Krasti</div>
+      <div class="topbar-sub" id="topDate">—</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-period" onclick="openPeriod()">
+        <span id="periodLabel">Apr 2026</span>
+        <span style="font-size:9px;opacity:0.6">▾</span>
+      </div>
+      <button class="topbar-sync" id="syncBtn" onclick="syncAll()" title="Refresh">⟳</button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body" id="mainBody">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PAGE: DASHBOARD                             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="section-title">Ringkasan Bulan Ini</div>
+
+      <!-- Laba Total -->
+      <div class="card" style="border-color:rgba(240,192,96,0.3);background:linear-gradient(135deg,var(--bg2),rgba(240,192,96,0.04))">
+        <div class="card-title">Total Laba Bersih</div>
+        <div class="card-val gold" id="d-total-laba">—</div>
+        <div class="prog-wrap" style="margin-top:10px">
+          <div class="prog-bar gold" id="d-laba-bar" style="width:0%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;">
+          <span style="font-size:10px;color:var(--ink3)">Omzet: <span id="d-total-omzet" style="color:var(--ink2)">—</span></span>
+          <span style="font-size:10px;color:var(--ink3)">Margin: <span id="d-margin" style="color:var(--gold)">—</span></span>
+        </div>
+      </div>
+
+      <!-- Stat 2 kolom -->
+      <div class="stat-grid">
+        <div class="stat-card green">
+          <div class="stat-label">Gubukan</div>
+          <div class="stat-val green" id="d-gk-laba">—</div>
+          <div class="stat-sub" id="d-gk-omzet">Omzet —</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-label">Toko Bahan</div>
+          <div class="stat-val gold" id="d-tb-laba">—</div>
+          <div class="stat-sub" id="d-tb-omzet">Omzet —</div>
+        </div>
+      </div>
+
+      <!-- Detail P&L -->
+      <div class="section-title">Detail P&L Gubukan</div>
+      <div class="card">
+        <div class="row"><span class="row-label">Omzet Event</span><span class="row-val gold" id="d-gk-omzet2">—</span></div>
+        <div class="row"><span class="row-label">HPP Bahan</span><span class="row-val red" id="d-gk-hpp">—</span></div>
+        <div class="row"><span class="row-label">Biaya Ops</span><span class="row-val red" id="d-gk-ops">—</span></div>
+        <div class="row"><span class="row-label" style="font-weight:600">Laba Gubukan</span><span class="row-val green" id="d-gk-laba2">—</span></div>
+      </div>
+
+      <div class="section-title">Detail P&L Toko Bahan</div>
+      <div class="card">
+        <div class="row"><span class="row-label">Penjualan Online</span><span class="row-val gold" id="d-tb-online">—</span></div>
+        <div class="row"><span class="row-label">Penjualan Offline</span><span class="row-val gold" id="d-tb-offline">—</span></div>
+        <div class="row"><span class="row-label">HPP Bahan (sisa)</span><span class="row-val red" id="d-tb-hpp">—</span></div>
+        <div class="row"><span class="row-label" style="font-weight:600">Laba Toko Bahan</span><span class="row-val green" id="d-tb-laba2">—</span></div>
+      </div>
+
+      <div class="section-title">Overhead & Kas</div>
+      <div class="card">
+        <div class="row"><span class="row-label">Total Pembelian Bahan</span><span class="row-val red" id="d-beli">—</span></div>
+        <div class="row"><span class="row-label">Overhead Umum</span><span class="row-val red" id="d-overhead">—</span></div>
+        <div class="row" style="margin-top:6px">
+          <span class="row-label">💰 Kas Usaha</span>
+          <span class="row-val gold" id="d-kas-usaha">—</span>
+        </div>
+        <div class="row">
+          <span class="row-label">🏠 Kas RT</span>
+          <span class="row-val gold" id="d-kas-rt">—</span>
+        </div>
+      </div>
+
+      <!-- Event mendatang -->
+      <div class="section-title">Event Mendatang</div>
+      <div id="d-events-upcoming">
+        <div class="empty"><div class="empty-icon">📅</div><div class="empty-text">Belum ada event</div></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PAGE: EVENT                                 -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="page" id="page-event">
+      <!-- Filter status -->
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px;scrollbar-width:none;">
+        <button class="chip active" data-status="all" onclick="filterEvent(this)">Semua</button>
+        <button class="chip" data-status="inquiry" onclick="filterEvent(this)">Inquiry</button>
+        <button class="chip" data-status="booking" onclick="filterEvent(this)">Booking</button>
+        <button class="chip" data-status="dp" onclick="filterEvent(this)">DP</button>
+        <button class="chip" data-status="lunas" onclick="filterEvent(this)">Lunas</button>
+        <button class="chip" data-status="selesai" onclick="filterEvent(this)">Selesai</button>
+        <button class="chip" data-status="cancel" onclick="filterEvent(this)">Cancel</button>
+      </div>
+      <style>
+        .chip {
+          flex-shrink:0; padding:5px 12px; border-radius:20px;
+          background:var(--bg3); border:1px solid var(--border);
+          color:var(--ink3); font-size:11px; font-weight:600; cursor:pointer;
+          transition:all 0.15s;
+        }
+        .chip.active { background:var(--gold-dim); border-color:var(--gold); color:var(--gold); }
+      </style>
+      <div id="ev-list">
+        <div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">Belum ada event</div></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PAGE: BAHAN                                 -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="page" id="page-bahan">
+      <!-- Sub tab -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="chip active" data-btab="master" onclick="switchBahanTab(this)">Master Bahan</button>
+        <button class="chip" data-btab="pembelian" onclick="switchBahanTab(this)">Pembelian</button>
+      </div>
+
+      <!-- Master bahan -->
+      <div id="bahan-master">
+        <div id="bahan-list">
+          <div class="empty"><div class="empty-icon">🥕</div><div class="empty-text">Belum ada bahan</div></div>
+        </div>
+      </div>
+
+      <!-- Pembelian bahan -->
+      <div id="bahan-pembelian" style="display:none">
+        <div id="beli-list">
+          <div class="empty"><div class="empty-icon">🛒</div><div class="empty-text">Belum ada pembelian</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PAGE: TOKBA                                 -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="page" id="page-tokba">
+      <!-- Sub tab -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="chip active" data-ttab="online" onclick="switchTokbaTab(this)">Online</button>
+        <button class="chip" data-ttab="offline" onclick="switchTokbaTab(this)">Offline</button>
+      </div>
+
+      <!-- Online -->
+      <div id="tokba-online">
+        <div class="section-title">Ringkasan Bulan Ini</div>
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);gap:6px;" id="platform-stats">
+          <div class="stat-card"><div class="stat-label" style="font-size:9px">Shopee</div><div class="stat-val" style="font-size:13px" id="ts-shopee">—</div></div>
+          <div class="stat-card"><div class="stat-label" style="font-size:9px">Tokped</div><div class="stat-val" style="font-size:13px" id="ts-tokped">—</div></div>
+          <div class="stat-card"><div class="stat-label" style="font-size:9px">Tiktok</div><div class="stat-val" style="font-size:13px" id="ts-tiktok">—</div></div>
+          <div class="stat-card"><div class="stat-label" style="font-size:9px">Lazada</div><div class="stat-val" style="font-size:13px" id="ts-lazada">—</div></div>
+        </div>
+        <div class="section-title">Riwayat Tarik</div>
+        <div id="online-list">
+          <div class="empty"><div class="empty-icon">🛍️</div><div class="empty-text">Belum ada data</div></div>
+        </div>
+      </div>
+
+      <!-- Offline -->
+      <div id="tokba-offline" style="display:none">
+        <div id="offline-list">
+          <div class="empty"><div class="empty-icon">🏭</div><div class="empty-text">Belum ada pesanan</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PAGE: LAPORAN                               -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="page" id="page-laporan">
+      <div class="section-title">P&L Bulanan</div>
+      <div id="lap-content">
+        <div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Belum ada data</div></div>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- TAB BAR -->
+  <div class="tabbar">
+    <button class="tab-item active" data-page="dashboard" onclick="switchTab(this)">
+      <span class="ti">⊞</span><span>Dashboard</span>
+    </button>
+    <button class="tab-item" data-page="event" onclick="switchTab(this)">
+      <span class="ti">🍽️</span><span>Event</span>
+    </button>
+    <button class="tab-item" data-page="bahan" onclick="switchTab(this)">
+      <span class="ti">🥕</span><span>Bahan</span>
+    </button>
+    <button class="tab-item" data-page="tokba" onclick="switchTab(this)">
+      <span class="ti">🛍️</span><span>Tokba</span>
+    </button>
+    <button class="tab-item" data-page="laporan" onclick="switchTab(this)">
+      <span class="ti">📊</span><span>Laporan</span>
+    </button>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="fabAction()">+</button>
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+</div><!-- /app -->
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SHEETS                                                  -->
+<!-- ════════════════════════════════════════════════════════ -->
+
+<!-- Period Picker -->
+<div class="overlay period-sheet" id="sheetPeriod" onclick="closeSheet('sheetPeriod')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Pilih Periode</span>
+      <span class="sheet-close" onclick="closeSheet('sheetPeriod')">✕</span>
+    </div>
+    <div class="sheet-body" id="periodList"></div>
+  </div>
+</div>
+
+<!-- Sheet: Tambah Event -->
+<div class="overlay" id="sheetEvent" onclick="overlayClose(event,'sheetEvent')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="sheetEventTitle">Tambah Event</span>
+      <span class="sheet-close" onclick="closeSheet('sheetEvent')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Customer / Nama Acara</label>
+        <input type="text" class="form-control" id="ev-customer" placeholder="Nama customer atau acara">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal Event</label>
+          <input type="date" class="form-control" id="ev-tanggal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="ev-status">
+            <option value="inquiry">Inquiry</option>
+            <option value="booking">Booking</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lokasi</label>
+        <input type="text" class="form-control" id="ev-lokasi" placeholder="Nama gedung / alamat">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kontak</label>
+        <input type="text" class="form-control" id="ev-kontak" placeholder="No. HP atau nama kontak">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <textarea class="form-control" id="ev-catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
+      </div>
+      <input type="hidden" id="ev-id">
+      <button class="btn btn-primary" onclick="saveEvent()">💾 Simpan Event</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetEvent')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Tambah Bahan -->
+<div class="overlay" id="sheetBahan" onclick="overlayClose(event,'sheetBahan')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="sheetBahanTitle">Tambah Bahan</span>
+      <span class="sheet-close" onclick="closeSheet('sheetBahan')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Nama Bahan</label>
+        <input type="text" class="form-control" id="bh-nama" placeholder="Tepung terigu, mozzarella, dll">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Satuan Besar</label>
+          <input type="text" class="form-control" id="bh-sat-besar" placeholder="karung, dus, liter">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Satuan Kecil</label>
+          <input type="text" class="form-control" id="bh-sat-kecil" placeholder="kg, gram, ml">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Konversi (1 satuan besar = ? satuan kecil)</label>
+        <input type="number" class="form-control" id="bh-konversi" placeholder="25" min="0.001" step="0.001">
+        <div class="form-hint" id="bh-konversi-hint">Contoh: 1 karung = 25 kg</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input type="text" class="form-control" id="bh-catatan" placeholder="Opsional">
+      </div>
+      <input type="hidden" id="bh-id">
+      <button class="btn btn-primary" onclick="saveBahan()">💾 Simpan Bahan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetBahan')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Tambah Pembelian -->
+<div class="overlay" id="sheetBeli" onclick="overlayClose(event,'sheetBeli')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Catat Pembelian Bahan</span>
+      <span class="sheet-close" onclick="closeSheet('sheetBeli')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Bahan</label>
+        <select class="form-control" id="beli-bahan" onchange="onBeliSelectBahan()">
+          <option value="">-- Pilih Bahan --</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty</label>
+          <input type="number" class="form-control" id="beli-qty" placeholder="0" min="0" step="0.001" oninput="calcBeliTotal()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Satuan</label>
+          <select class="form-control" id="beli-satuan" onchange="onBeliSatuanChange()">
+            <option value="">--</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Harga per Satuan (Rp)</label>
+        <input type="number" class="form-control" id="beli-harga" placeholder="0" min="0" oninput="calcBeliTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total</label>
+        <div class="form-control" id="beli-total" style="color:var(--gold);font-family:var(--mono);font-weight:600">Rp 0</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="beli-tanggal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Toko</label>
+          <input type="text" class="form-control" id="beli-toko" placeholder="Nama toko">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveBeli()">💾 Simpan Pembelian</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetBeli')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Tambah Tokba Online -->
+<div class="overlay" id="sheetOnline" onclick="overlayClose(event,'sheetOnline')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Catat Tarik Marketplace</span>
+      <span class="sheet-close" onclick="closeSheet('sheetOnline')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Platform</label>
+        <select class="form-control" id="on-platform">
+          <option value="shopee">Shopee</option>
+          <option value="tokped">Tokopedia</option>
+          <option value="tiktok">TikTok Shop</option>
+          <option value="lazada">Lazada</option>
+          <option value="lainnya">Lainnya</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jumlah (Rp)</label>
+        <input type="number" class="form-control" id="on-jumlah" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tanggal</label>
+        <input type="date" class="form-control" id="on-tanggal">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input type="text" class="form-control" id="on-catatan" placeholder="Opsional">
+      </div>
+      <button class="btn btn-primary" onclick="saveOnline()">💾 Simpan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetOnline')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: Tambah Pesanan Offline -->
+<div class="overlay" id="sheetOffline" onclick="overlayClose(event,'sheetOffline')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Pesanan Offline</span>
+      <span class="sheet-close" onclick="closeSheet('sheetOffline')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Customer</label>
+          <input type="text" class="form-control" id="off-customer" placeholder="Nama perusahaan">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="off-tanggal">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kontak</label>
+        <input type="text" class="form-control" id="off-kontak" placeholder="No. HP / nama">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input type="text" class="form-control" id="off-catatan" placeholder="Opsional">
+      </div>
+      <button class="btn btn-primary" onclick="saveOffline()">💾 Simpan Pesanan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetOffline')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SCRIPT                                                  -->
+<!-- ════════════════════════════════════════════════════════ -->
+<script>
+const SUPA_URL = 'https://skltbmcrqutevmtcxqxj.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrbHRibWNycXV0ZXZtdGN4cXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzM5ODIsImV4cCI6MjA5MTI0OTk4Mn0._nogUZg5UylVyP45QTGYw69u76pNxGryj9hZORIfE_A';
+
+// ── SUPABASE FETCH ─────────────────────────────────────────
+async function sb(path, opts={}) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${SUPA_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || 'return=representation',
+      ...opts.headers
+    },
+    ...opts
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.message || res.statusText);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+async function sbGet(table, params='') {
+  return sb(`${table}?${params}`);
+}
+async function sbInsert(table, data) {
+  return sb(table, { method:'POST', body: JSON.stringify(data) });
+}
+async function sbUpdate(table, id, data) {
+  return sb(`${table}?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(data) });
+}
+async function sbDelete(table, id) {
+  return sb(`${table}?id=eq.${id}`, { method:'DELETE' });
+}
+
+// ── STATE ──────────────────────────────────────────────────
+let state = {
+  currentTab: 'dashboard',
+  currentBahanTab: 'master',
+  currentTokbaTab: 'online',
+  period: { year: new Date().getFullYear(), month: new Date().getMonth()+1 },
+  eventFilter: 'all',
+  data: {
+    plBulanan: [],
+    events: [],
+    bahan: [],
+    pembelian: [],
+    tokbaOnline: [],
+    tokbaOffline: [],
+    kas: [],
+  }
+};
+
+// ── FORMAT ─────────────────────────────────────────────────
+function rp(n) {
+  if (n === null || n === undefined || n === '—') return '—';
+  const num = Number(n);
+  if (isNaN(num)) return '—';
+  if (Math.abs(num) >= 1000000) return 'Rp ' + (num/1000000).toFixed(1) + 'jt';
+  if (Math.abs(num) >= 1000) return 'Rp ' + (num/1000).toFixed(0) + 'rb';
+  return 'Rp ' + num.toLocaleString('id-ID');
+}
+function rpFull(n) {
+  if (n===null||n===undefined) return 'Rp 0';
+  return 'Rp ' + Number(n).toLocaleString('id-ID');
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'});
+}
+function fmtMonth(y,m) {
+  return new Date(y,m-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+}
+function periodStr() {
+  return fmtMonth(state.period.year, state.period.month);
+}
+function periodStart() {
+  const {year:y,month:m} = state.period;
+  return `${y}-${String(m).padStart(2,'0')}-01`;
+}
+function periodEnd() {
+  const {year:y,month:m} = state.period;
+  const last = new Date(y,m,0).getDate();
+  return `${y}-${String(m).padStart(2,'0')}-${last}`;
+}
+
+// ── TOAST ──────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, dur=2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), dur);
+}
+
+// ── SHEET ──────────────────────────────────────────────────
+function openSheet(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeSheet(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function overlayClose(e, id) {
+  if (e.target === document.getElementById(id)) closeSheet(id);
+}
+
+// ── TAB NAVIGATION ─────────────────────────────────────────
+function switchTab(el) {
+  const page = el.dataset.page;
+  state.currentTab = page;
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  // FAB visibility
+  const noFab = ['laporan'];
+  document.getElementById('fab').classList.toggle('hidden', noFab.includes(page));
+  loadPage(page);
+}
+
+function loadPage(page) {
+  if (page==='dashboard') loadDashboard();
+  else if (page==='event') loadEvents();
+  else if (page==='bahan') loadBahan();
+  else if (page==='tokba') loadTokba();
+  else if (page==='laporan') loadLaporan();
+}
+
+// ── FAB ACTION ─────────────────────────────────────────────
+function fabAction() {
+  const t = state.currentTab;
+  if (t==='event') openAddEvent();
+  else if (t==='bahan') {
+    if (state.currentBahanTab==='master') openAddBahan();
+    else openAddBeli();
+  }
+  else if (t==='tokba') {
+    if (state.currentTokbaTab==='online') openAddOnline();
+    else openAddOffline();
+  }
+  else if (t==='dashboard') openAddEvent();
+}
+
+// ── SYNC ALL ───────────────────────────────────────────────
+async function syncAll() {
+  const btn = document.getElementById('syncBtn');
+  btn.classList.add('spin');
+  try {
+    await loadPage(state.currentTab);
+    toast('✅ Data diperbarui');
+  } catch(e) {
+    toast('❌ Gagal: ' + e.message);
+  }
+  btn.classList.remove('spin');
+}
+
+// ══════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════
+async function loadDashboard() {
+  const s = periodStart(), e = periodEnd();
+  const y = state.period.year, m = state.period.month;
+  const bulanStr = `${y}-${String(m).padStart(2,'0')}`;
+
+  try {
+    // P&L bulanan dari view
+    const pl = await sbGet('gk_pl_bulanan',
+      `bulan=eq.${bulanStr}-01&select=*`);
+    const row = pl[0] || {};
+
+    // Kas
+    const kas = await sbGet('gk_kas', 'select=nama,jenis,saldo');
+
+    // Event mendatang
+    const today = new Date().toISOString().slice(0,10);
+    const upcoming = await sbGet('gk_event',
+      `tanggal=gte.${today}&status=in.(inquiry,booking,dp,lunas)&order=tanggal.asc&limit=5&select=*`);
+
+    renderDashboard(row, kas, upcoming);
+  } catch(err) {
+    toast('❌ ' + err.message);
+  }
+}
+
+function renderDashboard(row, kas, upcoming) {
+  const gkOmzet  = Number(row.gk_omzet||0);
+  const gkHpp    = Number(row.gk_hpp||0);
+  const gkOps    = Number(row.gk_ops||0);
+  const gkLaba   = Number(row.gk_laba||0);
+  const tbOmzet  = Number(row.tb_omzet||0);
+  const tbHpp    = Number(row.tb_hpp||0);
+  const tbLaba   = Number(row.tb_laba||0);
+  const overhead = Number(row.overhead||0);
+  const totalLaba= Number(row.total_laba||0);
+  const totalOmz = gkOmzet + tbOmzet;
+  const margin   = totalOmz > 0 ? Math.round(totalLaba/totalOmz*100) : 0;
+
+  // Online/offline split
+  const tbOnline = Number(row.tb_online||0) || 0;
+  const tbOff    = tbOmzet - tbOnline;
+  const beli     = Number(row.total_beli||0) || gkHpp + tbHpp;
+
+  set('d-total-laba',    rp(totalLaba));
+  set('d-total-omzet',   rp(totalOmz));
+  set('d-margin',        margin + '%');
+  set('d-gk-laba',       rp(gkLaba));
+  set('d-gk-omzet',      'Omzet ' + rp(gkOmzet));
+  set('d-tb-laba',       rp(tbLaba));
+  set('d-tb-omzet',      'Omzet ' + rp(tbOmzet));
+  set('d-gk-omzet2',     rpFull(gkOmzet));
+  set('d-gk-hpp',        '(' + rpFull(gkHpp) + ')');
+  set('d-gk-ops',        '(' + rpFull(gkOps) + ')');
+  set('d-gk-laba2',      rpFull(gkLaba));
+  set('d-tb-online',     rpFull(tbOnline));
+  set('d-tb-offline',    rpFull(tbOff));
+  set('d-tb-hpp',        '(' + rpFull(tbHpp) + ')');
+  set('d-tb-laba2',      rpFull(tbLaba));
+  set('d-beli',          '(' + rpFull(beli) + ')');
+  set('d-overhead',      '(' + rpFull(overhead) + ')');
+
+  // Laba bar (target max 50jt)
+  const pct = Math.min(Math.max(totalLaba/50000000*100, 0), 100);
+  document.getElementById('d-laba-bar').style.width = pct + '%';
+
+  // Kas
+  const kasUsaha = kas.find(k=>k.jenis==='usaha');
+  const kasRt    = kas.find(k=>k.jenis==='rt');
+  set('d-kas-usaha', rpFull(kasUsaha?.saldo||0));
+  set('d-kas-rt',    rpFull(kasRt?.saldo||0));
+
+  // Event mendatang
+  const el = document.getElementById('d-events-upcoming');
+  if (!upcoming.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-text">Belum ada event mendatang</div></div>`;
+    return;
+  }
+  el.innerHTML = upcoming.map(ev => `
+    <div class="ev-item" onclick="openEventDetail('${ev.id}')">
+      <div class="ev-top">
+        <div>
+          <div class="ev-customer">${ev.customer}</div>
+          <div class="ev-date">📅 ${fmtDate(ev.tanggal)} ${ev.lokasi ? '· '+ev.lokasi : ''}</div>
+        </div>
+        <span class="badge ${ev.status}">${ev.status}</span>
+      </div>
+    </div>`).join('');
+}
+
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// ══════════════════════════════════════════════════════════
+// EVENT
+// ══════════════════════════════════════════════════════════
+let eventsData = [];
+
+async function loadEvents() {
+  try {
+    const data = await sbGet('gk_event', 'order=tanggal.desc&select=*');
+    eventsData = data;
+    renderEvents();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function filterEvent(el) {
+  document.querySelectorAll('[data-status]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  state.eventFilter = el.dataset.status;
+  renderEvents();
+}
+
+function renderEvents() {
+  const f = state.eventFilter;
+  const list = f==='all' ? eventsData : eventsData.filter(e=>e.status===f);
+  const el = document.getElementById('ev-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">Tidak ada event</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(ev => `
+    <div class="ev-item" onclick="openEventDetail('${ev.id}')">
+      <div class="ev-top">
+        <div>
+          <div class="ev-customer">${ev.customer}</div>
+          <div class="ev-date">📅 ${fmtDate(ev.tanggal)}${ev.lokasi ? ' · '+ev.lokasi : ''}</div>
+        </div>
+        <span class="badge ${ev.status}">${ev.status}</span>
+      </div>
+      ${ev.catatan ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px">${ev.catatan}</div>` : ''}
+    </div>`).join('');
+}
+
+function openAddEvent() {
+  document.getElementById('ev-id').value = '';
+  document.getElementById('ev-customer').value = '';
+  document.getElementById('ev-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ev-status').value = 'inquiry';
+  document.getElementById('ev-lokasi').value = '';
+  document.getElementById('ev-kontak').value = '';
+  document.getElementById('ev-catatan').value = '';
+  document.getElementById('sheetEventTitle').textContent = 'Tambah Event';
+  openSheet('sheetEvent');
+}
+
+async function saveEvent() {
+  const id = document.getElementById('ev-id').value;
+  const data = {
+    customer: document.getElementById('ev-customer').value.trim(),
+    tanggal:  document.getElementById('ev-tanggal').value,
+    status:   document.getElementById('ev-status').value,
+    lokasi:   document.getElementById('ev-lokasi').value.trim(),
+    kontak:   document.getElementById('ev-kontak').value.trim(),
+    catatan:  document.getElementById('ev-catatan').value.trim(),
+  };
+  if (!data.customer || !data.tanggal) { toast('⚠️ Isi customer dan tanggal'); return; }
+  try {
+    if (id) await sbUpdate('gk_event', id, data);
+    else await sbInsert('gk_event', data);
+    closeSheet('sheetEvent');
+    toast('✅ Event disimpan');
+    await loadEvents();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════
+// EVENT DETAIL
+// ══════════════════════════════════════════════════════════
+let currentEvent = null;
+let currentEventMenus = [];
+let currentEventBahan = [];
+let currentEventBayar = [];
+let currentEventOps   = [];
+
+async function openEventDetail(id) {
+  try {
+    const [evArr, menus, bahans, bayars, ops] = await Promise.all([
+      sbGet('gk_event', `id=eq.${id}&select=*`),
+      sbGet('gk_event_menu', `event_id=eq.${id}&order=created_at.asc&select=*`),
+      sbGet('gk_event_bahan', `event_id=eq.${id}&order=created_at.asc&select=*`),
+      sbGet('gk_event_bayar', `event_id=eq.${id}&order=tanggal.asc&select=*`),
+      sbGet('gk_biaya_ops', `event_id=eq.${id}&order=tanggal.asc&select=*`),
+    ]);
+    currentEvent      = evArr[0];
+    currentEventMenus = menus;
+    currentEventBahan = bahans;
+    currentEventBayar = bayars;
+    currentEventOps   = ops;
+    renderEventDetail();
+    openSheet('sheetEventDetail');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function renderEventDetail() {
+  const ev = currentEvent;
+  const omzet    = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
+  const hpp      = currentEventBahan.reduce((s,b)=>s+Number(b.total||0),0);
+  const ops      = currentEventOps.reduce((s,o)=>s+Number(o.jumlah||0),0);
+  const laba     = omzet - hpp - ops;
+  const terbayar = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
+  const sisa     = omzet - terbayar;
+  const margin   = omzet>0 ? Math.round(laba/omzet*100) : 0;
+
+  // Header
+  set('evd-customer', ev.customer);
+  set('evd-date', fmtDate(ev.tanggal) + (ev.lokasi ? ' · '+ev.lokasi : ''));
+  document.getElementById('evd-status').className = 'badge '+ev.status;
+  set('evd-status', ev.status);
+
+  // Summary bar
+  set('evd-omzet',    rpFull(omzet));
+  set('evd-terbayar', rpFull(terbayar));
+  set('evd-sisa',     rpFull(sisa));
+  set('evd-laba',     rpFull(laba));
+  set('evd-margin',   margin+'%');
+  const labaBar = document.getElementById('evd-laba-bar');
+  if (labaBar) labaBar.style.width = Math.min(Math.max(margin,0),100)+'%';
+
+  // Status buttons
+  renderStatusBtns(ev.status);
+
+  // Menu list
+  const menuEl = document.getElementById('evd-menus');
+  if (!currentEventMenus.length) {
+    menuEl.innerHTML = `<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum ada menu — tap + untuk tambah</div>`;
+  } else {
+    menuEl.innerHTML = currentEventMenus.map(m=>`
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:500">${m.nama}</div>
+          <div style="font-size:11px;color:var(--ink3)">${m.qty} pax × ${rpFull(m.harga)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:600;color:var(--gold);font-family:var(--mono)">${rpFull(m.total)}</span>
+          <button onclick="deleteMenu('${m.id}')" style="background:none;color:var(--ink4);font-size:16px;padding:2px">×</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Bahan HPP list
+  const bahanEl = document.getElementById('evd-bahan');
+  if (!currentEventBahan.length) {
+    bahanEl.innerHTML = `<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum ada bahan — tap + untuk tarik bahan</div>`;
+  } else {
+    bahanEl.innerHTML = currentEventBahan.map(b=>`
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:500">${b.nama_bahan}</div>
+          <div style="font-size:11px;color:var(--ink3)">${b.qty} ${b.satuan} × ${rpFull(b.harga_avg)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:600;color:var(--red);font-family:var(--mono)">${rpFull(b.total)}</span>
+          <button onclick="deleteBahanEvent('${b.id}')" style="background:none;color:var(--ink4);font-size:16px;padding:2px">×</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Ops list
+  const opsEl = document.getElementById('evd-ops');
+  if (!currentEventOps.length) {
+    opsEl.innerHTML = `<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum ada biaya ops</div>`;
+  } else {
+    opsEl.innerHTML = currentEventOps.map(o=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:500">${o.keterangan}</div>
+          <div style="font-size:11px;color:var(--ink3)">${fmtDate(o.tanggal)} · ${o.metode||'cash'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:600;color:var(--orange);font-family:var(--mono)">${rpFull(o.jumlah)}</span>
+          <button onclick="deleteOps('${o.id}')" style="background:none;color:var(--ink4);font-size:16px;padding:2px">×</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Pembayaran list
+  const bayarEl = document.getElementById('evd-bayar');
+  if (!currentEventBayar.length) {
+    bayarEl.innerHTML = `<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum ada pembayaran</div>`;
+  } else {
+    bayarEl.innerHTML = currentEventBayar.map(b=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:500;text-transform:capitalize">${b.tahap}</div>
+          <div style="font-size:11px;color:var(--ink3)">${fmtDate(b.tanggal)} · ${b.metode||'transfer'}${b.catatan?' · '+b.catatan:''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:600;color:var(--green);font-family:var(--mono)">${rpFull(b.jumlah)}</span>
+          <button onclick="deleteBayar('${b.id}')" style="background:none;color:var(--ink4);font-size:16px;padding:2px">×</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function renderStatusBtns(current) {
+  const flow = ['inquiry','booking','dp','lunas','selesai'];
+  const idx  = flow.indexOf(current);
+  const el   = document.getElementById('evd-status-btns');
+  if (!el) return;
+
+  // Tombol ubah status
+  let html = '';
+  if (current === 'cancel') {
+    html = `<button class="btn btn-secondary" style="margin-top:0" onclick="changeEventStatus('inquiry')">↩ Batalkan Cancel</button>`;
+  } else {
+    if (idx < flow.length-1) {
+      const next = flow[idx+1];
+      const labels = {booking:'✅ Konfirmasi Booking',dp:'💰 Catat DP',lunas:'💳 Lunas',selesai:'🎉 Selesai'};
+      html += `<button class="btn btn-primary" onclick="changeEventStatus('${next}')">${labels[next]||next}</button>`;
+    }
+    html += `<button class="btn btn-danger" style="margin-top:8px" onclick="changeEventStatus('cancel')">❌ Cancel Event</button>`;
+  }
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════
+// BAHAN
+// ══════════════════════════════════════════════════════════
+let bahanData = [];
+
+function switchBahanTab(el) {
+  document.querySelectorAll('[data-btab]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  state.currentBahanTab = el.dataset.btab;
+  document.getElementById('bahan-master').style.display   = state.currentBahanTab==='master'    ? '' : 'none';
+  document.getElementById('bahan-pembelian').style.display = state.currentBahanTab==='pembelian' ? '' : 'none';
+}
+
+async function loadBahan() {
+  try {
+    const [bahan, beli] = await Promise.all([
+      sbGet('gk_bahan', 'order=nama.asc&select=*'),
+      sbGet('gk_pembelian', 'order=tanggal.desc&limit=50&select=*,gk_bahan(nama)')
+    ]);
+    bahanData = bahan;
+    renderBahan(bahan);
+    renderBeli(beli);
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function renderBahan(list) {
+  const el = document.getElementById('bahan-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🥕</div><div class="empty-text">Belum ada bahan<br>Tap + untuk tambah</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(b => `
+    <div class="card" style="margin-bottom:8px;padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:13px;font-weight:600">${b.nama}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:2px">
+            1 ${b.satuan_besar} = ${b.konversi} ${b.satuan_kecil}
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:600;color:var(--gold);font-family:var(--mono)">${rpFull(b.harga_rata2)}</div>
+          <div style="font-size:10px;color:var(--ink3)">per ${b.satuan_kecil}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderBeli(list) {
+  const el = document.getElementById('beli-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🛒</div><div class="empty-text">Belum ada pembelian<br>Tap + untuk catat</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(b => `
+    <div class="card" style="margin-bottom:8px;padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:13px;font-weight:600">${b.nama_bahan}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:2px">
+            ${b.qty} ${b.satuan} ${b.toko ? '· '+b.toko : ''} · ${fmtDate(b.tanggal)}
+          </div>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:var(--red);font-family:var(--mono)">${rpFull(b.total)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function openAddBahan() {
+  document.getElementById('bh-id').value = '';
+  document.getElementById('bh-nama').value = '';
+  document.getElementById('bh-sat-besar').value = '';
+  document.getElementById('bh-sat-kecil').value = '';
+  document.getElementById('bh-konversi').value = '';
+  document.getElementById('bh-catatan').value = '';
+  document.getElementById('sheetBahanTitle').textContent = 'Tambah Bahan';
+  openSheet('sheetBahan');
+}
+
+// Live preview konversi hint
+document.addEventListener('input', e => {
+  if (['bh-sat-besar','bh-sat-kecil','bh-konversi'].includes(e.target.id)) {
+    const sb = document.getElementById('bh-sat-besar').value || 'satuan besar';
+    const sk = document.getElementById('bh-sat-kecil').value || 'satuan kecil';
+    const k  = document.getElementById('bh-konversi').value || '?';
+    document.getElementById('bh-konversi-hint').textContent = `1 ${sb} = ${k} ${sk}`;
+  }
+});
+
+async function saveBahan() {
+  const id = document.getElementById('bh-id').value;
+  const data = {
+    nama:         document.getElementById('bh-nama').value.trim(),
+    satuan_besar: document.getElementById('bh-sat-besar').value.trim(),
+    satuan_kecil: document.getElementById('bh-sat-kecil').value.trim(),
+    konversi:     Number(document.getElementById('bh-konversi').value) || 1,
+    catatan:      document.getElementById('bh-catatan').value.trim(),
+  };
+  if (!data.nama || !data.satuan_besar || !data.satuan_kecil) {
+    toast('⚠️ Isi nama dan satuan'); return;
+  }
+  try {
+    if (id) await sbUpdate('gk_bahan', id, data);
+    else await sbInsert('gk_bahan', data);
+    closeSheet('sheetBahan');
+    toast('✅ Bahan disimpan');
+    await loadBahan();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openAddBeli() {
+  // Populate dropdown bahan
+  const sel = document.getElementById('beli-bahan');
+  sel.innerHTML = '<option value="">-- Pilih Bahan --</option>' +
+    bahanData.map(b=>`<option value="${b.id}" data-sb="${b.satuan_besar}" data-sk="${b.satuan_kecil}" data-k="${b.konversi}" data-h="${b.harga_rata2}">${b.nama}</option>`).join('');
+  document.getElementById('beli-qty').value = '';
+  document.getElementById('beli-harga').value = '';
+  document.getElementById('beli-total').textContent = 'Rp 0';
+  document.getElementById('beli-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('beli-toko').value = '';
+  document.getElementById('beli-satuan').innerHTML = '<option value="">--</option>';
+  openSheet('sheetBeli');
+}
+
+function onBeliSelectBahan() {
+  const sel = document.getElementById('beli-bahan');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt.value) return;
+  const sb = opt.dataset.sb, sk = opt.dataset.sk;
+  const satuanSel = document.getElementById('beli-satuan');
+  satuanSel.innerHTML = `<option value="${sb}">${sb}</option><option value="${sk}">${sk}</option>`;
+  document.getElementById('beli-harga').value = '';
+  calcBeliTotal();
+}
+
+function onBeliSatuanChange() { calcBeliTotal(); }
+
+function calcBeliTotal() {
+  const qty = Number(document.getElementById('beli-qty').value)||0;
+  const hrg = Number(document.getElementById('beli-harga').value)||0;
+  document.getElementById('beli-total').textContent = rpFull(qty*hrg);
+}
+
+async function saveBeli() {
+  const sel = document.getElementById('beli-bahan');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt.value) { toast('⚠️ Pilih bahan'); return; }
+  const bahanId = opt.value;
+  const satuan  = document.getElementById('beli-satuan').value;
+  const qty     = Number(document.getElementById('beli-qty').value)||0;
+  const harga   = Number(document.getElementById('beli-harga').value)||0;
+  if (!satuan || !qty || !harga) { toast('⚠️ Lengkapi data'); return; }
+
+  // Hitung qty_kecil dan harga_kecil
+  const sb = opt.dataset.sb, sk = opt.dataset.sk, k = Number(opt.dataset.k)||1;
+  let qty_kecil, harga_kecil;
+  if (satuan === sb) {
+    qty_kecil   = qty * k;
+    harga_kecil = harga / k;
+  } else {
+    qty_kecil   = qty;
+    harga_kecil = harga;
+  }
+
+  const data = {
+    bahan_id:    bahanId,
+    nama_bahan:  opt.text,
+    tanggal:     document.getElementById('beli-tanggal').value,
+    qty, satuan,
+    qty_kecil:   Math.round(qty_kecil*1000)/1000,
+    harga_beli:  harga,
+    harga_kecil: Math.round(harga_kecil*100)/100,
+    total:       qty * harga,
+    toko:        document.getElementById('beli-toko').value.trim(),
+  };
+  try {
+    await sbInsert('gk_pembelian', data);
+    closeSheet('sheetBeli');
+    toast('✅ Pembelian dicatat');
+    await loadBahan();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════
+// TOKBA
+// ══════════════════════════════════════════════════════════
+function switchTokbaTab(el) {
+  document.querySelectorAll('[data-ttab]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  state.currentTokbaTab = el.dataset.ttab;
+  document.getElementById('tokba-online').style.display  = state.currentTokbaTab==='online'  ? '' : 'none';
+  document.getElementById('tokba-offline').style.display = state.currentTokbaTab==='offline' ? '' : 'none';
+}
+
+async function loadTokba() {
+  const s = periodStart(), e = periodEnd();
+  try {
+    const [online, offline] = await Promise.all([
+      sbGet('gk_tokba_online',  `tanggal=gte.${s}&tanggal=lte.${e}&order=tanggal.desc&select=*`),
+      sbGet('gk_tokba_pesanan', `tanggal=gte.${s}&tanggal=lte.${e}&order=tanggal.desc&select=*`),
+    ]);
+    renderTokbaOnline(online);
+    renderTokbaOffline(offline);
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function renderTokbaOnline(list) {
+  // Platform stats
+  const platforms = ['shopee','tokped','tiktok','lazada'];
+  platforms.forEach(p => {
+    const total = list.filter(r=>r.platform===p).reduce((s,r)=>s+Number(r.jumlah),0);
+    const el = document.getElementById('ts-'+p);
+    if (el) el.textContent = total ? rp(total) : '—';
+  });
+
+  // List
+  const el = document.getElementById('online-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🛍️</div><div class="empty-text">Belum ada tarik bulan ini</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(r => `
+    <div class="card" style="margin-bottom:8px;padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:600;text-transform:capitalize">${r.platform}</div>
+          <div style="font-size:11px;color:var(--ink3)">${fmtDate(r.tanggal)}${r.catatan?' · '+r.catatan:''}</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--green);font-family:var(--mono)">${rpFull(r.jumlah)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderTokbaOffline(list) {
+  const el = document.getElementById('offline-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🏭</div><div class="empty-text">Belum ada pesanan bulan ini</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(r => `
+    <div class="ev-item" onclick="openPesananDetail('${r.id}')">
+      <div class="ev-top">
+        <div>
+          <div class="ev-customer">${r.customer}</div>
+          <div class="ev-date">📦 ${fmtDate(r.tanggal)}${r.kontak?' · '+r.kontak:''}</div>
+        </div>
+        <span class="badge ${r.status}">${r.status}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── PESANAN OFFLINE DETAIL ─────────────────────────────────
+let currentPesanan = null;
+let currentPesananItems = [];
+
+async function openPesananDetail(id) {
+  try {
+    const [pesArr, items] = await Promise.all([
+      sbGet('gk_tokba_pesanan', `id=eq.${id}&select=*`),
+      sbGet('gk_tokba_item', `pesanan_id=eq.${id}&order=created_at.asc&select=*`),
+    ]);
+    currentPesanan      = pesArr[0];
+    currentPesananItems = items;
+    renderPesananDetail();
+    openSheet('sheetPesananDetail');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function renderPesananDetail() {
+  const p = currentPesanan;
+  const total = currentPesananItems.reduce((s,i)=>s+Number(i.total||0),0);
+  set('pes-customer', p.customer);
+  set('pes-date', fmtDate(p.tanggal) + (p.kontak?' · '+p.kontak:''));
+  document.getElementById('pes-status').className = 'badge '+p.status;
+  set('pes-status', p.status);
+  set('pes-total', rpFull(total));
+  const el = document.getElementById('pes-items');
+  if (!currentPesananItems.length) {
+    el.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum ada item</div>';
+  } else {
+    el.innerHTML = currentPesananItems.map(i=>`
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:500">${i.nama_produk}</div>
+          <div style="font-size:11px;color:var(--ink3)">${i.qty} ${i.satuan} × ${rpFull(i.harga)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:600;color:var(--gold);font-family:var(--mono)">${rpFull(i.total)}</span>
+          <button onclick="deletePesananItem('${i.id}')" style="background:none;color:var(--ink4);font-size:16px;padding:2px">×</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+async function deletePesananItem(id) {
+  if (!confirm('Hapus item ini?')) return;
+  try {
+    await sbDelete('gk_tokba_item', id);
+    currentPesananItems = currentPesananItems.filter(i=>i.id!==id);
+    renderPesananDetail();
+    toast('✅ Item dihapus');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openAddPesananItem() {
+  document.getElementById('pitem-nama').value = '';
+  document.getElementById('pitem-qty').value = '1';
+  document.getElementById('pitem-satuan').value = 'pcs';
+  document.getElementById('pitem-harga').value = '';
+  document.getElementById('pitem-total').textContent = 'Rp 0';
+  openSheet('sheetPesananItem');
+}
+
+async function savePesananItem() {
+  const nama  = document.getElementById('pitem-nama').value.trim();
+  const qty   = Number(document.getElementById('pitem-qty').value)||0;
+  const satuan= document.getElementById('pitem-satuan').value.trim();
+  const harga = Number(document.getElementById('pitem-harga').value)||0;
+  if (!nama || !qty || !harga) { toast('⚠️ Lengkapi semua field'); return; }
+  try {
+    const res = await sbInsert('gk_tokba_item', {
+      pesanan_id: currentPesanan.id, nama_produk: nama, qty, satuan, harga
+    });
+    currentPesananItems.push(res[0]);
+    closeSheet('sheetPesananItem');
+    renderPesananDetail();
+    toast('✅ Item ditambah');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function setPesananStatus(status) {
+  try {
+    await sbUpdate('gk_tokba_pesanan', currentPesanan.id, { status });
+    currentPesanan.status = status;
+    renderPesananDetail();
+    toast('✅ Status: ' + status);
+    loadTokba();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openPesananInvoice() {
+  const p = currentPesanan;
+  const total = currentPesananItems.reduce((s,i)=>s+Number(i.total||0),0);
+  const invNo = 'INV/TB/' + (p.tanggal||'').replace(/-/g,'').slice(2) + '/' + p.id.slice(-4).toUpperCase();
+  const el = document.getElementById('invoice-body');
+  el.innerHTML = `
+    <div style="font-family:var(--mono);font-size:11px;color:var(--ink3);margin-bottom:4px">${invNo}</div>
+    <div style="font-size:18px;font-weight:700;color:var(--gold);margin-bottom:16px">INVOICE</div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:14px">
+      <div class="row"><span class="row-label">Customer</span><span style="font-size:13px;font-weight:600">${p.customer}</span></div>
+      <div class="row"><span class="row-label">Tanggal</span><span style="font-size:12px">${fmtDate(p.tanggal)}</span></div>
+      ${p.kontak?`<div class="row"><span class="row-label">Kontak</span><span style="font-size:12px">${p.kontak}</span></div>`:''}
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Item Pesanan</div>
+    ${currentPesananItems.map(i=>`
+      <div class="row">
+        <div>
+          <div style="font-size:13px">${i.nama_produk}</div>
+          <div style="font-size:11px;color:var(--ink3)">${i.qty} ${i.satuan} x ${rpFull(i.harga)}</div>
+        </div>
+        <span style="font-size:13px;font-weight:600;font-family:var(--mono)">${rpFull(i.total)}</span>
+      </div>`).join('')}
+    <div style="border-top:2px solid var(--border2);margin:12px 0;padding-top:12px">
+      <div class="row"><span style="font-size:14px;font-weight:700">TOTAL</span><span style="font-size:16px;font-weight:700;color:var(--gold);font-family:var(--mono)">${rpFull(total)}</span></div>
+    </div>
+    <div style="margin-top:16px;padding:12px;background:var(--bg3);border-radius:8px;font-size:11px;color:var(--ink3);text-align:center">
+      Gubukan Krasti - Toko Bahan
+    </div>`;
+  openSheet('sheetInvoice');
+}
+
+function openAddOnline() {
+  document.getElementById('on-jumlah').value = '';
+  document.getElementById('on-catatan').value = '';
+  document.getElementById('on-tanggal').value = new Date().toISOString().slice(0,10);
+  openSheet('sheetOnline');
+}
+
+async function saveOnline() {
+  const data = {
+    platform: document.getElementById('on-platform').value,
+    jumlah:   Number(document.getElementById('on-jumlah').value)||0,
+    tanggal:  document.getElementById('on-tanggal').value,
+    catatan:  document.getElementById('on-catatan').value.trim(),
+  };
+  if (!data.jumlah) { toast('⚠️ Isi jumlah'); return; }
+  try {
+    await sbInsert('gk_tokba_online', data);
+    closeSheet('sheetOnline');
+    toast('✅ Tarik dicatat');
+    await loadTokba();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openAddOffline() {
+  document.getElementById('off-customer').value = '';
+  document.getElementById('off-kontak').value = '';
+  document.getElementById('off-catatan').value = '';
+  document.getElementById('off-tanggal').value = new Date().toISOString().slice(0,10);
+  openSheet('sheetOffline');
+}
+
+async function saveOffline() {
+  const data = {
+    customer: document.getElementById('off-customer').value.trim(),
+    tanggal:  document.getElementById('off-tanggal').value,
+    kontak:   document.getElementById('off-kontak').value.trim(),
+    catatan:  document.getElementById('off-catatan').value.trim(),
+    status:   'proses',
+  };
+  if (!data.customer) { toast('⚠️ Isi nama customer'); return; }
+  try {
+    await sbInsert('gk_tokba_pesanan', data);
+    closeSheet('sheetOffline');
+    toast('✅ Pesanan dicatat');
+    await loadTokba();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════
+// LAPORAN
+// ══════════════════════════════════════════════════════════
+async function loadLaporan() {
+  try {
+    const data = await sbGet('gk_pl_bulanan', 'order=bulan.desc&limit=12&select=*');
+    renderLaporan(data);
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function renderLaporan(list) {
+  const el = document.getElementById('lap-content');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Belum ada data laporan</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(r => {
+    const gkLaba   = Number(r.gk_laba||0);
+    const tbLaba   = Number(r.tb_laba||0);
+    const total    = Number(r.total_laba||0);
+    const gkOmzet  = Number(r.gk_omzet||0);
+    const tbOmzet  = Number(r.tb_omzet||0);
+    const totOmzet = gkOmzet + tbOmzet;
+    const margin   = totOmzet > 0 ? Math.round(total/totOmzet*100) : 0;
+    const bulanLabel = new Date(r.bulan).toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+    return `
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:700">${bulanLabel}</div>
+        <div style="font-size:14px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'};font-family:var(--mono)">${rp(total)}</div>
+      </div>
+      <div class="row"><span class="row-label">Gubukan Omzet</span><span class="row-val gold">${rp(gkOmzet)}</span></div>
+      <div class="row"><span class="row-label">Gubukan Laba</span><span class="row-val ${gkLaba>=0?'green':'red'}">${rp(gkLaba)}</span></div>
+      <div class="row"><span class="row-label">Tokba Omzet</span><span class="row-val gold">${rp(tbOmzet)}</span></div>
+      <div class="row"><span class="row-label">Tokba Laba</span><span class="row-val ${tbLaba>=0?'green':'red'}">${rp(tbLaba)}</span></div>
+      <div class="row"><span class="row-label">Overhead</span><span class="row-val red">${rp(r.overhead)}</span></div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+        <span style="font-size:11px;color:var(--ink3)">Margin ${margin}%</span>
+        <span style="font-size:12px;font-weight:700;color:${total>=0?'var(--green)':'var(--red)'};font-family:var(--mono)">${rp(total)}</span>
+      </div>
+      <div class="prog-wrap" style="margin-top:6px">
+        <div class="prog-bar ${total>=0?'green':'red'}" style="width:${Math.min(Math.abs(margin),100)}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// PERIOD PICKER
+// ══════════════════════════════════════════════════════════
+function openPeriod() {
+  const el = document.getElementById('periodList');
+  const now = new Date();
+  let html = '';
+  for (let i=0; i<12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const y = d.getFullYear(), m = d.getMonth()+1;
+    const label = d.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+    const active = (y===state.period.year && m===state.period.month) ? 'active' : '';
+    html += `<button class="btn-period ${active}" onclick="setPeriod(${y},${m})">${label}</button>`;
+  }
+  el.innerHTML = html;
+  openSheet('sheetPeriod');
+}
+
+function setPeriod(y, m) {
+  state.period = {year:y, month:m};
+  document.getElementById('periodLabel').textContent =
+    new Date(y,m-1,1).toLocaleDateString('id-ID',{month:'short',year:'numeric'});
+  closeSheet('sheetPeriod');
+  loadPage(state.currentTab);
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+function init() {
+  // Tanggal di topbar
+  const now = new Date();
+  const days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  document.getElementById('topDate').textContent =
+    days[now.getDay()] + ', ' + now.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+
+  // Period label
+  document.getElementById('periodLabel').textContent =
+    now.toLocaleDateString('id-ID',{month:'short',year:'numeric'});
+
+  // Load dashboard
+  loadDashboard();
+}
+
+
+// ══════════════════════════════════════════════════════════
+// EVENT DETAIL — ACTIONS
+// ══════════════════════════════════════════════════════════
+async function changeEventStatus(status) {
+  if (!currentEvent) return;
+  try {
+    await sbUpdate('gk_event', currentEvent.id, { status });
+    currentEvent.status = status;
+    renderStatusBtns(status);
+    document.getElementById('evd-status').className = 'badge '+status;
+    set('evd-status', status);
+    toast('✅ Status: ' + status);
+    loadEvents();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function deleteMenu(id) {
+  if (!confirm('Hapus menu ini?')) return;
+  try {
+    await sbDelete('gk_event_menu', id);
+    currentEventMenus = currentEventMenus.filter(m=>m.id!==id);
+    renderEventDetail();
+    toast('✅ Menu dihapus');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function deleteBahanEvent(id) {
+  if (!confirm('Hapus bahan ini?')) return;
+  try {
+    await sbDelete('gk_event_bahan', id);
+    currentEventBahan = currentEventBahan.filter(b=>b.id!==id);
+    renderEventDetail();
+    toast('✅ Bahan dihapus');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function deleteOps(id) {
+  if (!confirm('Hapus biaya ops?')) return;
+  try {
+    await sbDelete('gk_biaya_ops', id);
+    currentEventOps = currentEventOps.filter(o=>o.id!==id);
+    renderEventDetail();
+    toast('✅ Ops dihapus');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function deleteBayar(id) {
+  if (!confirm('Hapus pembayaran?')) return;
+  try {
+    await sbDelete('gk_event_bayar', id);
+    currentEventBayar = currentEventBayar.filter(b=>b.id!==id);
+    renderEventDetail();
+    toast('✅ Pembayaran dihapus');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openAddMenu() {
+  document.getElementById('menu-nama').value = '';
+  document.getElementById('menu-qty').value = '';
+  document.getElementById('menu-harga').value = '';
+  document.getElementById('menu-total').textContent = 'Rp 0';
+  openSheet('sheetMenu');
+}
+
+async function saveMenu() {
+  const nama  = document.getElementById('menu-nama').value.trim();
+  const qty   = Number(document.getElementById('menu-qty').value)||0;
+  const harga = Number(document.getElementById('menu-harga').value)||0;
+  if (!nama || !qty || !harga) { toast('⚠️ Lengkapi semua field'); return; }
+  try {
+    const res = await sbInsert('gk_event_menu', { event_id: currentEvent.id, nama, qty, harga });
+    currentEventMenus.push(res[0]);
+    closeSheet('sheetMenu');
+    renderEventDetail();
+    toast('✅ Menu ditambah');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openAddBahanEvent() {
+  const sel = document.getElementById('evb-bahan');
+  sel.innerHTML = '<option value="">-- Pilih Bahan --</option>' +
+    bahanData.map(b=>`<option value="${b.id}" data-sk="${b.satuan_kecil}" data-h="${b.harga_rata2}">${b.nama} (${rpFull(b.harga_rata2)}/${b.satuan_kecil})</option>`).join('') +
+    '<option value="__manual__">+ Input Manual</option>';
+  document.getElementById('evb-nama-manual').style.display = 'none';
+  document.getElementById('evb-qty').value = '';
+  document.getElementById('evb-harga').value = '';
+  document.getElementById('evb-satuan').value = '';
+  document.getElementById('evb-total').textContent = 'Rp 0';
+  openSheet('sheetBahanEvent');
+}
+
+function onEvbSelectBahan() {
+  const sel = document.getElementById('evb-bahan');
+  const opt = sel.options[sel.selectedIndex];
+  const manualDiv = document.getElementById('evb-nama-manual');
+  if (opt.value === '__manual__') {
+    manualDiv.style.display = '';
+    document.getElementById('evb-satuan').value = '';
+    document.getElementById('evb-harga').value = '';
+  } else if (opt.value) {
+    manualDiv.style.display = 'none';
+    document.getElementById('evb-satuan').value = opt.dataset.sk || '';
+    document.getElementById('evb-harga').value = opt.dataset.h || '';
+    calcEvbTotal();
+  }
+}
+
+function calcEvbTotal() {
+  const qty   = Number(document.getElementById('evb-qty').value)||0;
+  const harga = Number(document.getElementById('evb-harga').value)||0;
+  document.getElementById('evb-total').textContent = rpFull(qty*harga);
+}
+
+async function saveBahanEvent() {
+  const sel    = document.getElementById('evb-bahan');
+  const opt    = sel.options[sel.selectedIndex];
+  const manual = opt.value === '__manual__';
+  const bahanId= manual ? null : opt.value;
+  const nama   = manual ? document.getElementById('evb-nama-input').value.trim() : opt.text.split(' (')[0];
+  const qty    = Number(document.getElementById('evb-qty').value)||0;
+  const satuan = document.getElementById('evb-satuan').value.trim();
+  const harga  = Number(document.getElementById('evb-harga').value)||0;
+  if (!nama || !qty || !satuan || !harga) { toast('⚠️ Lengkapi semua field'); return; }
+  try {
+    const data = { event_id: currentEvent.id, nama_bahan: nama, qty, satuan, harga_avg: harga };
+    if (bahanId) data.bahan_id = bahanId;
+    const res = await sbInsert('gk_event_bahan', data);
+    currentEventBahan.push(res[0]);
+    closeSheet('sheetBahanEvent');
+    renderEventDetail();
+    toast('✅ Bahan ditambah');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openAddOpsEvent() {
+  document.getElementById('ops-ket').value = '';
+  document.getElementById('ops-jumlah').value = '';
+  document.getElementById('ops-metode').value = 'cash';
+  document.getElementById('ops-tanggal').value = (currentEvent && currentEvent.tanggal) || new Date().toISOString().slice(0,10);
+  openSheet('sheetOpsEvent');
+}
+
+async function saveOpsEvent() {
+  const ket    = document.getElementById('ops-ket').value.trim();
+  const jumlah = Number(document.getElementById('ops-jumlah').value)||0;
+  const metode = document.getElementById('ops-metode').value;
+  const tgl    = document.getElementById('ops-tanggal').value;
+  if (!ket || !jumlah) { toast('⚠️ Isi keterangan dan jumlah'); return; }
+  try {
+    const res = await sbInsert('gk_biaya_ops', { event_id: currentEvent.id, keterangan: ket, jumlah, metode, tanggal: tgl, kategori: 'event' });
+    currentEventOps.push(res[0]);
+    closeSheet('sheetOpsEvent');
+    renderEventDetail();
+    toast('✅ Biaya ops ditambah');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openAddBayar() {
+  const tahapDone = currentEventBayar.map(b=>b.tahap);
+  let nextTahap = 'booking';
+  if (tahapDone.includes('booking'))   nextTahap = 'dp';
+  if (tahapDone.includes('dp'))        nextTahap = 'pelunasan';
+  if (tahapDone.includes('pelunasan')) nextTahap = 'lainnya';
+  document.getElementById('bayar-tahap').value = nextTahap;
+  const omzet = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
+  const sudah = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
+  document.getElementById('bayar-jumlah').value = Math.max(omzet-sudah,0)||'';
+  document.getElementById('bayar-metode').value = 'transfer';
+  document.getElementById('bayar-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('bayar-catatan').value = '';
+  openSheet('sheetBayar');
+}
+
+async function saveBayar() {
+  const tahap  = document.getElementById('bayar-tahap').value;
+  const jumlah = Number(document.getElementById('bayar-jumlah').value)||0;
+  const metode = document.getElementById('bayar-metode').value;
+  const tgl    = document.getElementById('bayar-tanggal').value;
+  const catatan= document.getElementById('bayar-catatan').value.trim();
+  if (!jumlah) { toast('⚠️ Isi jumlah pembayaran'); return; }
+  try {
+    const res = await sbInsert('gk_event_bayar', { event_id: currentEvent.id, tahap, jumlah, metode, tanggal: tgl, catatan });
+    currentEventBayar.push(res[0]);
+    closeSheet('sheetBayar');
+    if (tahap==='booking' && currentEvent.status==='inquiry') await changeEventStatus('booking');
+    else if (tahap==='dp' && currentEvent.status==='booking') await changeEventStatus('dp');
+    else if (tahap==='pelunasan') await changeEventStatus('lunas');
+    renderEventDetail();
+    toast('✅ Pembayaran dicatat');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openInvoice() {
+  const ev = currentEvent;
+  const omzet = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
+  const terbayar = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
+  const sisa = omzet - terbayar;
+  const invNo = 'INV/GK/' + (ev.tanggal||'').replace(/-/g,'').slice(2) + '/' + ev.id.slice(-4).toUpperCase();
+  const el = document.getElementById('invoice-body');
+  el.innerHTML = `
+    <div style="font-family:var(--mono);font-size:11px;color:var(--ink3);margin-bottom:4px">${invNo}</div>
+    <div style="font-size:18px;font-weight:700;color:var(--gold);margin-bottom:16px">INVOICE</div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:14px">
+      <div class="row"><span class="row-label">Customer</span><span style="font-size:13px;font-weight:600">${ev.customer}</span></div>
+      <div class="row"><span class="row-label">Tanggal Event</span><span style="font-size:12px">${fmtDate(ev.tanggal)}</span></div>
+      ${ev.lokasi?`<div class="row"><span class="row-label">Lokasi</span><span style="font-size:12px">${ev.lokasi}</span></div>`:''}
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Item Menu</div>
+    ${currentEventMenus.map(m=>`
+      <div class="row">
+        <div><div style="font-size:13px">${m.nama}</div><div style="font-size:11px;color:var(--ink3)">${m.qty} pax x ${rpFull(m.harga)}</div></div>
+        <span style="font-size:13px;font-weight:600;font-family:var(--mono)">${rpFull(m.total)}</span>
+      </div>`).join('')}
+    <div style="border-top:2px solid var(--border2);margin:12px 0;padding-top:12px">
+      <div class="row"><span style="font-size:14px;font-weight:700">TOTAL</span><span style="font-size:16px;font-weight:700;color:var(--gold);font-family:var(--mono)">${rpFull(omzet)}</span></div>
+      <div class="row"><span class="row-label">Terbayar</span><span style="font-size:13px;color:var(--green);font-family:var(--mono)">${rpFull(terbayar)}</span></div>
+      ${sisa>0?`<div class="row"><span class="row-label" style="color:var(--red)">Sisa Tagihan</span><span style="font-size:14px;font-weight:700;color:var(--red);font-family:var(--mono)">${rpFull(sisa)}</span></div>`:'<div style="text-align:center;padding:10px;color:var(--green);font-weight:600">LUNAS</div>'}
+    </div>
+    <div style="margin-top:16px;padding:12px;background:var(--bg3);border-radius:8px;font-size:11px;color:var(--ink3);text-align:center">Gubukan Krasti - Catering dan Kuliner</div>`;
+  openSheet('sheetInvoice');
+}
+
+init();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SHEET: EVENT DETAIL                                        -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="overlay" id="sheetEventDetail" onclick="overlayClose(event,'sheetEventDetail')">
+  <div class="sheet" onclick="e=>e.stopPropagation()" style="max-height:95dvh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-title" id="evd-customer">—</div>
+        <div style="font-size:11px;color:var(--ink3);margin-top:2px" id="evd-date">—</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge inquiry" id="evd-status">—</span>
+        <span class="sheet-close" onclick="closeSheet('sheetEventDetail')">✕</span>
+      </div>
+    </div>
+    <div style="padding:14px 18px">
+      <!-- Summary -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <div class="stat-card" style="padding:10px">
+          <div class="stat-label">Omzet</div>
+          <div class="stat-val gold" style="font-size:14px" id="evd-omzet">—</div>
+        </div>
+        <div class="stat-card" style="padding:10px">
+          <div class="stat-label">Terbayar</div>
+          <div class="stat-val green" style="font-size:14px" id="evd-terbayar">—</div>
+        </div>
+        <div class="stat-card" style="padding:10px">
+          <div class="stat-label">Sisa</div>
+          <div class="stat-val red" style="font-size:14px" id="evd-sisa">—</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--ink3)">Laba: <span id="evd-laba" style="color:var(--green);font-weight:600">—</span></span>
+        <span style="font-size:11px;color:var(--gold)" id="evd-margin">—</span>
+      </div>
+      <div class="prog-wrap" style="margin-bottom:14px"><div class="prog-bar green" id="evd-laba-bar" style="width:0%"></div></div>
+
+      <!-- Status Buttons -->
+      <div id="evd-status-btns" style="margin-bottom:14px"></div>
+
+      <!-- Menu -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="section-title" style="margin:0">Menu</div>
+        <button onclick="openAddMenu()" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Tambah</button>
+      </div>
+      <div id="evd-menus" style="margin-bottom:14px"></div>
+
+      <!-- HPP Bahan -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="section-title" style="margin:0">HPP Bahan</div>
+        <button onclick="openAddBahanEvent()" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Tarik</button>
+      </div>
+      <div id="evd-bahan" style="margin-bottom:14px"></div>
+
+      <!-- Biaya Ops -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="section-title" style="margin:0">Biaya Ops</div>
+        <button onclick="openAddOpsEvent()" style="background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Tambah</button>
+      </div>
+      <div id="evd-ops" style="margin-bottom:14px"></div>
+
+      <!-- Pembayaran -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="section-title" style="margin:0">Pembayaran</div>
+        <button onclick="openAddBayar()" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Catat</button>
+      </div>
+      <div id="evd-bayar" style="margin-bottom:14px"></div>
+
+      <!-- Invoice -->
+      <button class="btn btn-secondary" onclick="openInvoice()">🧾 Lihat Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Tambah Menu -->
+<div class="overlay" id="sheetMenu" onclick="overlayClose(event,'sheetMenu')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Tambah Menu</span>
+      <span class="sheet-close" onclick="closeSheet('sheetMenu')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Nama Menu</label>
+        <input type="text" class="form-control" id="menu-nama" placeholder="Zuppa Soup, Sate Ayam, dll">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty (pax)</label>
+          <input type="number" class="form-control" id="menu-qty" placeholder="0" min="1" oninput="document.getElementById('menu-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('menu-harga').value)||0))">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Harga / pax</label>
+          <input type="number" class="form-control" id="menu-harga" placeholder="0" min="0" oninput="document.getElementById('menu-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('menu-qty').value)||0))">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total</label>
+        <div class="form-control" id="menu-total" style="color:var(--gold);font-family:var(--mono);font-weight:600">Rp 0</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveMenu()">💾 Simpan Menu</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetMenu')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Tarik Bahan untuk Event -->
+<div class="overlay" id="sheetBahanEvent" onclick="overlayClose(event,'sheetBahanEvent')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Tarik Bahan (HPP)</span>
+      <span class="sheet-close" onclick="closeSheet('sheetBahanEvent')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Pilih Bahan</label>
+        <select class="form-control" id="evb-bahan" onchange="onEvbSelectBahan()">
+          <option value="">-- Pilih --</option>
+        </select>
+      </div>
+      <div id="evb-nama-manual" style="display:none" class="form-group">
+        <label class="form-label">Nama Bahan (manual)</label>
+        <input type="text" class="form-control" id="evb-nama-input" placeholder="Nama bahan">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty</label>
+          <input type="number" class="form-control" id="evb-qty" placeholder="0" min="0" step="0.001" oninput="calcEvbTotal()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Satuan</label>
+          <input type="text" class="form-control" id="evb-satuan" placeholder="kg, gram, pcs">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Harga / satuan (Rp)</label>
+        <input type="number" class="form-control" id="evb-harga" placeholder="0" oninput="calcEvbTotal()">
+        <div class="form-hint">Otomatis dari harga rata-rata, bisa diubah</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total HPP</label>
+        <div class="form-control" id="evb-total" style="color:var(--red);font-family:var(--mono);font-weight:600">Rp 0</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveBahanEvent()">💾 Simpan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetBahanEvent')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Tambah Biaya Ops Event -->
+<div class="overlay" id="sheetOpsEvent" onclick="overlayClose(event,'sheetOpsEvent')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Biaya Operasional</span>
+      <span class="sheet-close" onclick="closeSheet('sheetOpsEvent')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <input type="text" class="form-control" id="ops-ket" placeholder="Fee waiters, transport, dll">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-control" id="ops-jumlah" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Metode</label>
+          <select class="form-control" id="ops-metode">
+            <option value="cash">Cash</option>
+            <option value="transfer">Transfer</option>
+            <option value="qris">QRIS</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tanggal</label>
+        <input type="date" class="form-control" id="ops-tanggal">
+      </div>
+      <button class="btn btn-primary" onclick="saveOpsEvent()">💾 Simpan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetOpsEvent')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Catat Pembayaran -->
+<div class="overlay" id="sheetBayar" onclick="overlayClose(event,'sheetBayar')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Catat Pembayaran</span>
+      <span class="sheet-close" onclick="closeSheet('sheetBayar')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tahap</label>
+          <select class="form-control" id="bayar-tahap">
+            <option value="booking">Booking Fee</option>
+            <option value="dp">DP</option>
+            <option value="pelunasan">Pelunasan</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-control" id="bayar-jumlah" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Metode</label>
+          <select class="form-control" id="bayar-metode">
+            <option value="transfer">Transfer</option>
+            <option value="cash">Cash</option>
+            <option value="qris">QRIS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="bayar-tanggal">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input type="text" class="form-control" id="bayar-catatan" placeholder="Opsional">
+      </div>
+      <button class="btn btn-primary" onclick="saveBayar()">💾 Simpan Pembayaran</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetBayar')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Invoice -->
+<div class="overlay" id="sheetInvoice" onclick="overlayClose(event,'sheetInvoice')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Invoice</span>
+      <span class="sheet-close" onclick="closeSheet('sheetInvoice')">✕</span>
+    </div>
+    <div class="sheet-body" id="invoice-body"></div>
+  </div>
+</div>
+
+<!-- SHEET: Detail Pesanan Offline -->
+<div class="overlay" id="sheetPesananDetail" onclick="overlayClose(event,'sheetPesananDetail')">
+  <div class="sheet" onclick="e=>e.stopPropagation()" style="max-height:95dvh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-title" id="pes-customer">—</div>
+        <div style="font-size:11px;color:var(--ink3);margin-top:2px" id="pes-date">—</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge proses" id="pes-status">—</span>
+        <span class="sheet-close" onclick="closeSheet('sheetPesananDetail')">✕</span>
+      </div>
+    </div>
+    <div style="padding:14px 18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:14px;font-weight:700;color:var(--gold);font-family:var(--mono)" id="pes-total">—</span>
+        <div style="display:flex;gap:8px">
+          <button onclick="setPesananStatus('lunas')" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:600">✅ Lunas</button>
+          <button onclick="setPesananStatus('cancel')" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:600">❌ Cancel</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="section-title" style="margin:0">Item Pesanan</div>
+        <button onclick="openAddPesananItem()" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Item</button>
+      </div>
+      <div id="pes-items" style="margin-bottom:14px"></div>
+      <button class="btn btn-secondary" onclick="openPesananInvoice()">🧾 Lihat Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: Tambah Item Pesanan -->
+<div class="overlay" id="sheetPesananItem" onclick="overlayClose(event,'sheetPesananItem')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Tambah Item</span>
+      <span class="sheet-close" onclick="closeSheet('sheetPesananItem')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Nama Produk</label>
+        <input type="text" class="form-control" id="pitem-nama" placeholder="Nama produk yang dijual">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty</label>
+          <input type="number" class="form-control" id="pitem-qty" placeholder="1" min="1" oninput="document.getElementById('pitem-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('pitem-harga').value)||0))">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Satuan</label>
+          <input type="text" class="form-control" id="pitem-satuan" placeholder="pcs, kg, dll">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Harga Jual (Rp)</label>
+        <input type="number" class="form-control" id="pitem-harga" placeholder="0" min="0" oninput="document.getElementById('pitem-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('pitem-qty').value)||0))">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total</label>
+        <div class="form-control" id="pitem-total" style="color:var(--gold);font-family:var(--mono);font-weight:600">Rp 0</div>
+      </div>
+      <button class="btn btn-primary" onclick="savePesananItem()">💾 Simpan Item</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetPesananItem')">Batal</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
