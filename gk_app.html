@@ -814,15 +814,18 @@ select.form-control { appearance: none; }
     <!-- PAGE: EVENT                                 -->
     <!-- ═══════════════════════════════════════════ -->
     <div class="page" id="page-event">
-      <!-- Filter status -->
-      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px;scrollbar-width:none;">
-        <button class="chip active" data-status="all" onclick="filterEvent(this)">Semua</button>
-        <button class="chip" data-status="inquiry" onclick="filterEvent(this)">Inquiry</button>
-        <button class="chip" data-status="booking" onclick="filterEvent(this)">Booking</button>
-        <button class="chip" data-status="dp" onclick="filterEvent(this)">DP</button>
-        <button class="chip" data-status="lunas" onclick="filterEvent(this)">Lunas</button>
-        <button class="chip" data-status="selesai" onclick="filterEvent(this)">Selesai</button>
-        <button class="chip" data-status="cancel" onclick="filterEvent(this)">Cancel</button>
+      <!-- View toggle + Filter -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;flex:1" id="ev-filter-chips">
+          <button class="chip active" data-status="all" onclick="filterEvent(this)">Semua</button>
+          <button class="chip" data-status="inquiry" onclick="filterEvent(this)">Inquiry</button>
+          <button class="chip" data-status="booking" onclick="filterEvent(this)">Booking</button>
+          <button class="chip" data-status="dp" onclick="filterEvent(this)">DP</button>
+          <button class="chip" data-status="lunas" onclick="filterEvent(this)">Lunas</button>
+          <button class="chip" data-status="selesai" onclick="filterEvent(this)">Selesai</button>
+          <button class="chip" data-status="cancel" onclick="filterEvent(this)">Cancel</button>
+        </div>
+        <button id="ev-cal-toggle" onclick="toggleEvCalendar()" style="flex-shrink:0;margin-left:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--ink3);font-size:13px;padding:5px 10px">📅</button>
       </div>
       <style>
         .chip {
@@ -832,7 +835,48 @@ select.form-control { appearance: none; }
           transition:all 0.15s;
         }
         .chip.active { background:var(--gold-dim); border-color:var(--gold); color:var(--gold); }
+
+        /* ── EVENT CALENDAR ─────────────────────── */
+        #ev-calendar { display:none; }
+        #ev-calendar.show { display:block; }
+        .cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .cal-nav button { background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--ink); font-size:16px; padding:4px 12px; }
+        .cal-nav-label { font-size:14px; font-weight:700; color:var(--ink); }
+        .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+        .cal-dow { font-size:9px; font-weight:700; color:var(--ink4); text-align:center; padding:4px 0; text-transform:uppercase; }
+        .cal-cell {
+          min-height:42px; border-radius:8px; padding:4px 2px 2px;
+          text-align:center; cursor:pointer; position:relative;
+          background:var(--bg3); border:1px solid transparent;
+          transition:background 0.15s;
+        }
+        .cal-cell:active { background:var(--bg2); }
+        .cal-cell.today { border-color:var(--gold); }
+        .cal-cell.other-month .cal-day { color:var(--ink4); }
+        .cal-cell.selected { background:var(--gold-dim); border-color:var(--gold); }
+        .cal-day { font-size:12px; font-weight:500; color:var(--ink); line-height:1; }
+        .cal-dots { display:flex; justify-content:center; gap:2px; margin-top:3px; flex-wrap:wrap; }
+        .cal-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+        .cal-dot.inquiry, .cal-dot.booking, .cal-dot.dp { background:var(--gold); }
+        .cal-dot.lunas, .cal-dot.selesai { background:#27ae60; }
+        .cal-dot.cancel { background:var(--red); }
+        #cal-event-list { margin-top:10px; }
+        .cal-ev-item { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:6px; cursor:pointer; }
+        .cal-ev-item:active { background:var(--bg2); }
       </style>
+
+      <!-- Calendar view -->
+      <div id="ev-calendar">
+        <div class="cal-nav">
+          <button onclick="calNav(-1)">‹</button>
+          <span class="cal-nav-label" id="cal-label">—</span>
+          <button onclick="calNav(1)">›</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div id="cal-event-list"></div>
+      </div>
+
+      <!-- List view -->
       <div id="ev-list">
         <div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">Belum ada event</div></div>
       </div>
@@ -1369,15 +1413,21 @@ function periodStr() {
 }
 function periodStart() {
   const p = state.period;
-  if (p.mode === 'year')   return `${p.year}-01-01`;
-  if (p.mode === 'custom') return p.customStart;
+  if (p.mode === 'year')     return `${p.year}-01-01`;
+  if (p.mode === 'custom')   return p.customStart;
+  if (p.mode === 'upcoming') return new Date().toISOString().slice(0,10);
   const {year:y,month:m} = p;
   return `${y}-${String(m).padStart(2,'0')}-01`;
 }
 function periodEnd() {
   const p = state.period;
-  if (p.mode === 'year')   return `${p.year}-12-31`;
-  if (p.mode === 'custom') return p.customEnd;
+  if (p.mode === 'year')     return `${p.year}-12-31`;
+  if (p.mode === 'custom')   return p.customEnd;
+  if (p.mode === 'upcoming') {
+    const d = new Date();
+    d.setMonth(d.getMonth() + (p.months||6));
+    return d.toISOString().slice(0,10);
+  }
   const {year:y,month:m} = p;
   const last = new Date(y,m,0).getDate();
   return `${y}-${String(m).padStart(2,'0')}-${last}`;
@@ -1700,6 +1750,139 @@ function filterEvent(el) {
   el.classList.add('active');
   state.eventFilter = el.dataset.status;
   renderEvents();
+}
+
+// ── EVENT CALENDAR ──────────────────────────────────────────
+let calState = { show: false, year: new Date().getFullYear(), month: new Date().getMonth(), selectedDate: null };
+
+function toggleEvCalendar() {
+  calState.show = !calState.show;
+  const cal  = document.getElementById('ev-calendar');
+  const list = document.getElementById('ev-list');
+  const btn  = document.getElementById('ev-cal-toggle');
+  const chips = document.getElementById('ev-filter-chips');
+  if (calState.show) {
+    cal.classList.add('show');
+    list.style.display = 'none';
+    chips.style.opacity = '0.4';
+    btn.style.background = 'var(--gold-dim)';
+    btn.style.borderColor = 'var(--gold)';
+    btn.style.color = 'var(--gold)';
+    renderCalendar();
+  } else {
+    cal.classList.remove('show');
+    list.style.display = '';
+    chips.style.opacity = '';
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    renderEvents();
+  }
+}
+
+function calNav(dir) {
+  calState.month += dir;
+  if (calState.month > 11) { calState.month = 0; calState.year++; }
+  if (calState.month < 0)  { calState.month = 11; calState.year--; }
+  calState.selectedDate = null;
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const { year, month } = calState;
+  const label = new Date(year, month, 1).toLocaleDateString('id-ID', { month:'long', year:'numeric' });
+  document.getElementById('cal-label').textContent = label;
+
+  // Build date → events map
+  const evMap = {};
+  eventsData.forEach(ev => {
+    if (!ev.tanggal) return;
+    const key = ev.tanggal.slice(0,10);
+    if (!evMap[key]) evMap[key] = [];
+    evMap[key].push(ev);
+  });
+
+  const today    = new Date().toISOString().slice(0,10);
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInPrev  = new Date(year, month, 0).getDate();
+
+  const dows = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  // Prev month padding
+  for (let i = firstDay-1; i >= 0; i--) {
+    const d = daysInPrev - i;
+    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    html += calCell(dateStr, d, true, evMap, today);
+  }
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    html += calCell(dateStr, d, false, evMap, today);
+  }
+  // Next month padding
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+  const filled = firstDay + daysInMonth;
+  for (let d = 1; d <= totalCells - filled; d++) {
+    const dateStr = `${year}-${String(month+2).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    html += calCell(dateStr, d, true, evMap, today);
+  }
+
+  document.getElementById('cal-grid').innerHTML = html;
+
+  // Show selected date events
+  if (calState.selectedDate && evMap[calState.selectedDate]) {
+    renderCalEventList(calState.selectedDate, evMap[calState.selectedDate]);
+  } else {
+    document.getElementById('cal-event-list').innerHTML = '';
+  }
+}
+
+function calCell(dateStr, day, otherMonth, evMap, today) {
+  const events = evMap[dateStr] || [];
+  const isToday    = dateStr === today;
+  const isSelected = dateStr === calState.selectedDate;
+  const dots = events.map(ev =>
+    `<div class="cal-dot ${ev.status}"></div>`
+  ).join('');
+  const cls = [
+    'cal-cell',
+    otherMonth ? 'other-month' : '',
+    isToday    ? 'today' : '',
+    isSelected ? 'selected' : '',
+  ].filter(Boolean).join(' ');
+  return `<div class="${cls}" onclick="calSelectDate('${dateStr}')">
+    <div class="cal-day">${day}</div>
+    ${dots ? `<div class="cal-dots">${dots}</div>` : ''}
+  </div>`;
+}
+
+function calSelectDate(dateStr) {
+  calState.selectedDate = calState.selectedDate === dateStr ? null : dateStr;
+  renderCalendar();
+}
+
+function renderCalEventList(dateStr, events) {
+  const label = new Date(dateStr+'T00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});
+  const html = `
+    <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;margin-top:4px">${label}</div>
+    ${events.map(ev => `
+      <div class="cal-ev-item" onclick="openEventDetail('${ev.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;font-weight:600">${ev.customer}</div>
+            <div style="font-size:11px;color:var(--ink3)">${ev.lokasi||'—'}</div>
+          </div>
+          <span class="badge ${ev.status}">${ev.status}</span>
+        </div>
+        ${ev.summary ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px">
+          Nilai Order: <span style="color:var(--gold)">${rpFull(ev.summary.omzet)}</span>
+          · Terbayar: <span style="color:var(--green)">${rpFull(ev.summary.terbayar)}</span>
+        </div>` : ''}
+      </div>`
+    ).join('')}`;
+  document.getElementById('cal-event-list').innerHTML = html;
 }
 
 function renderEvents() {
@@ -2784,14 +2967,36 @@ function openPeriod() {
   const curY = now.getFullYear();
   const p = state.period;
 
+  // ── Section: Mendatang ──────────────────────
+  const upcomingOpts = [
+    { label: 'Mendatang (1 bulan)', months: 1 },
+    { label: 'Mendatang (3 bulan)', months: 3 },
+    { label: 'Mendatang (6 bulan)', months: 6 },
+  ];
+  let html = '<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Mendatang</div>';
+  upcomingOpts.forEach(o => {
+    const active = p.mode==='upcoming' && p.months===o.months ? 'active' : '';
+    html += `<button class="btn-period ${active}" onclick="setPeriodUpcoming(${o.months})">${o.label}</button>`;
+  });
+
+  // ── Section: Bulan ke depan ─────────────────
+  html += '<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px">Bulan ke Depan</div>';
+  for (let i=1; i<=6; i++) {
+    const d = new Date(curY, now.getMonth()+i, 1);
+    const y = d.getFullYear(), m = d.getMonth()+1;
+    const label = d.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+    const activeM = (!p.mode || p.mode==='month') && p.year===y && p.month===m ? 'active' : '';
+    html += `<button class="btn-period ${activeM}" onclick="setPeriod(${y},${m})">📅 ${label}</button>`;
+  }
+
   // ── Section: Tahun ──────────────────────────
-  let html = '<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Tahun</div>';
+  html += '<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px">Tahun</div>';
   for (let y = curY; y >= curY-2; y--) {
     const activeY = (p.mode==='year' && p.year===y) ? 'active' : '';
     html += `<button class="btn-period ${activeY}" onclick="setPeriodYear(${y})">${y}</button>`;
   }
 
-  // ── Section: Bulan ──────────────────────────
+  // ── Section: Bulan (historis) ───────────────
   html += '<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px">Per Bulan</div>';
   for (let i=0; i<24; i++) {
     const d = new Date(curY, now.getMonth()-i, 1);
@@ -2819,6 +3024,14 @@ function openPeriod() {
 
   el.innerHTML = html;
   openSheet('sheetPeriod');
+}
+
+function setPeriodUpcoming(months) {
+  state.period = { mode:'upcoming', months };
+  const label = months===1 ? '1 Bln ke Depan' : months===3 ? '3 Bln ke Depan' : '6 Bln ke Depan';
+  document.getElementById('periodLabel').textContent = label;
+  closeSheet('sheetPeriod');
+  loadPage(state.currentTab);
 }
 
 function setPeriod(y, m) {
