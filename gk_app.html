@@ -898,9 +898,14 @@ select.form-control { appearance: none; }
     <div class="sheet-body">
       <div class="form-group">
         <label class="form-label">Bahan</label>
-        <select class="form-control" id="beli-bahan" onchange="onBeliSelectBahan()">
-          <option value="">-- Pilih Bahan --</option>
-        </select>
+        <div class="ac-wrap">
+          <input type="hidden" id="beli-bahan-val">
+          <button type="button" class="ac-trigger" id="beli-bahan-trigger"
+            data-placeholder="-- Pilih Bahan --"
+            onclick="acBeliOpen()">
+            <span class="ac-placeholder">-- Pilih Bahan --</span>
+          </button>
+        </div>
       </div>
 
       <!-- Section bahan baru (muncul kalau pilih "+ Bahan Baru") -->
@@ -1759,11 +1764,12 @@ async function saveBahan() {
 }
 
 function openAddBeli() {
-  const sel = document.getElementById('beli-bahan');
-  sel.innerHTML = '<option value="">-- Pilih Bahan --</option>' +
-    bahanData.map(b=>`<option value="${b.id}" data-sb="${b.satuan_besar}" data-sk="${b.satuan_kecil}" data-k="${b.konversi}" data-h="${b.harga_rata2}">${b.nama}</option>`).join('') +
-    '<option value="__baru__">➕ Bahan Baru...</option>';
-  sel.dataset.editId = '';
+  selectedBeliObj = null;
+  beliEditId = '';
+  // Reset trigger display
+  const t = document.getElementById('beli-bahan-trigger');
+  if (t) { t.innerHTML = '<span class="ac-placeholder">-- Pilih Bahan --</span>'; }
+  document.getElementById('beli-bahan-val').value = '';
   document.getElementById('beli-baru-section').style.display = 'none';
   document.getElementById('beli-qty').value = '';
   document.getElementById('beli-harga').value = '';
@@ -1791,29 +1797,75 @@ function updateBeliBaruHint() {
   }
 }
 
-function onBeliSelectBahan() {
-  const sel = document.getElementById('beli-bahan');
-  const opt = sel.options[sel.selectedIndex];
-  const baruSection = document.getElementById('beli-baru-section');
+// Dipanggil dari modal search beli-bahan
+function acBeliOpen() {
+  // Buka modal khusus beli-bahan dengan list dari bahanData
+  const listEl = document.getElementById('acModal-list');
+  document.getElementById('acModal-label').textContent = 'Pilih Bahan';
+  document.getElementById('acModal-search').value = '';
+  acModalCurrentId = '__beli-bahan__';
+  acBeliRender('');
+  document.getElementById('acModal').classList.add('open');
+  history.pushState({ acModal: '__beli-bahan__' }, '');
+  setTimeout(() => document.getElementById('acModal-search').focus(), 100);
+}
 
-  if (opt.value === '__baru__') {
-    baruSection.style.display = '';
-    document.getElementById('beli-satuan').innerHTML = '<option value="">--</option>';
-    document.getElementById('beli-harga').value = '';
-    calcBeliTotal();
-    return;
+function acBeliRender(query) {
+  const q = (query||'').toLowerCase().trim();
+  const list = document.getElementById('acModal-list');
+  const items = bahanData.filter(b => !q || b.nama.toLowerCase().includes(q));
+
+  function hi(s) {
+    if (!q) return s;
+    return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<b>$1</b>');
   }
 
-  baruSection.style.display = 'none';
-  if (!opt.value) return;
-  const sb = opt.dataset.sb, sk = opt.dataset.sk;
-  const satuanSel = document.getElementById('beli-satuan');
-  acSetOptions('beli-satuan', [sb, sk]);
-  acSet('beli-satuan', sb);
-  onBeliSatuanChange();
+  let html = '';
+  // Tambah baru selalu di atas
+  if (q && !bahanData.some(b => b.nama.toLowerCase() === q)) {
+    html += `<div class="acm-item new-item" onclick="acBeliSelectBaru('${query.replace(/'/g,"\\'")}')"> Tambah bahan baru: "${query}"</div>`;
+  }
+  html += items.map(b =>
+    `<div class="acm-item" onclick="acBeliSelectExisting('${b.id}')">
+      <div>
+        <div style="font-size:14px">${hi(b.nama)}</div>
+        <div style="font-size:11px;color:var(--ink3)">${b.satuan_besar} / ${b.satuan_kecil} · ${rpFull(b.harga_rata2||0)}/${b.satuan_kecil}</div>
+      </div>
+    </div>`
+  ).join('');
+  if (!html) html = '<div class="acm-empty">Belum ada bahan</div>';
+  list.innerHTML = html;
+}
+
+function acBeliSelectExisting(id) {
+  const b = bahanData.find(x => x.id === id);
+  if (!b) return;
+  selectedBeliObj = b;
+  document.getElementById('beli-bahan-val').value = b.id;
+  const t = document.getElementById('beli-bahan-trigger');
+  if (t) t.innerHTML = b.nama;
+  document.getElementById('beli-baru-section').style.display = 'none';
+  acSetOptions('beli-satuan', [b.satuan_besar, b.satuan_kecil]);
+  acSet('beli-satuan', b.satuan_besar);
   document.getElementById('beli-harga').value = '';
   calcBeliTotal();
+  acModalClose();
 }
+
+function acBeliSelectBaru(nama) {
+  selectedBeliObj = null;
+  document.getElementById('beli-bahan-val').value = '__baru__';
+  const t = document.getElementById('beli-bahan-trigger');
+  if (t) t.innerHTML = '➕ ' + nama;
+  document.getElementById('beli-baru-nama').value = nama;
+  document.getElementById('beli-baru-section').style.display = '';
+  acSet('beli-satuan', '');
+  document.getElementById('beli-harga').value = '';
+  calcBeliTotal();
+  acModalClose();
+}
+
+function onBeliSelectBahan() {} // legacy, tidak dipakai
 
 function onBeliSatuanChange() { calcBeliTotal(); }
 
@@ -1824,42 +1876,38 @@ function calcBeliTotal() {
 }
 
 async function saveBeli() {
-  const sel    = document.getElementById('beli-bahan');
-  const opt    = sel.options[sel.selectedIndex];
-  const editId = sel.dataset.editId || '';
-  const satuan = acVal('beli-satuan');
-  const qty    = Number(document.getElementById('beli-qty').value)||0;
-  const harga  = Number(document.getElementById('beli-harga').value)||0;
+  const bahanVal = document.getElementById('beli-bahan-val').value;
+  const satuan   = acVal('beli-satuan');
+  const qty      = Number(document.getElementById('beli-qty').value)||0;
+  const harga    = Number(document.getElementById('beli-harga').value)||0;
+  if (!bahanVal)          { toast('⚠️ Pilih bahan dulu'); return; }
   if (!satuan || !qty || !harga) { toast('⚠️ Lengkapi data'); return; }
 
   let bahanId, namaBahan, satBesar, satKecil, konversi;
 
-  if (opt.value === '__baru__') {
-    // Validasi & simpan bahan baru dulu
+  if (bahanVal === '__baru__') {
     namaBahan = document.getElementById('beli-baru-nama').value.trim();
     satBesar  = document.getElementById('beli-baru-sat-besar').value.trim();
     satKecil  = document.getElementById('beli-baru-sat-kecil').value.trim();
     konversi  = Number(document.getElementById('beli-baru-konversi').value)||1;
     if (!namaBahan || !satBesar || !satKecil) { toast('⚠️ Lengkapi data bahan baru'); return; }
-    // Cek duplikat
     const dup = bahanData.find(b => b.nama.toLowerCase() === namaBahan.toLowerCase());
-    if (dup) { toast(`⚠️ Bahan "${namaBahan}" sudah ada di master`); return; }
+    if (dup) { toast(`⚠️ Bahan "${namaBahan}" sudah ada`); return; }
     try {
       const res = await sbInsert('gk_bahan', { nama: namaBahan, satuan_besar: satBesar, satuan_kecil: satKecil, konversi });
       bahanId = res[0].id;
-      // Reload bahanData
       bahanData = await sbGet('gk_bahan', 'order=nama.asc&select=*');
     } catch(e) { toast('❌ Gagal simpan bahan: ' + e.message); return; }
   } else {
-    if (!opt.value) { toast('⚠️ Pilih bahan'); return; }
-    bahanId   = opt.value;
-    namaBahan = opt.text;
-    satBesar  = opt.dataset.sb;
-    satKecil  = opt.dataset.sk;
-    konversi  = Number(opt.dataset.k)||1;
+    const b = selectedBeliObj || bahanData.find(x => x.id === bahanVal);
+    if (!b) { toast('⚠️ Bahan tidak ditemukan'); return; }
+    bahanId   = b.id;
+    namaBahan = b.nama;
+    satBesar  = b.satuan_besar;
+    satKecil  = b.satuan_kecil;
+    konversi  = Number(b.konversi)||1;
   }
 
-  // Hitung qty_kecil dan harga_kecil
   let qty_kecil, harga_kecil;
   if (satuan === satBesar) {
     qty_kecil   = qty * konversi;
@@ -1881,13 +1929,13 @@ async function saveBeli() {
     toko:        document.getElementById('beli-toko').value.trim(),
   };
   try {
-    if (editId) {
-      await sbUpdate('gk_pembelian', editId, data);
-      sel.dataset.editId = '';
+    if (beliEditId) {
+      await sbUpdate('gk_pembelian', beliEditId, data);
+      beliEditId = '';
       toast('✅ Pembelian diperbarui');
     } else {
       await sbInsert('gk_pembelian', data);
-      toast(opt.value === '__baru__' ? '✅ Bahan baru + pembelian disimpan' : '✅ Pembelian dicatat');
+      toast(bahanVal === '__baru__' ? '✅ Bahan baru + pembelian disimpan' : '✅ Pembelian dicatat');
     }
     closeSheet('sheetBeli');
     await loadBahan();
@@ -1896,6 +1944,8 @@ async function saveBeli() {
 
 // ── EDIT / DELETE MASTER BAHAN ────────────────────────────
 let bahanEditData = [];
+let selectedBeliObj = null; // bahan terpilih di form beli
+let beliEditId = '';        // edit mode id
 
 function openEditBahan(id) {
   const b = bahanData.find(x => x.id === id);
@@ -1933,30 +1983,30 @@ function openEditBeli(id) {
   const b = beliData.find(x => x.id === id);
   if (!b) return;
 
-  // Populate dropdown bahan
-  const sel = document.getElementById('beli-bahan');
-  sel.innerHTML = '<option value="">-- Pilih Bahan --</option>' +
-    bahanData.map(bh => `<option value="${bh.id}" data-sb="${bh.satuan_besar}" data-sk="${bh.satuan_kecil}" data-k="${bh.konversi}" data-h="${bh.harga_rata2}"${bh.id===b.bahan_id?' selected':''}>${bh.nama}</option>`).join('');
+  beliEditId = id;
+  const bh = bahanData.find(x => x.id === b.bahan_id);
+  selectedBeliObj = bh || null;
 
-  // Populate satuan
-  const satuanSel = document.getElementById('beli-satuan');
-  const selectedBahan = bahanData.find(x => x.id === b.bahan_id);
-  if (selectedBahan) {
-    acSetOptions('beli-satuan', [selectedBahan.satuan_besar, selectedBahan.satuan_kecil]);
-    acSet('beli-satuan', b.satuan);
+  // Set trigger display
+  document.getElementById('beli-bahan-val').value = b.bahan_id || '';
+  const t = document.getElementById('beli-bahan-trigger');
+  if (t) t.innerHTML = b.nama_bahan || '-- Pilih Bahan --';
+
+  // Satuan
+  if (bh) {
+    acSetOptions('beli-satuan', [bh.satuan_besar, bh.satuan_kecil]);
   } else {
     acSetOptions('beli-satuan', [b.satuan]);
-    acSet('beli-satuan', b.satuan);
   }
+  acSet('beli-satuan', b.satuan);
 
+  document.getElementById('beli-baru-section').style.display = 'none';
   document.getElementById('beli-qty').value = b.qty || '';
   document.getElementById('beli-harga').value = b.harga_beli || '';
   document.getElementById('beli-total').textContent = rpFull((b.qty||0)*(b.harga_beli||0));
   document.getElementById('beli-tanggal').value = b.tanggal || '';
   document.getElementById('beli-toko').value = b.toko || '';
 
-  // Store id for save
-  sel.dataset.editId = id;
   openSheet('sheetBeli');
 }
 
@@ -2596,34 +2646,82 @@ async function saveMenu() {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+let selectedEvbObj = null; // bahan terpilih di form tarik HPP
+
 function openAddBahanEvent() {
-  const sel = document.getElementById('evb-bahan');
-  sel.innerHTML = '<option value="">-- Pilih Bahan --</option>' +
-    bahanData.map(b=>`<option value="${b.id}" data-sk="${b.satuan_kecil}" data-h="${b.harga_rata2}">${b.nama} (${rpFull(b.harga_rata2)}/${b.satuan_kecil})</option>`).join('') +
-    '<option value="__manual__">+ Input Manual</option>';
+  selectedEvbObj = null;
+  document.getElementById('evb-bahan-val').value = '';
+  const t = document.getElementById('evb-bahan-trigger');
+  if (t) t.innerHTML = '<span class="ac-placeholder">-- Pilih Bahan --</span>';
   document.getElementById('evb-nama-manual').style.display = 'none';
   document.getElementById('evb-qty').value = '';
   document.getElementById('evb-harga').value = '';
-  document.getElementById('evb-satuan').value = '';
+  acSet('evb-satuan', '');
   document.getElementById('evb-total').textContent = 'Rp 0';
   openSheet('sheetBahanEvent');
 }
 
-function onEvbSelectBahan() {
-  const sel = document.getElementById('evb-bahan');
-  const opt = sel.options[sel.selectedIndex];
-  const manualDiv = document.getElementById('evb-nama-manual');
-  if (opt.value === '__manual__') {
-    manualDiv.style.display = '';
-    document.getElementById('evb-satuan').value = '';
-    document.getElementById('evb-harga').value = '';
-  } else if (opt.value) {
-    manualDiv.style.display = 'none';
-    acSet('evb-satuan', opt.dataset.sk || '');
-  calcEvbTotal();
-    document.getElementById('evb-harga').value = opt.dataset.h || '';
-    calcEvbTotal();
+function acEvbOpen() {
+  acModalCurrentId = '__evb-bahan__';
+  document.getElementById('acModal-label').textContent = 'Pilih Bahan HPP';
+  document.getElementById('acModal-search').value = '';
+  acEvbRender('');
+  document.getElementById('acModal').classList.add('open');
+  history.pushState({ acModal: '__evb-bahan__' }, '');
+  setTimeout(() => document.getElementById('acModal-search').focus(), 100);
+}
+
+function acEvbRender(query) {
+  const q    = (query||'').toLowerCase().trim();
+  const list = document.getElementById('acModal-list');
+  const items = bahanData.filter(b => !q || b.nama.toLowerCase().includes(q));
+  function hi(s) {
+    if (!q) return s;
+    return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<b>$1</b>');
   }
+  let html = '';
+  // Manual input selalu di atas
+  if (q && !bahanData.some(b => b.nama.toLowerCase() === q)) {
+    html += `<div class="acm-item new-item" onclick="acEvbSelectManual('${query.replace(/'/g,"\\'")}')"> Input manual: "${query}"</div>`;
+  }
+  html += `<div class="acm-item new-item" style="background:var(--bg3);color:var(--ink2)" onclick="acEvbSelectManual('')"> ✏️ Input manual...</div>`;
+  html += items.map(b =>
+    `<div class="acm-item" onclick="acEvbSelectExisting('${b.id}')">
+      <div>
+        <div style="font-size:14px">${hi(b.nama)}</div>
+        <div style="font-size:11px;color:var(--ink3)">${b.satuan_kecil} · ${rpFull(b.harga_rata2||0)}/${b.satuan_kecil}</div>
+      </div>
+    </div>`
+  ).join('');
+  if (!html) html = '<div class="acm-empty">Belum ada bahan</div>';
+  list.innerHTML = html;
+}
+
+function acEvbSelectExisting(id) {
+  const b = bahanData.find(x => x.id === id);
+  if (!b) return;
+  selectedEvbObj = b;
+  document.getElementById('evb-bahan-val').value = b.id;
+  const t = document.getElementById('evb-bahan-trigger');
+  if (t) t.innerHTML = b.nama;
+  document.getElementById('evb-nama-manual').style.display = 'none';
+  acSet('evb-satuan', b.satuan_kecil || '');
+  document.getElementById('evb-harga').value = b.harga_rata2 || '';
+  calcEvbTotal();
+  acModalClose();
+}
+
+function acEvbSelectManual(nama) {
+  selectedEvbObj = null;
+  document.getElementById('evb-bahan-val').value = '__manual__';
+  const t = document.getElementById('evb-bahan-trigger');
+  if (t) t.innerHTML = nama ? '✏️ ' + nama : '✏️ Input manual';
+  document.getElementById('evb-nama-manual').style.display = '';
+  if (nama) document.getElementById('evb-nama-input').value = nama;
+  acSet('evb-satuan', '');
+  document.getElementById('evb-harga').value = '';
+  calcEvbTotal();
+  acModalClose();
 }
 
 function calcEvbTotal() {
@@ -2633,17 +2731,19 @@ function calcEvbTotal() {
 }
 
 async function saveBahanEvent() {
-  const sel    = document.getElementById('evb-bahan');
-  const opt    = sel.options[sel.selectedIndex];
-  const manual = opt.value === '__manual__';
-  const bahanId= manual ? null : opt.value;
-  const nama   = manual ? document.getElementById('evb-nama-input').value.trim() : opt.text.split(' (')[0];
+  const bahanVal = document.getElementById('evb-bahan-val').value;
+  if (!bahanVal) { toast('⚠️ Pilih bahan dulu'); return; }
+  const manual = bahanVal === '__manual__';
+  const bahanId= manual ? null : bahanVal;
+  const nama   = manual
+    ? document.getElementById('evb-nama-input').value.trim()
+    : (selectedEvbObj ? selectedEvbObj.nama : '');
   const qty    = Number(document.getElementById('evb-qty').value)||0;
   const satuan = acVal('evb-satuan');
   const harga  = Number(document.getElementById('evb-harga').value)||0;
   if (!nama || !qty || !satuan || !harga) { toast('⚠️ Lengkapi semua field'); return; }
   try {
-    const data = { event_id: currentEvent.id, nama_bahan: nama, qty, satuan, harga_avg: harga };
+    const data = { event_id: currentEvent.id, nama_bahan: nama, qty, satuan, harga_avg: harga, total: qty*harga };
     if (bahanId) data.bahan_id = bahanId;
     const res = await sbInsert('gk_event_bahan', data);
     currentEventBahan.push(res[0]);
@@ -2864,9 +2964,14 @@ init();
     <div class="sheet-body">
       <div class="form-group">
         <label class="form-label">Pilih Bahan</label>
-        <select class="form-control" id="evb-bahan" onchange="onEvbSelectBahan()">
-          <option value="">-- Pilih --</option>
-        </select>
+        <div class="ac-wrap">
+          <input type="hidden" id="evb-bahan-val">
+          <button type="button" class="ac-trigger" id="evb-bahan-trigger"
+            data-placeholder="-- Pilih Bahan --"
+            onclick="acEvbOpen()">
+            <span class="ac-placeholder">-- Pilih Bahan --</span>
+          </button>
+        </div>
       </div>
       <div id="evb-nama-manual" style="display:none" class="form-group">
         <label class="form-label">Nama Bahan (manual)</label>
@@ -3285,6 +3390,8 @@ function acModalClose() {
 
 function acModalFilter() {
   const q = document.getElementById('acModal-search').value;
+  if (acModalCurrentId === '__beli-bahan__') { acBeliRender(q); return; }
+  if (acModalCurrentId === '__evb-bahan__')  { acEvbRender(q);  return; }
   acModalRender(q);
 }
 
