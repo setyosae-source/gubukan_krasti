@@ -3060,7 +3060,7 @@ async function saveBahanEvent() {
   const harga  = Number(document.getElementById('evb-harga').value)||0;
   if (!nama || !qty || !satuan || !harga) { toast('⚠️ Lengkapi semua field'); return; }
   try {
-    const data = { event_id: currentEvent.id, nama_bahan: nama, qty, satuan, harga_avg: harga, total: qty*harga };
+    const data = { event_id: currentEvent.id, nama_bahan: nama, qty, satuan, harga_avg: harga };
     if (bahanId) data.bahan_id = bahanId;
     const res = await sbInsert('gk_event_bahan', data);
     currentEventBahan.push(res[0]);
