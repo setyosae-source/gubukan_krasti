@@ -2418,7 +2418,7 @@ async function savePesananItem() {
   const qty   = Number(document.getElementById('pitem-qty').value)||0;
   const satuan= acVal('pitem-satuan');
   const harga = Number(document.getElementById('pitem-harga').value)||0;
-  if (!nama || !qty || !harga) { toast('⚠️ Lengkapi semua field'); return; }
+  if (!nama || !qty) { toast('⚠️ Lengkapi nama dan qty'); return; }
   try {
     if (editId) {
       await sbUpdate('gk_tokba_item', editId, {nama_produk:nama, qty, satuan, harga, total:qty*harga});
@@ -2793,7 +2793,7 @@ async function saveMenuEdit() {
   const nama  = document.getElementById('menu-edit-nama').value.trim();
   const qty   = Number(document.getElementById('menu-edit-qty').value)||0;
   const harga = Number(document.getElementById('menu-edit-harga').value)||0;
-  if (!nama||!qty||!harga) { toast('⚠️ Lengkapi semua field'); return; }
+  if (!nama||!qty) { toast('⚠️ Lengkapi nama dan qty'); return; }
   try {
     await sbUpdate('gk_event_menu', id, {nama, qty, harga});
     const idx = currentEventMenus.findIndex(x=>x.id===id);
@@ -2935,7 +2935,7 @@ async function saveMenu() {
   const nama  = document.getElementById('menu-nama').value.trim();
   const qty   = Number(document.getElementById('menu-qty').value)||0;
   const harga = Number(document.getElementById('menu-harga').value)||0;
-  if (!nama || !qty || !harga) { toast('⚠️ Lengkapi semua field'); return; }
+  if (!nama || !qty) { toast('⚠️ Lengkapi nama dan qty'); return; }
   try {
     const res = await sbInsert('gk_event_menu', { event_id: currentEvent.id, nama, qty, harga });
     currentEventMenus.push(res[0]);
