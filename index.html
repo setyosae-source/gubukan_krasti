@@ -4041,13 +4041,27 @@ function openTerimaForEvent(eventId, jenis, amount) {
 }
 
 function openOpsForEvent(eventId) {
+  // Tutup sheet yang sedang buka
   closeSheet('detailSheet');
+  closeSheet('eventFormSheet');
   setTimeout(() => {
-    switchBiayaType('ops');
-    populateEventDropdowns();
-    const refEl = document.getElementById('opsEventRef');
-    if (refEl) refEl.value = eventId;
-    openSheet('inputBiayaSheet');
+    // Navigasi ke halaman Kas, tab Biaya
+    gotoPage('kas');
+    setTimeout(() => {
+      setKasInputType('ops');
+      populateEventDropdowns();
+      // Set dropdown event otomatis
+      const evDrop = document.getElementById('ki_ops_event');
+      if (evDrop) evDrop.value = eventId;
+      // Set tanggal hari ini
+      const tgl = document.getElementById('ki_ops_tgl');
+      if (tgl && !tgl.value) tgl.value = new Date().toISOString().slice(0,10);
+      // Scroll ke form
+      setTimeout(() => {
+        const el = document.getElementById('ki_ops_ket');
+        if (el) el.focus();
+      }, 100);
+    }, 150);
   }, 300);
 }
 
