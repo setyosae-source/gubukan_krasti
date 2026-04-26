@@ -2410,7 +2410,7 @@ function renderBahan(list) {
     return;
   }
   el.innerHTML = list.map(b => `
-    <div class="card" style="margin-bottom:8px;padding:12px 14px">
+    <div class="card" style="margin-bottom:8px;padding:12px 14px;cursor:pointer" onclick="openBahanDetail('${b.id}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div style="flex:1">
           <div style="font-size:13px;font-weight:600">${b.nama}</div>
@@ -2425,8 +2425,8 @@ function renderBahan(list) {
             <div style="font-size:10px;color:var(--ink3)">per ${b.satuan_kecil}</div>
           </div>
           <div style="display:flex;gap:6px">
-            <button onclick="openEditBahan('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 8px">✏️ Edit</button>
-            <button onclick="deleteBahan('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 8px">🗑️</button>
+            <button onclick="event.stopPropagation();openEditBahan('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 8px">✏️</button>
+            <button onclick="event.stopPropagation();deleteBahan('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 8px">🗑️</button>
           </div>
         </div>
       </div>
@@ -2763,6 +2763,63 @@ async function deleteBahan(id) {
     await sbDelete('gk_bahan', id);
     toast('✅ Bahan dihapus');
     await loadBahan();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function openBahanDetail(id) {
+  const b = bahanData.find(x=>x.id===id);
+  if (!b) return;
+
+  set('bdet-nama', b.nama);
+  set('bdet-sub',  `1 ${b.satuan_besar} = ${b.konversi} ${b.satuan_kecil}`);
+  set('bdet-harga', rpFull(b.harga_rata2||0) + ' / ' + b.satuan_kecil);
+  set('bdet-total-beli', '...');
+  set('bdet-total-tarik', '...');
+  document.getElementById('bdet-beli-list').innerHTML  = '<div style="color:var(--ink4);font-size:12px">Memuat...</div>';
+  document.getElementById('bdet-tarik-list').innerHTML = '<div style="color:var(--ink4);font-size:12px">Memuat...</div>';
+
+  openSheet('sheetBahanDetail');
+
+  try {
+    const [belis, tariks] = await Promise.all([
+      sbGet('gk_pembelian', `bahan_id=eq.${id}&order=tanggal.desc&select=*`),
+      sbGet('gk_event_bahan', `bahan_id=eq.${id}&order=created_at.desc&select=*,gk_event(customer,tanggal)`),
+    ]);
+
+    const totalBeli  = belis.reduce((s,r)=>s+Number(r.total||0),0);
+    const totalTarik = tariks.reduce((s,r)=>s+Number(r.total||0),0);
+    set('bdet-total-beli',  rpFull(totalBeli));
+    set('bdet-total-tarik', rpFull(totalTarik));
+
+    // Riwayat beli
+    const beliEl = document.getElementById('bdet-beli-list');
+    if (!belis.length) {
+      beliEl.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum ada pembelian</div>';
+    } else {
+      beliEl.innerHTML = belis.map(r=>`
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:12px;font-weight:500">${r.qty} ${r.satuan}${r.toko?' · '+r.toko:''}</div>
+            <div style="font-size:10px;color:var(--ink3)">${fmtDate(r.tanggal)} · ${rpFull(r.harga_beli)}/${r.satuan}</div>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:var(--red);font-family:var(--mono)">${rpFull(r.total)}</div>
+        </div>`).join('');
+    }
+
+    // Riwayat tarik ke event
+    const tarikEl = document.getElementById('bdet-tarik-list');
+    if (!tariks.length) {
+      tarikEl.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum pernah ditarik ke event</div>';
+    } else {
+      tarikEl.innerHTML = tariks.map(r=>`
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:12px;font-weight:500">${r.gk_event?.customer||'—'}</div>
+            <div style="font-size:10px;color:var(--ink3)">${fmtDate(r.gk_event?.tanggal)} · ${r.qty} ${r.satuan} × ${rpFull(r.harga_avg)}</div>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:var(--blue);font-family:var(--mono)">${rpFull(r.total)}</div>
+        </div>`).join('');
+    }
   } catch(e) { toast('❌ ' + e.message); }
 }
 
@@ -5149,6 +5206,45 @@ loadSavedTheme();
       <span class="sheet-close" onclick="closeSheet('sheetKasForm')">✕</span>
     </div>
     <div class="sheet-body" id="kasFormBody"></div>
+  </div>
+</div>
+
+<!-- SHEET: Detail Bahan -->
+<div class="overlay" id="sheetBahanDetail" onclick="overlayClose(event,'sheetBahanDetail')">
+  <div class="sheet" onclick="e=>e.stopPropagation()" style="max-height:92dvh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-title" id="bdet-nama">—</div>
+        <div style="font-size:11px;color:var(--ink3);margin-top:2px" id="bdet-sub">—</div>
+      </div>
+      <span class="sheet-close" onclick="closeSheet('sheetBahanDetail')">✕</span>
+    </div>
+    <div style="padding:14px 18px;overflow-y:auto">
+      <!-- Summary -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:16px">
+        <div class="stat-card" style="padding:9px">
+          <div class="stat-label" style="font-size:9px">Harga Rata²</div>
+          <div class="stat-val gold" style="font-size:13px" id="bdet-harga">—</div>
+        </div>
+        <div class="stat-card" style="padding:9px">
+          <div class="stat-label" style="font-size:9px">Total Beli</div>
+          <div class="stat-val red" style="font-size:13px" id="bdet-total-beli">—</div>
+        </div>
+        <div class="stat-card" style="padding:9px">
+          <div class="stat-label" style="font-size:9px">Total Tarik</div>
+          <div class="stat-val blue" style="font-size:13px" id="bdet-total-tarik">—</div>
+        </div>
+      </div>
+
+      <!-- Riwayat Beli -->
+      <div class="section-title" style="margin-bottom:8px">🛒 Riwayat Pembelian</div>
+      <div id="bdet-beli-list" style="margin-bottom:16px"></div>
+
+      <!-- Riwayat Tarik (HPP event) -->
+      <div class="section-title" style="margin-bottom:8px">📤 Riwayat Tarik ke Event</div>
+      <div id="bdet-tarik-list"></div>
+    </div>
   </div>
 </div>
 
