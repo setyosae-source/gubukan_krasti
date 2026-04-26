@@ -430,40 +430,118 @@ select.form-control { appearance: none; }
   border-color: var(--gold);
   color: var(--gold);
 }
-/* ── AUTOCOMPLETE ─────────────────────────────────────────── */
-.ac-wrap { position: relative; }
-.ac-dropdown {
-  position: absolute;
-  top: calc(100% + 3px);
-  left: 0; right: 0;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
+/* ── AUTOCOMPLETE MODAL ───────────────────────────────────── */
+.ac-trigger {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  z-index: 300;
-  max-height: 210px;
-  overflow-y: auto;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
-  display: none;
-}
-.ac-dropdown.open { display: block; }
-.ac-item {
-  padding: 10px 12px;
-  font-size: 13px;
+  color: var(--ink);
+  padding: 10px 36px 10px 12px;
+  font-size: 14px;
+  text-align: left;
+  position: relative;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s;
+  font-family: var(--font);
+}
+.ac-trigger:active { border-color: var(--gold); }
+.ac-trigger::after {
+  content: '▾';
+  position: absolute;
+  right: 12px;
+  color: var(--ink3);
+  font-size: 11px;
+}
+.ac-trigger .ac-placeholder { color: var(--ink4); }
+
+/* Modal overlay */
+#acModal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: none;
+  flex-direction: column;
+  background: var(--bg);
+}
+#acModal.open { display: flex; }
+#acModal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--bg2);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#acModal-back {
+  background: none;
+  color: var(--ink2);
+  font-size: 20px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+#acModal-search {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: var(--font);
+  outline: none;
+}
+#acModal-search:focus { border-color: var(--gold); }
+#acModal-label {
+  font-size: 11px;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 600;
+  padding: 10px 16px 4px;
+  flex-shrink: 0;
+}
+#acModal-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.acm-item {
+  padding: 14px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
   color: var(--ink);
   -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.ac-item:last-child { border-bottom: none; }
-.ac-item:active { background: var(--gold-dim); color: var(--gold); }
-.ac-item.new-item {
+.acm-item:active { background: var(--gold-dim); color: var(--gold); }
+.acm-item.new-item {
   color: var(--blue);
   font-weight: 600;
   background: var(--blue-dim);
-  border-bottom: 1px solid var(--border2);
+  border-bottom: 2px solid var(--border2);
   position: sticky;
   top: 0;
+  z-index: 1;
 }
+.acm-item.new-item::before { content: '➕'; }
+.acm-item b { color: var(--gold); font-weight: 700; }
+.acm-empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--ink4);
+  font-size: 13px;
+}
+/* ac-wrap masih dipakai sbg container */
+.ac-wrap { display: block; }
 </style>
 </head>
 <body>
@@ -719,7 +797,7 @@ select.form-control { appearance: none; }
         </div>
         <div class="form-group">
           <label class="form-label">Status</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="ev-status" placeholder="inquiry" autocomplete="off" oninput="acFilter('ev-status')" onfocus="acOpen('ev-status')" onblur="acBlur('ev-status')"><div class="ac-dropdown" id="ev-status-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="ev-status-val" onchange=""><button type="button" class="ac-trigger" id="ev-status-trigger" data-placeholder="inquiry" onclick="acModalOpen('ev-status')"><span class="ac-placeholder">inquiry</span></button></div>
         </div>
       </div>
       <div class="form-group">
@@ -827,7 +905,7 @@ select.form-control { appearance: none; }
         </div>
         <div class="form-group">
           <label class="form-label">Satuan</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="beli-satuan" placeholder="kg, karung..." autocomplete="off" oninput="acFilter('beli-satuan');onBeliSatuanChange()" onfocus="acOpen('beli-satuan')" onblur="acBlur('beli-satuan')"><div class="ac-dropdown" id="beli-satuan-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="beli-satuan-val" onchange="onBeliSatuanChange()"><button type="button" class="ac-trigger" id="beli-satuan-trigger" data-placeholder="Pilih satuan..." onclick="acModalOpen('beli-satuan')"><span class="ac-placeholder">Pilih satuan...</span></button></div>
         </div>
       </div>
       <div class="form-group">
@@ -865,7 +943,7 @@ select.form-control { appearance: none; }
     <div class="sheet-body">
       <div class="form-group">
         <label class="form-label">Platform</label>
-        <div class="ac-wrap"><input type="text" class="form-control" id="on-platform" placeholder="Shopee, Tokped, Tiktok..." autocomplete="off" oninput="acFilter('on-platform')" onfocus="acOpen('on-platform')" onblur="acBlur('on-platform')"><div class="ac-dropdown" id="on-platform-dd"></div></div>
+        <div class="ac-wrap"><input type="hidden" id="on-platform-val" onchange=""><button type="button" class="ac-trigger" id="on-platform-trigger" data-placeholder="Pilih platform..." onclick="acModalOpen('on-platform')"><span class="ac-placeholder">Pilih platform...</span></button></div>
       </div>
       <div class="form-group">
         <label class="form-label">Jumlah (Rp)</label>
@@ -1480,6 +1558,7 @@ async function loadBahan() {
     beliData  = beli;
     renderBahan(bahan);
     renderBeli(beli);
+    if (typeof updateSatuanAc === 'function') updateSatuanAc();
   } catch(e) { toast('❌ ' + e.message); }
 }
 
@@ -1610,7 +1689,7 @@ function updateBeliBaruHint() {
   // Update satuan dropdown sesuai isian
   if (sb || sk) {
     acSetOptions('beli-satuan', [sb,sk].filter(Boolean));
-    if (!acVal('beli-satuan')) acSet('beli-satuan', sb||sk);
+    if (!acVal('beli-satuan')) { acSet('beli-satuan', sb||sk); onBeliSatuanChange(); }
   }
 }
 
@@ -1633,6 +1712,7 @@ function onBeliSelectBahan() {
   const satuanSel = document.getElementById('beli-satuan');
   acSetOptions('beli-satuan', [sb, sk]);
   acSet('beli-satuan', sb);
+  onBeliSatuanChange();
   document.getElementById('beli-harga').value = '';
   calcBeliTotal();
 }
@@ -2439,6 +2519,7 @@ function onEvbSelectBahan() {
   } else if (opt.value) {
     manualDiv.style.display = 'none';
     acSet('evb-satuan', opt.dataset.sk || '');
+  calcEvbTotal();
     document.getElementById('evb-harga').value = opt.dataset.h || '';
     calcEvbTotal();
   }
@@ -2697,7 +2778,7 @@ init();
         </div>
         <div class="form-group">
           <label class="form-label">Satuan</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="evb-satuan" placeholder="kg, gram, pcs" autocomplete="off" oninput="acFilter('evb-satuan')" onfocus="acOpen('evb-satuan')" onblur="acBlur('evb-satuan')"><div class="ac-dropdown" id="evb-satuan-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="evb-satuan-val" onchange=""><button type="button" class="ac-trigger" id="evb-satuan-trigger" data-placeholder="kg, gram, pcs..." onclick="acModalOpen('evb-satuan')"><span class="ac-placeholder">kg, gram, pcs...</span></button></div>
         </div>
       </div>
       <div class="form-group">
@@ -2735,7 +2816,7 @@ init();
         </div>
         <div class="form-group">
           <label class="form-label">Metode</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="ops-metode" placeholder="Cash, Transfer, QRIS..." autocomplete="off" oninput="acFilter('ops-metode')" onfocus="acOpen('ops-metode')" onblur="acBlur('ops-metode')"><div class="ac-dropdown" id="ops-metode-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="ops-metode-val" onchange=""><button type="button" class="ac-trigger" id="ops-metode-trigger" data-placeholder="Pilih metode..." onclick="acModalOpen('ops-metode')"><span class="ac-placeholder">Pilih metode...</span></button></div>
         </div>
       </div>
       <div class="form-group">
@@ -2760,7 +2841,7 @@ init();
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Tahap</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="bayar-tahap" placeholder="DP, Pelunasan, Booking..." autocomplete="off" oninput="acFilter('bayar-tahap')" onfocus="acOpen('bayar-tahap')" onblur="acBlur('bayar-tahap')"><div class="ac-dropdown" id="bayar-tahap-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="bayar-tahap-val" onchange=""><button type="button" class="ac-trigger" id="bayar-tahap-trigger" data-placeholder="Pilih tahap..." onclick="acModalOpen('bayar-tahap')"><span class="ac-placeholder">Pilih tahap...</span></button></div>
         </div>
         <div class="form-group">
           <label class="form-label">Jumlah (Rp)</label>
@@ -2770,7 +2851,7 @@ init();
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Metode</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="bayar-metode" placeholder="Transfer, Cash, QRIS..." autocomplete="off" oninput="acFilter('bayar-metode')" onfocus="acOpen('bayar-metode')" onblur="acBlur('bayar-metode')"><div class="ac-dropdown" id="bayar-metode-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="bayar-metode-val" onchange=""><button type="button" class="ac-trigger" id="bayar-metode-trigger" data-placeholder="Pilih metode..." onclick="acModalOpen('bayar-metode')"><span class="ac-placeholder">Pilih metode...</span></button></div>
         </div>
         <div class="form-group">
           <label class="form-label">Tanggal</label>
@@ -2853,7 +2934,7 @@ init();
         </div>
         <div class="form-group">
           <label class="form-label">Satuan</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="pitem-satuan" placeholder="pcs, kg, dll" autocomplete="off" oninput="acFilter('pitem-satuan')" onfocus="acOpen('pitem-satuan')" onblur="acBlur('pitem-satuan')"><div class="ac-dropdown" id="pitem-satuan-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="pitem-satuan-val" onchange=""><button type="button" class="ac-trigger" id="pitem-satuan-trigger" data-placeholder="pcs, kg, dll..." onclick="acModalOpen('pitem-satuan')"><span class="ac-placeholder">pcs, kg, dll...</span></button></div>
         </div>
       </div>
       <div class="form-group">
@@ -2968,7 +3049,7 @@ init();
         </div>
         <div class="form-group">
           <label class="form-label">Metode</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="ops-edit-metode" placeholder="Cash, Transfer, QRIS..." autocomplete="off" oninput="acFilter('ops-edit-metode')" onfocus="acOpen('ops-edit-metode')" onblur="acBlur('ops-edit-metode')"><div class="ac-dropdown" id="ops-edit-metode-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="ops-edit-metode-val" onchange=""><button type="button" class="ac-trigger" id="ops-edit-metode-trigger" data-placeholder="Pilih metode..." onclick="acModalOpen('ops-edit-metode')"><span class="ac-placeholder">Pilih metode...</span></button></div>
         </div>
       </div>
       <div class="form-group">
@@ -2994,7 +3075,7 @@ init();
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Tahap</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="bayar-edit-tahap" placeholder="DP, Pelunasan, Booking..." autocomplete="off" oninput="acFilter('bayar-edit-tahap')" onfocus="acOpen('bayar-edit-tahap')" onblur="acBlur('bayar-edit-tahap')"><div class="ac-dropdown" id="bayar-edit-tahap-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="bayar-edit-tahap-val" onchange=""><button type="button" class="ac-trigger" id="bayar-edit-tahap-trigger" data-placeholder="Pilih tahap..." onclick="acModalOpen('bayar-edit-tahap')"><span class="ac-placeholder">Pilih tahap...</span></button></div>
         </div>
         <div class="form-group">
           <label class="form-label">Jumlah (Rp)</label>
@@ -3004,7 +3085,7 @@ init();
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Metode</label>
-          <div class="ac-wrap"><input type="text" class="form-control" id="bayar-edit-metode" placeholder="Transfer, Cash, QRIS..." autocomplete="off" oninput="acFilter('bayar-edit-metode')" onfocus="acOpen('bayar-edit-metode')" onblur="acBlur('bayar-edit-metode')"><div class="ac-dropdown" id="bayar-edit-metode-dd"></div></div>
+          <div class="ac-wrap"><input type="hidden" id="bayar-edit-metode-val" onchange=""><button type="button" class="ac-trigger" id="bayar-edit-metode-trigger" data-placeholder="Pilih metode..." onclick="acModalOpen('bayar-edit-metode')"><span class="ac-placeholder">Pilih metode...</span></button></div>
         </div>
         <div class="form-group">
           <label class="form-label">Tanggal</label>
@@ -3022,135 +3103,169 @@ init();
 </div>
 
 <!-- ════════════════════════════════════════════════════════ -->
-<!-- AUTOCOMPLETE ENGINE                                      -->
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- AC MODAL                                                 -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div id="acModal">
+  <div id="acModal-header">
+    <button id="acModal-back" onclick="acModalClose()">←</button>
+    <input id="acModal-search" type="text" placeholder="Ketik untuk cari..." autocomplete="off"
+      oninput="acModalFilter()" autofocus>
+  </div>
+  <div id="acModal-label"></div>
+  <div id="acModal-list"></div>
+</div>
+
+<!-- AUTOCOMPLETE ENGINE (MODAL) -->
 <!-- ════════════════════════════════════════════════════════ -->
 <script>
 // ── AC REGISTRY ────────────────────────────────────────────
-// Setiap field punya: options (array string), allowNew (bool)
 const acRegistry = {};
+let acModalCurrentId = null;
+let acModalCallback  = null;
 
-function acRegister(id, options, allowNew=true) {
-  acRegistry[id] = { options: [...new Set(options.filter(Boolean))], allowNew };
-  // Jika field sudah ada di DOM, langsung set value pertama sebagai placeholder hint
+function acRegister(id, options, allowNew=true, label='') {
+  acRegistry[id] = {
+    options: [...new Set(options.filter(Boolean))],
+    allowNew,
+    label: label || id
+  };
 }
 
 function acSetOptions(id, options) {
   if (acRegistry[id]) acRegistry[id].options = [...new Set(options.filter(Boolean))];
-  else acRegistry[id] = { options: [...new Set(options.filter(Boolean))], allowNew: true };
+  else acRegistry[id] = { options: [...new Set(options.filter(Boolean))], allowNew: true, label: id };
 }
 
 function acAddValue(id, val) {
   if (!val || !acRegistry[id]) return;
-  if (!acRegistry[id].options.includes(val)) acRegistry[id].options.unshift(val);
-}
-
-function acOpen(id) {
-  const inp = document.getElementById(id);
-  const dd  = document.getElementById(id+'-dd');
-  if (!dd || !acRegistry[id]) return;
-  acRender(id, inp.value);
-  dd.classList.add('open');
-}
-
-function acBlur(id) {
-  // Delay agar tap item sempat terdaftar
-  setTimeout(() => {
-    const dd = document.getElementById(id+'-dd');
-    if (dd) dd.classList.remove('open');
-  }, 200);
-}
-
-function acFilter(id) {
-  const inp = document.getElementById(id);
-  const dd  = document.getElementById(id+'-dd');
-  if (!dd || !acRegistry[id]) return;
-  acRender(id, inp.value);
-  dd.classList.add('open');
-}
-
-function acRender(id, query) {
-  const dd  = document.getElementById(id+'-dd');
-  const reg = acRegistry[id];
-  if (!dd || !reg) return;
-  const q   = (query||'').toLowerCase().trim();
-  const opts = reg.options.filter(o => !q || o.toLowerCase().includes(q));
-
-  function esc(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
-  function hi(s)  { if (!q) return s; return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<b>$1</b>'); }
-
-  // Tombol "Tambah baru" selalu di ATAS
-  let addBtn = '';
-  if (reg.allowNew && q && !reg.options.some(o => o.toLowerCase()===q)) {
-    addBtn = `<div class="ac-item new-item" onmousedown="acSelect('${id}','${esc(query)}')">➕ Tambah baru: "${query}"</div>`;
-  }
-
-  const listHtml = opts.map(o =>
-    `<div class="ac-item" onmousedown="acSelect('${id}','${esc(o)}')">${hi(o)}</div>`
-  ).join('');
-
-  dd.innerHTML = addBtn + (listHtml || (!addBtn ? `<div class="ac-item" style="color:var(--ink4)">Tidak ada hasil</div>` : ''));
-}
-
-function acSelect(id, val) {
-  const inp = document.getElementById(id);
-  if (inp) inp.value = val;
-  acAddValue(id, val);
-  const dd = document.getElementById(id+'-dd');
-  if (dd) dd.classList.remove('open');
-  // Trigger change event agar logika lain berjalan
-  inp.dispatchEvent(new Event('input', {bubbles:true}));
-  inp.dispatchEvent(new Event('change', {bubbles:true}));
+  const opts = acRegistry[id].options;
+  if (!opts.map(o=>o.toLowerCase()).includes(val.toLowerCase())) opts.unshift(val);
 }
 
 function acVal(id) {
-  const el = document.getElementById(id);
+  const el = document.getElementById(id+'-val');
   return el ? el.value.trim() : '';
 }
 
 function acSet(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.value = val || '';
+  const v = document.getElementById(id+'-val');
+  const t = document.getElementById(id+'-trigger');
+  if (v) v.value = val || '';
+  if (t) {
+    if (val) {
+      t.innerHTML = val;
+      t.classList.remove('ac-placeholder');
+    } else {
+      t.innerHTML = `<span class="ac-placeholder">${t.dataset.placeholder||'Pilih...'}</span>`;
+    }
+  }
 }
+
+// Buka modal
+function acModalOpen(id) {
+  acModalCurrentId = id;
+  const reg = acRegistry[id];
+  if (!reg) return;
+  document.getElementById('acModal-label').textContent = reg.label;
+  document.getElementById('acModal-search').value = '';
+  acModalRender('');
+  document.getElementById('acModal').classList.add('open');
+  // Push history agar back nutup modal
+  history.pushState({ acModal: id }, '');
+  setTimeout(() => document.getElementById('acModal-search').focus(), 100);
+}
+
+function acModalClose() {
+  document.getElementById('acModal').classList.remove('open');
+  acModalCurrentId = null;
+}
+
+function acModalFilter() {
+  const q = document.getElementById('acModal-search').value;
+  acModalRender(q);
+}
+
+function acModalRender(query) {
+  const id  = acModalCurrentId;
+  const reg = acRegistry[id];
+  if (!reg) return;
+  const q    = (query||'').toLowerCase().trim();
+  const opts = reg.options.filter(o => !q || o.toLowerCase().includes(q));
+  const list = document.getElementById('acModal-list');
+
+  function hi(s) {
+    if (!q) return s;
+    return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<b>$1</b>');
+  }
+
+  let html = '';
+
+  // Tambah baru — selalu di atas kalau allowNew dan belum ada
+  if (reg.allowNew && q && !reg.options.some(o => o.toLowerCase()===q)) {
+    html += `<div class="acm-item new-item" onclick="acModalSelect('${id}','${query.replace(/'/g,"\\'")}')"> Tambah baru: "${query}"</div>`;
+  }
+
+  html += opts.map(o =>
+    `<div class="acm-item" onclick="acModalSelect('${id}','${o.replace(/'/g,"\\'")}')"><span>${hi(o)}</span></div>`
+  ).join('');
+
+  if (!html) html = '<div class="acm-empty">Tidak ada hasil</div>';
+  list.innerHTML = html;
+}
+
+function acModalSelect(id, val) {
+  acSet(id, val);
+  acAddValue(id, val);
+  acModalClose();
+  // Trigger change agar logika form berjalan
+  const hidden = document.getElementById(id+'-val');
+  if (hidden) {
+    hidden.dispatchEvent(new Event('change', {bubbles:true}));
+    hidden.dispatchEvent(new Event('input',  {bubbles:true}));
+  }
+}
+
+// Back button nutup modal juga
+const _origPopstate = window.onpopstate;
+window.addEventListener('popstate', function(e) {
+  if (document.getElementById('acModal').classList.contains('open')) {
+    document.getElementById('acModal').classList.remove('open');
+    acModalCurrentId = null;
+    return;
+  }
+});
 
 // ── INIT AC FIELDS ─────────────────────────────────────────
-// Dipanggil setelah init(), diupdate saat data load
-
 function initAcFields() {
-  // Status event
-  acRegister('ev-status', ['inquiry','booking','dp','lunas','selesai','cancel'], false);
-
-  // Platform marketplace
-  acRegister('on-platform', ['Shopee','Tokopedia','TikTok Shop','Lazada','Lainnya']);
-
-  // Metode bayar
+  acRegister('ev-status',        ['inquiry','booking','dp','lunas','selesai','cancel'], false, 'Status Event');
+  acRegister('on-platform',      ['Shopee','Tokopedia','TikTok Shop','Lazada','Lainnya'], true, 'Platform Marketplace');
   const metodes = ['Cash','Transfer','QRIS'];
-  acRegister('ops-metode',      metodes, true);
-  acRegister('ops-edit-metode', metodes, true);
-  acRegister('bayar-metode',    metodes, true);
-  acRegister('bayar-edit-metode', metodes, true);
-
-  // Tahap pembayaran
+  acRegister('ops-metode',       metodes, true, 'Metode Pembayaran');
+  acRegister('ops-edit-metode',  metodes, true, 'Metode Pembayaran');
+  acRegister('bayar-metode',     metodes, true, 'Metode Pembayaran');
+  acRegister('bayar-edit-metode',metodes, true, 'Metode Pembayaran');
   const tahaps = ['Booking Fee','DP','Pelunasan','Lainnya'];
-  acRegister('bayar-tahap',     tahaps, true);
-  acRegister('bayar-edit-tahap', tahaps, true);
+  acRegister('bayar-tahap',      tahaps,  true, 'Tahap Pembayaran');
+  acRegister('bayar-edit-tahap', tahaps,  true, 'Tahap Pembayaran');
+  const satuans = ['kg','gram','liter','ml','pcs','karung','dus','pack','sachet','lusin','box'];
+  acRegister('beli-satuan',  satuans, true, 'Satuan');
+  acRegister('evb-satuan',   satuans, true, 'Satuan');
+  acRegister('pitem-satuan', satuans, true, 'Satuan');
 
-  // Satuan - diupdate dinamis saat bahan dipilih
-  acRegister('beli-satuan',  ['kg','gram','liter','ml','pcs','karung','dus','pack','sachet'], true);
-  acRegister('evb-satuan',   ['kg','gram','liter','ml','pcs','karung','dus','pack','sachet'], true);
-  acRegister('pitem-satuan', ['pcs','kg','gram','liter','pack','dus','karung','lusin','box'], true);
-
-  // Default values
-  acSet('ev-status',    'inquiry');
-  acSet('ops-metode',   'Cash');
-  acSet('bayar-tahap',  'DP');
-  acSet('bayar-metode', 'Transfer');
+  // Set default values
+  acSet('ev-status',         'inquiry');
+  acSet('ops-metode',        'Cash');
   acSet('ops-edit-metode',   'Cash');
+  acSet('bayar-tahap',       'DP');
+  acSet('bayar-metode',      'Transfer');
   acSet('bayar-edit-tahap',  'DP');
   acSet('bayar-edit-metode', 'Transfer');
-  acSet('on-platform',  'Shopee');
+  acSet('on-platform',       'Shopee');
 }
 
-// Update satuan options dari data bahan
+// Update satuan options dari master bahan
 function updateSatuanAc() {
   const satuans = new Set(['kg','gram','liter','ml','pcs','karung','dus','pack','sachet']);
   bahanData.forEach(b => {
@@ -3163,15 +3278,6 @@ function updateSatuanAc() {
   acSetOptions('pitem-satuan', arr);
 }
 
-// Patch acSet calls on openSheet helpers setelah data diload
-const _origLoadBahan = loadBahan;
-// Override loadBahan untuk update satuan AC setelah load
-async function loadBahan() {
-  await _origLoadBahan();
-  updateSatuanAc();
-}
-
-// Panggil setelah semua fungsi AC terdefinisi
 initAcFields();
 </script>
 
