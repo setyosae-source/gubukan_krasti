@@ -3243,7 +3243,6 @@ function buildKasJournal() {
       allSources.push({type:'terima',dir:'in',amount:Number(ev.omzet)||0,tanggal:ev.tanggal,icon:'💰',
         label:(ev.no_event?'Ev '+ev.no_event+' · ':'')+String(ev.customer||'-'),meta:ev.lokasi||'Event Catering',id:ev.id,table:'events'});
   });
-  // MASUK: penerimaan tambahan (bukan event)
   f.penerimaan.filter(r=>!r.event_id).forEach(r=>{
     allSources.push({type:'terima',dir:'in',amount:Number(r.jumlah)||0,tanggal:r.tanggal,icon:'💰',
       label:r.label||r.jenis||'Penerimaan',meta:String(r.metode||'')});
@@ -3974,7 +3973,6 @@ function openOpsForEvent(eventId) {
   const ev = state.events.find(e=>e.id===eventId);
   const today = new Date().toISOString().slice(0,10);
   const opsKats = ['transport','fee','parkir','bensin','listrik','ongkir','akomodasi','waiters','vendor','operasional','lainnya'];
-  // Render mini sheet ops
   document.getElementById('quickOpsBody').innerHTML = `
     <div style="padding:0 20px 24px;">
       <div style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;padding:8px 12px;margin-bottom:14px;">
@@ -4025,18 +4023,19 @@ async function saveQuickOps(eventId) {
   if (!ket)    { toast('⚠️ Isi keterangan!'); return; }
   if (!jumlah) { toast('⚠️ Isi jumlah!'); return; }
   if (!tgl)    { toast('⚠️ Isi tanggal!'); return; }
+  // Simpan ke gubukan_pengeluaran (punya kolom metode)
   const data = {
     tanggal: tgl, keterangan: ket, jumlah,
     kategori: kat, metode, event_id: eventId, toko: '', catatan: ''
   };
   try {
-    const res = await apiWrite('insert','expenses', data);
+    const res = await apiWrite('insert','pengeluaran', data);
+    // Juga tambah ke state.expenses agar tampil di dashboard/kas
     state.expenses = state.expenses || [];
     state.expenses.push({...data, id: res?.id});
     cacheState();
     closeSheet('quickOpsSheet');
     toast('✅ Biaya ops disimpan!');
-    // refresh detail event
     setTimeout(()=>{ if(typeof renderDetailTab==='function') renderDetailTab('stok'); },200);
   } catch(e) { toast('❌ '+e.message); }
 }
