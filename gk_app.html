@@ -3441,6 +3441,17 @@ async function deleteOps(id) {
   if (!confirm('Hapus biaya ops?')) return;
   try {
     await sbDelete('gk_biaya_ops', id);
+    try {
+      const kasUsaha = await sbGet('gk_kas','jenis=eq.usaha&select=id').then(r=>r[0]);
+      if (kasUsaha) {
+        const mutasis = await sbGet('gk_kas_mutasi', `kas_id=eq.${kasUsaha.id}&referensi=eq.ops:${id}&select=id`);
+        if (mutasis.length) {
+          await sbDelete('gk_kas_mutasi', mutasis[0].id);
+          const saldo = await hitungSaldoKas(kasUsaha.id);
+          await sbUpdate('gk_kas', kasUsaha.id, { saldo });
+        }
+      }
+    } catch(e2) { console.warn('Gagal hapus kas ops:', e2.message); }
     currentEventOps = currentEventOps.filter(o=>o.id!==id);
     renderEventDetail();
     toast('✅ Ops dihapus');
@@ -3695,10 +3706,26 @@ async function saveOpsEvent() {
   try {
     const res = await sbInsert('gk_biaya_ops', { event_id: currentEvent.id, keterangan: ket, jumlah, metode, tanggal: tgl, kategori: 'event' });
     currentEventOps.push(res[0]);
+    const opsId = res[0]?.id || '';
+    // Otomatis catat ke kas usaha sebagai keluar
+    try {
+      const kasUsaha = await sbGet('gk_kas','jenis=eq.usaha&select=id').then(r=>r[0]);
+      if (kasUsaha) {
+        await sbInsert('gk_kas_mutasi', {
+          kas_id: kasUsaha.id,
+          tipe: 'keluar',
+          keterangan: `Ops: ${ket} - ${currentEvent.customer}`,
+          jumlah,
+          tanggal: tgl,
+          referensi: 'ops:' + opsId,
+        });
+        const saldo = await hitungSaldoKas(kasUsaha.id);
+        await sbUpdate('gk_kas', kasUsaha.id, { saldo });
+      }
+    } catch(e2) { console.warn('Gagal catat kas ops:', e2.message); }
     closeSheet('sheetOpsEvent');
     renderEventDetail();
     toast('✅ Biaya ops ditambah');
-    updateSaldoUsaha();
   } catch(e) { toast('❌ ' + e.message); }
 }
 
