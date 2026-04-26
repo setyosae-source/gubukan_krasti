@@ -430,6 +430,32 @@ select.form-control { appearance: none; }
   border-color: var(--gold);
   color: var(--gold);
 }
+/* ── AUTOCOMPLETE ─────────────────────────────────────────── */
+.ac-wrap { position: relative; }
+.ac-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0; right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  z-index: 200;
+  max-height: 180px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  display: none;
+}
+.ac-dropdown.open { display: block; }
+.ac-item {
+  padding: 9px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:active, .ac-item.highlighted { background: var(--gold-dim); color: var(--gold); }
+.ac-item.new-item { color: var(--blue); font-style: italic; }
 </style>
 </head>
 <body>
@@ -685,10 +711,7 @@ select.form-control { appearance: none; }
         </div>
         <div class="form-group">
           <label class="form-label">Status</label>
-          <select class="form-control" id="ev-status">
-            <option value="inquiry">Inquiry</option>
-            <option value="booking">Booking</option>
-          </select>
+          <div class="ac-wrap"><input type="text" class="form-control" id="ev-status" placeholder="inquiry" autocomplete="off" oninput="acFilter('ev-status')" onfocus="acOpen('ev-status')" onblur="acBlur('ev-status')"><div class="ac-dropdown" id="ev-status-dd"></div></div>
         </div>
       </div>
       <div class="form-group">
@@ -796,9 +819,7 @@ select.form-control { appearance: none; }
         </div>
         <div class="form-group">
           <label class="form-label">Satuan</label>
-          <select class="form-control" id="beli-satuan" onchange="onBeliSatuanChange()">
-            <option value="">--</option>
-          </select>
+          <div class="ac-wrap"><input type="text" class="form-control" id="beli-satuan" placeholder="kg, karung..." autocomplete="off" oninput="acFilter('beli-satuan');onBeliSatuanChange()" onfocus="acOpen('beli-satuan')" onblur="acBlur('beli-satuan')"><div class="ac-dropdown" id="beli-satuan-dd"></div></div>
         </div>
       </div>
       <div class="form-group">
@@ -836,13 +857,7 @@ select.form-control { appearance: none; }
     <div class="sheet-body">
       <div class="form-group">
         <label class="form-label">Platform</label>
-        <select class="form-control" id="on-platform">
-          <option value="shopee">Shopee</option>
-          <option value="tokped">Tokopedia</option>
-          <option value="tiktok">TikTok Shop</option>
-          <option value="lazada">Lazada</option>
-          <option value="lainnya">Lainnya</option>
-        </select>
+        <div class="ac-wrap"><input type="text" class="form-control" id="on-platform" placeholder="Shopee, Tokped, Tiktok..." autocomplete="off" oninput="acFilter('on-platform')" onfocus="acOpen('on-platform')" onblur="acBlur('on-platform')"><div class="ac-dropdown" id="on-platform-dd"></div></div>
       </div>
       <div class="form-group">
         <label class="form-label">Jumlah (Rp)</label>
@@ -1221,7 +1236,7 @@ function openAddEvent() {
   document.getElementById('ev-id').value = '';
   document.getElementById('ev-customer').value = '';
   document.getElementById('ev-tanggal').value = new Date().toISOString().slice(0,10);
-  document.getElementById('ev-status').value = 'inquiry';
+  acSet('ev-status', 'inquiry');
   document.getElementById('ev-lokasi').value = '';
   document.getElementById('ev-kontak').value = '';
   document.getElementById('ev-catatan').value = '';
@@ -1236,7 +1251,7 @@ function openEditEvent(id) {
   document.getElementById('ev-id').value = ev.id;
   document.getElementById('ev-customer').value = ev.customer || '';
   document.getElementById('ev-tanggal').value = ev.tanggal || '';
-  document.getElementById('ev-status').value = ev.status || 'inquiry';
+  acSet('ev-status', ev.status || 'inquiry');
   document.getElementById('ev-lokasi').value = ev.lokasi || '';
   document.getElementById('ev-kontak').value = ev.kontak || '';
   document.getElementById('ev-catatan').value = ev.catatan || '';
@@ -1250,7 +1265,7 @@ async function saveEvent() {
   const data = {
     customer: document.getElementById('ev-customer').value.trim(),
     tanggal:  document.getElementById('ev-tanggal').value,
-    status:   document.getElementById('ev-status').value,
+    status:   acVal('ev-status'),
     lokasi:   document.getElementById('ev-lokasi').value.trim(),
     kontak:   document.getElementById('ev-kontak').value.trim(),
     catatan:  document.getElementById('ev-catatan').value.trim(),
@@ -1560,7 +1575,7 @@ function openAddBeli() {
   document.getElementById('beli-total').textContent = 'Rp 0';
   document.getElementById('beli-tanggal').value = new Date().toISOString().slice(0,10);
   document.getElementById('beli-toko').value = '';
-  document.getElementById('beli-satuan').innerHTML = '<option value="">--</option>';
+  acSet('beli-satuan', '');
   document.getElementById('beli-baru-nama').value = '';
   document.getElementById('beli-baru-sat-besar').value = '';
   document.getElementById('beli-baru-sat-kecil').value = '';
@@ -1575,11 +1590,9 @@ function updateBeliBaruHint() {
   const k  = document.getElementById('beli-baru-konversi').value || '?';
   document.getElementById('beli-baru-hint').textContent = `1 ${sb} = ${k} ${sk}`;
   // Update satuan dropdown sesuai isian
-  const satuanSel = document.getElementById('beli-satuan');
   if (sb || sk) {
-    satuanSel.innerHTML = 
-      (sb ? `<option value="${sb}">${sb}</option>` : '') +
-      (sk ? `<option value="${sk}">${sk}</option>` : '');
+    acSetOptions('beli-satuan', [sb,sk].filter(Boolean));
+    if (!acVal('beli-satuan')) acSet('beli-satuan', sb||sk);
   }
 }
 
@@ -1600,7 +1613,8 @@ function onBeliSelectBahan() {
   if (!opt.value) return;
   const sb = opt.dataset.sb, sk = opt.dataset.sk;
   const satuanSel = document.getElementById('beli-satuan');
-  satuanSel.innerHTML = `<option value="${sb}">${sb}</option><option value="${sk}">${sk}</option>`;
+  acSetOptions('beli-satuan', [sb, sk]);
+  acSet('beli-satuan', sb);
   document.getElementById('beli-harga').value = '';
   calcBeliTotal();
 }
@@ -1617,7 +1631,7 @@ async function saveBeli() {
   const sel    = document.getElementById('beli-bahan');
   const opt    = sel.options[sel.selectedIndex];
   const editId = sel.dataset.editId || '';
-  const satuan = document.getElementById('beli-satuan').value;
+  const satuan = acVal('beli-satuan');
   const qty    = Number(document.getElementById('beli-qty').value)||0;
   const harga  = Number(document.getElementById('beli-harga').value)||0;
   if (!satuan || !qty || !harga) { toast('⚠️ Lengkapi data'); return; }
@@ -1732,9 +1746,11 @@ function openEditBeli(id) {
   const satuanSel = document.getElementById('beli-satuan');
   const selectedBahan = bahanData.find(x => x.id === b.bahan_id);
   if (selectedBahan) {
-    satuanSel.innerHTML = `<option value="${selectedBahan.satuan_besar}"${b.satuan===selectedBahan.satuan_besar?' selected':''}>${selectedBahan.satuan_besar}</option><option value="${selectedBahan.satuan_kecil}"${b.satuan===selectedBahan.satuan_kecil?' selected':''}>${selectedBahan.satuan_kecil}</option>`;
+    acSetOptions('beli-satuan', [selectedBahan.satuan_besar, selectedBahan.satuan_kecil]);
+    acSet('beli-satuan', b.satuan);
   } else {
-    satuanSel.innerHTML = `<option value="${b.satuan}" selected>${b.satuan}</option>`;
+    acSetOptions('beli-satuan', [b.satuan]);
+    acSet('beli-satuan', b.satuan);
   }
 
   document.getElementById('beli-qty').value = b.qty || '';
@@ -1887,7 +1903,7 @@ async function deletePesananItem(id) {
 function openAddPesananItem() {
   document.getElementById('pitem-nama').value = '';
   document.getElementById('pitem-qty').value = '1';
-  document.getElementById('pitem-satuan').value = 'pcs';
+  acSet('pitem-satuan', 'pcs');
   document.getElementById('pitem-harga').value = '';
   document.getElementById('pitem-total').textContent = 'Rp 0';
   document.querySelector('#sheetPesananItem .sheet-title').textContent = 'Tambah Item';
@@ -1900,7 +1916,7 @@ function openEditPesananItem(id) {
   if (!i) return;
   document.getElementById('pitem-nama').value  = i.nama_produk || '';
   document.getElementById('pitem-qty').value   = i.qty || '';
-  document.getElementById('pitem-satuan').value= i.satuan || 'pcs';
+  acSet('pitem-satuan', i.satuan || 'pcs');
   document.getElementById('pitem-harga').value = i.harga || '';
   document.getElementById('pitem-total').textContent = rpFull((i.qty||0)*(i.harga||0));
   document.querySelector('#sheetPesananItem .sheet-title').textContent = 'Edit Item';
@@ -1913,7 +1929,7 @@ async function savePesananItem() {
   const editId  = titleEl.dataset.editId || '';
   const nama  = document.getElementById('pitem-nama').value.trim();
   const qty   = Number(document.getElementById('pitem-qty').value)||0;
-  const satuan= document.getElementById('pitem-satuan').value.trim();
+  const satuan= acVal('pitem-satuan');
   const harga = Number(document.getElementById('pitem-harga').value)||0;
   if (!nama || !qty || !harga) { toast('⚠️ Lengkapi semua field'); return; }
   try {
@@ -1981,7 +1997,7 @@ let tokbaOnlineData = [];
 
 function openAddOnline() {
   onlineEditId = '';
-  document.getElementById('on-platform').value = 'shopee';
+  acSet('on-platform', 'Shopee');
   document.getElementById('on-jumlah').value = '';
   document.getElementById('on-catatan').value = '';
   document.getElementById('on-tanggal').value = new Date().toISOString().slice(0,10);
@@ -1993,7 +2009,7 @@ function openEditOnline(id) {
   const r = tokbaOnlineData.find(x => x.id === id);
   if (!r) return;
   onlineEditId = id;
-  document.getElementById('on-platform').value = r.platform || 'shopee';
+  acSet('on-platform', r.platform || 'Shopee');
   document.getElementById('on-jumlah').value = r.jumlah || '';
   document.getElementById('on-catatan').value = r.catatan || '';
   document.getElementById('on-tanggal').value = r.tanggal || '';
@@ -2012,7 +2028,7 @@ async function deleteOnline(id) {
 
 async function saveOnline() {
   const data = {
-    platform: document.getElementById('on-platform').value,
+    platform: acVal('on-platform'),
     jumlah:   Number(document.getElementById('on-jumlah').value)||0,
     tanggal:  document.getElementById('on-tanggal').value,
     catatan:  document.getElementById('on-catatan').value.trim(),
@@ -2186,6 +2202,7 @@ function init() {
 
   // Load dashboard
   loadDashboard();
+  initAcFields();
 }
 
 
@@ -2297,7 +2314,7 @@ function openEditOps(id) {
   document.getElementById('ops-edit-id').value = o.id;
   document.getElementById('ops-edit-ket').value = o.keterangan || '';
   document.getElementById('ops-edit-jumlah').value = o.jumlah || '';
-  document.getElementById('ops-edit-metode').value = o.metode || 'cash';
+  acSet('ops-edit-metode', o.metode || 'Cash');
   document.getElementById('ops-edit-tanggal').value = o.tanggal || '';
   openSheet('sheetOpsEventEdit');
 }
@@ -2306,7 +2323,7 @@ async function saveOpsEdit() {
   const id     = document.getElementById('ops-edit-id').value;
   const ket    = document.getElementById('ops-edit-ket').value.trim();
   const jumlah = Number(document.getElementById('ops-edit-jumlah').value)||0;
-  const metode = document.getElementById('ops-edit-metode').value;
+  const metode = acVal('ops-edit-metode');
   const tgl    = document.getElementById('ops-edit-tanggal').value;
   if (!ket||!jumlah) { toast('⚠️ Isi keterangan dan jumlah'); return; }
   try {
@@ -2333,9 +2350,9 @@ function openEditBayar(id) {
   const b = currentEventBayar.find(x=>x.id===id);
   if (!b) return;
   document.getElementById('bayar-edit-id').value = b.id;
-  document.getElementById('bayar-edit-tahap').value = b.tahap || 'pelunasan';
+  acSet('bayar-edit-tahap', b.tahap || 'Pelunasan');
   document.getElementById('bayar-edit-jumlah').value = b.jumlah || '';
-  document.getElementById('bayar-edit-metode').value = b.metode || 'transfer';
+  acSet('bayar-edit-metode', b.metode || 'Transfer');
   document.getElementById('bayar-edit-tanggal').value = b.tanggal || '';
   document.getElementById('bayar-edit-catatan').value = b.catatan || '';
   openSheet('sheetBayarEdit');
@@ -2343,9 +2360,9 @@ function openEditBayar(id) {
 
 async function saveBayarEdit() {
   const id     = document.getElementById('bayar-edit-id').value;
-  const tahap  = document.getElementById('bayar-edit-tahap').value;
+  const tahap  = acVal('bayar-edit-tahap');
   const jumlah = Number(document.getElementById('bayar-edit-jumlah').value)||0;
-  const metode = document.getElementById('bayar-edit-metode').value;
+  const metode = acVal('bayar-edit-metode');
   const tgl    = document.getElementById('bayar-edit-tanggal').value;
   const catatan= document.getElementById('bayar-edit-catatan').value.trim();
   if (!jumlah) { toast('⚠️ Isi jumlah'); return; }
@@ -2404,7 +2421,7 @@ function onEvbSelectBahan() {
     document.getElementById('evb-harga').value = '';
   } else if (opt.value) {
     manualDiv.style.display = 'none';
-    document.getElementById('evb-satuan').value = opt.dataset.sk || '';
+    acSet('evb-satuan', opt.dataset.sk || '');
     document.getElementById('evb-harga').value = opt.dataset.h || '';
     calcEvbTotal();
   }
@@ -2423,7 +2440,7 @@ async function saveBahanEvent() {
   const bahanId= manual ? null : opt.value;
   const nama   = manual ? document.getElementById('evb-nama-input').value.trim() : opt.text.split(' (')[0];
   const qty    = Number(document.getElementById('evb-qty').value)||0;
-  const satuan = document.getElementById('evb-satuan').value.trim();
+  const satuan = acVal('evb-satuan');
   const harga  = Number(document.getElementById('evb-harga').value)||0;
   if (!nama || !qty || !satuan || !harga) { toast('⚠️ Lengkapi semua field'); return; }
   try {
@@ -2440,7 +2457,7 @@ async function saveBahanEvent() {
 function openAddOpsEvent() {
   document.getElementById('ops-ket').value = '';
   document.getElementById('ops-jumlah').value = '';
-  document.getElementById('ops-metode').value = 'cash';
+  acSet('ops-metode', 'Cash');
   document.getElementById('ops-tanggal').value = (currentEvent && currentEvent.tanggal) || new Date().toISOString().slice(0,10);
   openSheet('sheetOpsEvent');
 }
@@ -2448,7 +2465,7 @@ function openAddOpsEvent() {
 async function saveOpsEvent() {
   const ket    = document.getElementById('ops-ket').value.trim();
   const jumlah = Number(document.getElementById('ops-jumlah').value)||0;
-  const metode = document.getElementById('ops-metode').value;
+  const metode = acVal('ops-metode');
   const tgl    = document.getElementById('ops-tanggal').value;
   if (!ket || !jumlah) { toast('⚠️ Isi keterangan dan jumlah'); return; }
   try {
@@ -2466,20 +2483,20 @@ function openAddBayar() {
   if (tahapDone.includes('booking'))   nextTahap = 'dp';
   if (tahapDone.includes('dp'))        nextTahap = 'pelunasan';
   if (tahapDone.includes('pelunasan')) nextTahap = 'lainnya';
-  document.getElementById('bayar-tahap').value = nextTahap;
+  acSet('bayar-tahap', nextTahap.charAt(0).toUpperCase()+nextTahap.slice(1));
   const omzet = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
   const sudah = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
   document.getElementById('bayar-jumlah').value = Math.max(omzet-sudah,0)||'';
-  document.getElementById('bayar-metode').value = 'transfer';
+  acSet('bayar-metode', 'Transfer');
   document.getElementById('bayar-tanggal').value = new Date().toISOString().slice(0,10);
   document.getElementById('bayar-catatan').value = '';
   openSheet('sheetBayar');
 }
 
 async function saveBayar() {
-  const tahap  = document.getElementById('bayar-tahap').value;
+  const tahap  = acVal('bayar-tahap');
   const jumlah = Number(document.getElementById('bayar-jumlah').value)||0;
-  const metode = document.getElementById('bayar-metode').value;
+  const metode = acVal('bayar-metode');
   const tgl    = document.getElementById('bayar-tanggal').value;
   const catatan= document.getElementById('bayar-catatan').value.trim();
   if (!jumlah) { toast('⚠️ Isi jumlah pembayaran'); return; }
@@ -2663,7 +2680,7 @@ init();
         </div>
         <div class="form-group">
           <label class="form-label">Satuan</label>
-          <input type="text" class="form-control" id="evb-satuan" placeholder="kg, gram, pcs">
+          <div class="ac-wrap"><input type="text" class="form-control" id="evb-satuan" placeholder="kg, gram, pcs" autocomplete="off" oninput="acFilter('evb-satuan')" onfocus="acOpen('evb-satuan')" onblur="acBlur('evb-satuan')"><div class="ac-dropdown" id="evb-satuan-dd"></div></div>
         </div>
       </div>
       <div class="form-group">
@@ -2701,11 +2718,7 @@ init();
         </div>
         <div class="form-group">
           <label class="form-label">Metode</label>
-          <select class="form-control" id="ops-metode">
-            <option value="cash">Cash</option>
-            <option value="transfer">Transfer</option>
-            <option value="qris">QRIS</option>
-          </select>
+          <div class="ac-wrap"><input type="text" class="form-control" id="ops-metode" placeholder="Cash, Transfer, QRIS..." autocomplete="off" oninput="acFilter('ops-metode')" onfocus="acOpen('ops-metode')" onblur="acBlur('ops-metode')"><div class="ac-dropdown" id="ops-metode-dd"></div></div>
         </div>
       </div>
       <div class="form-group">
@@ -2730,12 +2743,7 @@ init();
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Tahap</label>
-          <select class="form-control" id="bayar-tahap">
-            <option value="booking">Booking Fee</option>
-            <option value="dp">DP</option>
-            <option value="pelunasan">Pelunasan</option>
-            <option value="lainnya">Lainnya</option>
-          </select>
+          <div class="ac-wrap"><input type="text" class="form-control" id="bayar-tahap" placeholder="DP, Pelunasan, Booking..." autocomplete="off" oninput="acFilter('bayar-tahap')" onfocus="acOpen('bayar-tahap')" onblur="acBlur('bayar-tahap')"><div class="ac-dropdown" id="bayar-tahap-dd"></div></div>
         </div>
         <div class="form-group">
           <label class="form-label">Jumlah (Rp)</label>
@@ -2745,11 +2753,7 @@ init();
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Metode</label>
-          <select class="form-control" id="bayar-metode">
-            <option value="transfer">Transfer</option>
-            <option value="cash">Cash</option>
-            <option value="qris">QRIS</option>
-          </select>
+          <div class="ac-wrap"><input type="text" class="form-control" id="bayar-metode" placeholder="Transfer, Cash, QRIS..." autocomplete="off" oninput="acFilter('bayar-metode')" onfocus="acOpen('bayar-metode')" onblur="acBlur('bayar-metode')"><div class="ac-dropdown" id="bayar-metode-dd"></div></div>
         </div>
         <div class="form-group">
           <label class="form-label">Tanggal</label>
@@ -2832,7 +2836,7 @@ init();
         </div>
         <div class="form-group">
           <label class="form-label">Satuan</label>
-          <input type="text" class="form-control" id="pitem-satuan" placeholder="pcs, kg, dll">
+          <div class="ac-wrap"><input type="text" class="form-control" id="pitem-satuan" placeholder="pcs, kg, dll" autocomplete="off" oninput="acFilter('pitem-satuan')" onfocus="acOpen('pitem-satuan')" onblur="acBlur('pitem-satuan')"><div class="ac-dropdown" id="pitem-satuan-dd"></div></div>
         </div>
       </div>
       <div class="form-group">
@@ -2947,11 +2951,7 @@ init();
         </div>
         <div class="form-group">
           <label class="form-label">Metode</label>
-          <select class="form-control" id="ops-edit-metode">
-            <option value="cash">Cash</option>
-            <option value="transfer">Transfer</option>
-            <option value="qris">QRIS</option>
-          </select>
+          <div class="ac-wrap"><input type="text" class="form-control" id="ops-edit-metode" placeholder="Cash, Transfer, QRIS..." autocomplete="off" oninput="acFilter('ops-edit-metode')" onfocus="acOpen('ops-edit-metode')" onblur="acBlur('ops-edit-metode')"><div class="ac-dropdown" id="ops-edit-metode-dd"></div></div>
         </div>
       </div>
       <div class="form-group">
@@ -2977,12 +2977,7 @@ init();
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Tahap</label>
-          <select class="form-control" id="bayar-edit-tahap">
-            <option value="booking">Booking Fee</option>
-            <option value="dp">DP</option>
-            <option value="pelunasan">Pelunasan</option>
-            <option value="lainnya">Lainnya</option>
-          </select>
+          <div class="ac-wrap"><input type="text" class="form-control" id="bayar-edit-tahap" placeholder="DP, Pelunasan, Booking..." autocomplete="off" oninput="acFilter('bayar-edit-tahap')" onfocus="acOpen('bayar-edit-tahap')" onblur="acBlur('bayar-edit-tahap')"><div class="ac-dropdown" id="bayar-edit-tahap-dd"></div></div>
         </div>
         <div class="form-group">
           <label class="form-label">Jumlah (Rp)</label>
@@ -2992,11 +2987,7 @@ init();
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Metode</label>
-          <select class="form-control" id="bayar-edit-metode">
-            <option value="transfer">Transfer</option>
-            <option value="cash">Cash</option>
-            <option value="qris">QRIS</option>
-          </select>
+          <div class="ac-wrap"><input type="text" class="form-control" id="bayar-edit-metode" placeholder="Transfer, Cash, QRIS..." autocomplete="off" oninput="acFilter('bayar-edit-metode')" onfocus="acOpen('bayar-edit-metode')" onblur="acBlur('bayar-edit-metode')"><div class="ac-dropdown" id="bayar-edit-metode-dd"></div></div>
         </div>
         <div class="form-group">
           <label class="form-label">Tanggal</label>
@@ -3012,6 +3003,152 @@ init();
     </div>
   </div>
 </div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- AUTOCOMPLETE ENGINE                                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<script>
+// ── AC REGISTRY ────────────────────────────────────────────
+// Setiap field punya: options (array string), allowNew (bool)
+const acRegistry = {};
+
+function acRegister(id, options, allowNew=true) {
+  acRegistry[id] = { options: [...new Set(options.filter(Boolean))], allowNew };
+  // Jika field sudah ada di DOM, langsung set value pertama sebagai placeholder hint
+}
+
+function acSetOptions(id, options) {
+  if (acRegistry[id]) acRegistry[id].options = [...new Set(options.filter(Boolean))];
+  else acRegistry[id] = { options: [...new Set(options.filter(Boolean))], allowNew: true };
+}
+
+function acAddValue(id, val) {
+  if (!val || !acRegistry[id]) return;
+  if (!acRegistry[id].options.includes(val)) acRegistry[id].options.unshift(val);
+}
+
+function acOpen(id) {
+  const inp = document.getElementById(id);
+  const dd  = document.getElementById(id+'-dd');
+  if (!dd || !acRegistry[id]) return;
+  acRender(id, inp.value);
+  dd.classList.add('open');
+}
+
+function acBlur(id) {
+  // Delay agar tap item sempat terdaftar
+  setTimeout(() => {
+    const dd = document.getElementById(id+'-dd');
+    if (dd) dd.classList.remove('open');
+  }, 200);
+}
+
+function acFilter(id) {
+  const inp = document.getElementById(id);
+  const dd  = document.getElementById(id+'-dd');
+  if (!dd || !acRegistry[id]) return;
+  acRender(id, inp.value);
+  dd.classList.add('open');
+}
+
+function acRender(id, query) {
+  const dd   = document.getElementById(id+'-dd');
+  const reg  = acRegistry[id];
+  if (!dd || !reg) return;
+  const q    = (query||'').toLowerCase().trim();
+  const opts = reg.options.filter(o => !q || o.toLowerCase().includes(q));
+  let html = opts.map(o =>
+    `<div class="ac-item" onmousedown="acSelect('${id}','${o.replace(/'/g,"\\'")}')">
+      ${o.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<b>$1</b>')}
+    </div>`
+  ).join('');
+  // Opsi "Tambah baru" jika nilai belum ada dan allowNew
+  if (reg.allowNew && q && !reg.options.some(o=>o.toLowerCase()===q)) {
+    html += `<div class="ac-item new-item" onmousedown="acSelect('${id}','${query.replace(/'/g,"\\'")}')">➕ Tambah "${query}"</div>`;
+  }
+  dd.innerHTML = html || `<div class="ac-item" style="color:var(--ink4)">Tidak ada hasil</div>`;
+}
+
+function acSelect(id, val) {
+  const inp = document.getElementById(id);
+  if (inp) inp.value = val;
+  acAddValue(id, val);
+  const dd = document.getElementById(id+'-dd');
+  if (dd) dd.classList.remove('open');
+  // Trigger change event agar logika lain berjalan
+  inp.dispatchEvent(new Event('input', {bubbles:true}));
+  inp.dispatchEvent(new Event('change', {bubbles:true}));
+}
+
+function acVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function acSet(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val || '';
+}
+
+// ── INIT AC FIELDS ─────────────────────────────────────────
+// Dipanggil setelah init(), diupdate saat data load
+
+function initAcFields() {
+  // Status event
+  acRegister('ev-status', ['inquiry','booking','dp','lunas','selesai','cancel'], false);
+
+  // Platform marketplace
+  acRegister('on-platform', ['Shopee','Tokopedia','TikTok Shop','Lazada','Lainnya']);
+
+  // Metode bayar
+  const metodes = ['Cash','Transfer','QRIS'];
+  acRegister('ops-metode',      metodes, true);
+  acRegister('ops-edit-metode', metodes, true);
+  acRegister('bayar-metode',    metodes, true);
+  acRegister('bayar-edit-metode', metodes, true);
+
+  // Tahap pembayaran
+  const tahaps = ['Booking Fee','DP','Pelunasan','Lainnya'];
+  acRegister('bayar-tahap',     tahaps, true);
+  acRegister('bayar-edit-tahap', tahaps, true);
+
+  // Satuan - diupdate dinamis saat bahan dipilih
+  acRegister('beli-satuan',  ['kg','gram','liter','ml','pcs','karung','dus','pack','sachet'], true);
+  acRegister('evb-satuan',   ['kg','gram','liter','ml','pcs','karung','dus','pack','sachet'], true);
+  acRegister('pitem-satuan', ['pcs','kg','gram','liter','pack','dus','karung','lusin','box'], true);
+
+  // Default values
+  acSet('ev-status',    'inquiry');
+  acSet('ops-metode',   'Cash');
+  acSet('bayar-tahap',  'DP');
+  acSet('bayar-metode', 'Transfer');
+  acSet('ops-edit-metode',   'Cash');
+  acSet('bayar-edit-tahap',  'DP');
+  acSet('bayar-edit-metode', 'Transfer');
+  acSet('on-platform',  'Shopee');
+}
+
+// Update satuan options dari data bahan
+function updateSatuanAc() {
+  const satuans = new Set(['kg','gram','liter','ml','pcs','karung','dus','pack','sachet']);
+  bahanData.forEach(b => {
+    if (b.satuan_besar) satuans.add(b.satuan_besar);
+    if (b.satuan_kecil) satuans.add(b.satuan_kecil);
+  });
+  const arr = [...satuans];
+  acSetOptions('beli-satuan',  arr);
+  acSetOptions('evb-satuan',   arr);
+  acSetOptions('pitem-satuan', arr);
+}
+
+// Patch acSet calls on openSheet helpers setelah data diload
+const _origLoadBahan = loadBahan;
+// Override loadBahan untuk update satuan AC setelah load
+async function loadBahan() {
+  await _origLoadBahan();
+  updateSatuanAc();
+}
+</script>
 
 </body>
 </html>
