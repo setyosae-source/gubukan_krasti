@@ -434,28 +434,36 @@ select.form-control { appearance: none; }
 .ac-wrap { position: relative; }
 .ac-dropdown {
   position: absolute;
-  top: calc(100% + 2px);
+  top: calc(100% + 3px);
   left: 0; right: 0;
   background: var(--bg2);
   border: 1px solid var(--border2);
   border-radius: var(--radius-sm);
-  z-index: 200;
-  max-height: 180px;
+  z-index: 300;
+  max-height: 210px;
   overflow-y: auto;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
   display: none;
 }
 .ac-dropdown.open { display: block; }
 .ac-item {
-  padding: 9px 12px;
+  padding: 10px 12px;
   font-size: 13px;
   cursor: pointer;
   border-bottom: 1px solid var(--border);
   color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
 }
 .ac-item:last-child { border-bottom: none; }
-.ac-item:active, .ac-item.highlighted { background: var(--gold-dim); color: var(--gold); }
-.ac-item.new-item { color: var(--blue); font-style: italic; }
+.ac-item:active { background: var(--gold-dim); color: var(--gold); }
+.ac-item.new-item {
+  color: var(--blue);
+  font-weight: 600;
+  background: var(--blue-dim);
+  border-bottom: 1px solid var(--border2);
+  position: sticky;
+  top: 0;
+}
 </style>
 </head>
 <body>
@@ -1013,31 +1021,41 @@ function toast(msg, dur=2500) {
 }
 
 // ── SHEET ──────────────────────────────────────────────────
+// ── SHEET MANAGEMENT ───────────────────────────────────────
+let _backHandling = false; // flag: popstate sedang diproses
+
 function openSheet(id) {
   document.getElementById(id).classList.add('open');
-  // Push state agar tombol back Android nutup sheet, bukan keluar app
   history.pushState({ sheet: id }, '');
 }
+
 function closeSheet(id) {
-  document.getElementById(id).classList.remove('open');
+  const el = document.getElementById(id);
+  if (!el || !el.classList.contains('open')) return;
+  el.classList.remove('open');
+  // Sinkronkan history hanya kalau bukan dipicu oleh popstate
+  if (!_backHandling && history.state && history.state.sheet) {
+    history.back();
+  }
 }
+
 function overlayClose(e, id) {
   if (e.target === document.getElementById(id)) closeSheet(id);
 }
 
 // ── BACK BUTTON HANDLER ─────────────────────────────────────
-window.addEventListener('popstate', function(e) {
-  // Cari sheet yang sedang terbuka, tutup yang paling atas
+window.addEventListener('popstate', function() {
+  _backHandling = true;
   const openSheets = Array.from(document.querySelectorAll('.overlay.open'));
   if (openSheets.length > 0) {
-    const topSheet = openSheets[openSheets.length - 1];
-    topSheet.classList.remove('open');
+    // Tutup sheet paling atas
+    openSheets[openSheets.length - 1].classList.remove('open');
+    // Kalau masih ada sheet lain, push state lagi agar back berikutnya tetap tertangkap
+    if (openSheets.length > 1) {
+      history.pushState({ sheet: openSheets[openSheets.length - 2].id }, '');
+    }
   }
-  // Kalau masih ada sheet lain terbuka, push state lagi agar back berikutnya masih tertangkap
-  const remaining = document.querySelectorAll('.overlay.open');
-  if (remaining.length > 0) {
-    history.pushState({ sheet: remaining[remaining.length-1].id }, '');
-  }
+  _backHandling = false;
 });
 
 // ── TAB NAVIGATION ─────────────────────────────────────────
@@ -1257,7 +1275,7 @@ function openEditEvent(id) {
   document.getElementById('ev-catatan').value = ev.catatan || '';
   document.getElementById('sheetEventTitle').textContent = 'Edit Event';
   closeSheet('sheetEventDetail');
-  setTimeout(() => openSheet('sheetEvent'), 200);
+  openSheet('sheetEvent');
 }
 
 async function saveEvent() {
@@ -2202,7 +2220,6 @@ function init() {
 
   // Load dashboard
   loadDashboard();
-  initAcFields();
 }
 
 
@@ -3052,21 +3069,26 @@ function acFilter(id) {
 }
 
 function acRender(id, query) {
-  const dd   = document.getElementById(id+'-dd');
-  const reg  = acRegistry[id];
+  const dd  = document.getElementById(id+'-dd');
+  const reg = acRegistry[id];
   if (!dd || !reg) return;
-  const q    = (query||'').toLowerCase().trim();
+  const q   = (query||'').toLowerCase().trim();
   const opts = reg.options.filter(o => !q || o.toLowerCase().includes(q));
-  let html = opts.map(o =>
-    `<div class="ac-item" onmousedown="acSelect('${id}','${o.replace(/'/g,"\\'")}')">
-      ${o.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<b>$1</b>')}
-    </div>`
-  ).join('');
-  // Opsi "Tambah baru" jika nilai belum ada dan allowNew
-  if (reg.allowNew && q && !reg.options.some(o=>o.toLowerCase()===q)) {
-    html += `<div class="ac-item new-item" onmousedown="acSelect('${id}','${query.replace(/'/g,"\\'")}')">➕ Tambah "${query}"</div>`;
+
+  function esc(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+  function hi(s)  { if (!q) return s; return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<b>$1</b>'); }
+
+  // Tombol "Tambah baru" selalu di ATAS
+  let addBtn = '';
+  if (reg.allowNew && q && !reg.options.some(o => o.toLowerCase()===q)) {
+    addBtn = `<div class="ac-item new-item" onmousedown="acSelect('${id}','${esc(query)}')">➕ Tambah baru: "${query}"</div>`;
   }
-  dd.innerHTML = html || `<div class="ac-item" style="color:var(--ink4)">Tidak ada hasil</div>`;
+
+  const listHtml = opts.map(o =>
+    `<div class="ac-item" onmousedown="acSelect('${id}','${esc(o)}')">${hi(o)}</div>`
+  ).join('');
+
+  dd.innerHTML = addBtn + (listHtml || (!addBtn ? `<div class="ac-item" style="color:var(--ink4)">Tidak ada hasil</div>` : ''));
 }
 
 function acSelect(id, val) {
@@ -3148,6 +3170,9 @@ async function loadBahan() {
   await _origLoadBahan();
   updateSatuanAc();
 }
+
+// Panggil setelah semua fungsi AC terdefinisi
+initAcFields();
 </script>
 
 </body>
