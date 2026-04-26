@@ -803,6 +803,9 @@ select.form-control { appearance: none; }
         </div>
       </div>
 
+      <!-- Reminder Pembayaran -->
+      <div id="d-reminders"></div>
+
       <!-- Event mendatang -->
       <div class="section-title">Event Mendatang</div>
       <div id="d-events-upcoming">
@@ -1611,20 +1614,32 @@ async function loadDashboard() {
   const bulanStr = `${y}-${String(m).padStart(2,'0')}`;
 
   try {
-    // P&L bulanan dari view
-    const pl = await sbGet('gk_pl_bulanan',
-      `bulan=eq.${bulanStr}-01&select=*`);
+    const pl = await sbGet('gk_pl_bulanan', `bulan=eq.${bulanStr}-01&select=*`);
     const row = pl[0] || {};
-
-    // Kas
     const kas = await sbGet('gk_kas', 'select=nama,jenis,saldo');
 
-    // Event mendatang
+    // Event mendatang + data pembayaran
     const today = new Date().toISOString().slice(0,10);
     const upcoming = await sbGet('gk_event',
-      `tanggal=gte.${today}&status=in.(inquiry,booking,dp,lunas)&order=tanggal.asc&limit=5&select=*`);
+      `tanggal=gte.${today}&status=in.(inquiry,booking,dp,lunas)&order=tanggal.asc&limit=10&select=*`);
+
+    // Fetch menu & bayar untuk setiap upcoming event
+    if (upcoming.length) {
+      const ids = upcoming.map(e=>e.id);
+      const [menus, bayars] = await Promise.all([
+        sbGet('gk_event_menu',  `event_id=in.(${ids.join(',')})&select=event_id,total`),
+        sbGet('gk_event_bayar', `event_id=in.(${ids.join(',')})&select=event_id,jumlah,tahap`),
+      ]);
+      const sumMenu  = menus.reduce((m,r)=>{ m[r.event_id]=(m[r.event_id]||0)+Number(r.total||0); return m; }, {});
+      const sumBayar = bayars.reduce((m,r)=>{ m[r.event_id]=(m[r.event_id]||0)+Number(r.jumlah||0); return m; }, {});
+      upcoming.forEach(ev => {
+        ev._omzet    = sumMenu[ev.id]||0;
+        ev._terbayar = sumBayar[ev.id]||0;
+      });
+    }
 
     renderDashboard(row, kas, upcoming);
+    renderReminders(upcoming);
   } catch(err) {
     toast('❌ ' + err.message);
   }
@@ -1697,6 +1712,159 @@ function renderDashboard(row, kas, upcoming) {
 function set(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
+}
+
+// ── REMINDER PEMBAYARAN ─────────────────────────────────────
+function getDismissed() {
+  try {
+    const data = JSON.parse(localStorage.getItem('gk_dismissed')||'{}');
+    const today = new Date().toISOString().slice(0,10);
+    // Rollover: hapus semua yang bukan hari ini
+    const cleaned = {};
+    Object.keys(data).forEach(k => { if (data[k]===today) cleaned[k]=today; });
+    return cleaned;
+  } catch { return {}; }
+}
+
+function dismissReminder(evId) {
+  const today = new Date().toISOString().slice(0,10);
+  const data  = getDismissed();
+  data[evId]  = today;
+  localStorage.setItem('gk_dismissed', JSON.stringify(data));
+  document.getElementById('rem-'+evId)?.remove();
+  // Hapus section title kalau tidak ada reminder lagi
+  const rem = document.getElementById('d-reminders');
+  if (rem && !rem.querySelector('.rem-card')) rem.innerHTML = '';
+}
+
+function renderReminders(upcoming) {
+  const el = document.getElementById('d-reminders');
+  if (!el) return;
+  const today     = new Date().toISOString().slice(0,10);
+  const dismissed = getDismissed();
+
+  const cards = upcoming
+    .filter(ev => !dismissed[ev.id] && ev.status !== 'lunas' && ev.status !== 'selesai')
+    .map(ev => {
+      const diffDays  = Math.ceil((new Date(ev.tanggal) - new Date(today)) / 86400000);
+      const omzet     = ev._omzet || 0;
+      const terbayar  = ev._terbayar || 0;
+      const dpTarget  = Math.round(omzet * 0.5);
+      const kurangDp  = Math.max(dpTarget - terbayar, 0);
+      const sisaPelunasan = Math.max(omzet - terbayar, 0);
+      const pctBayar  = omzet > 0 ? Math.min(Math.round(terbayar/omzet*100),100) : 0;
+
+      // Tentukan tipe reminder
+      let tipe = null;
+      if (diffDays <= 7  && terbayar < dpTarget)  tipe = 'dp';
+      if (diffDays <= 3  && terbayar >= dpTarget && sisaPelunasan > 0) tipe = 'pelunasan';
+      if (diffDays <= 14 && tipe === null && terbayar === 0) tipe = 'dp'; // belum ada pembayaran sama sekali
+
+      if (!tipe) return '';
+
+      const hLabel   = diffDays === 0 ? 'HARI INI' : diffDays === 1 ? 'BESOK' : `H-${diffDays}`;
+      const hColor   = diffDays <= 1 ? 'var(--red)' : diffDays <= 3 ? '#e67e22' : 'var(--gold)';
+      const icon     = tipe === 'pelunasan' ? '💰' : '🔔';
+      const tipLabel = tipe === 'pelunasan' ? 'Tagih Pelunasan' : 'Tagih DP';
+      const tagihan  = tipe === 'pelunasan' ? sisaPelunasan : kurangDp;
+
+      return `
+      <div class="rem-card" id="rem-${ev.id}" style="background:var(--bg2);border:1px solid ${hColor};border-radius:12px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--ink)">${icon} ${ev.customer}</div>
+            <div style="font-size:11px;color:var(--ink3);margin-top:2px">📅 ${fmtDate(ev.tanggal)}${ev.lokasi?' · '+ev.lokasi:''}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;font-weight:800;color:${hColor}">${hLabel}</div>
+            <div style="font-size:10px;color:var(--ink3);margin-top:1px">${tipLabel}</div>
+          </div>
+        </div>
+
+        <!-- Rekap tagihan -->
+        <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px">
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--ink3)">Nilai Order</span>
+            <span style="font-weight:600;font-family:var(--mono);color:var(--gold)">${rpFull(omzet)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--ink3)">Sudah Masuk</span>
+            <span style="font-weight:600;font-family:var(--mono);color:var(--green)">${rpFull(terbayar)} <span style="color:var(--ink4);font-size:10px">(${pctBayar}%)</span></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--ink3)">Target DP (50%)</span>
+            <span style="font-family:var(--mono)">${rpFull(dpTarget)}</span>
+          </div>
+          ${kurangDp > 0 ? `
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--red)">⚠️ Kurang DP</span>
+            <span style="font-weight:700;font-family:var(--mono);color:var(--red)">${rpFull(kurangDp)}</span>
+          </div>` : ''}
+          <div style="display:flex;justify-content:space-between;padding:3px 0">
+            <span style="color:var(--ink3)">Sisa Pelunasan</span>
+            <span style="font-weight:700;font-family:var(--mono);color:${sisaPelunasan>0?'var(--red)':'var(--green)'}">${sisaPelunasan>0?rpFull(sisaPelunasan):'✅ Lunas'}</span>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex;gap:8px">
+          <button onclick="kirimWA('${ev.id}','${tipe}')" style="flex:1;background:#25D366;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:9px">📱 Kirim WA</button>
+          <button onclick="dismissReminder('${ev.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--ink3);font-size:12px;padding:9px 12px">✅ Oke</button>
+        </div>
+      </div>`;
+    }).filter(Boolean).join('');
+
+  if (!cards) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="section-title" style="margin-bottom:8px">🔔 Reminder Pembayaran</div>
+    ${cards}`;
+}
+
+function kirimWA(evId, tipe) {
+  const ev = eventsData.find(e=>e.id===evId) || { customer:'', tanggal:'', lokasi:'', kontak:'', _omzet:0, _terbayar:0 };
+  _kirimWAMsg(ev, tipe);
+}
+
+function kirimWAEvent(evId) {
+  const ev = eventsData.find(e=>e.id===evId);
+  if (!ev) return;
+  const tipe = (ev.summary?.terbayar||0) >= Math.round((ev.summary?.omzet||0)*0.5) ? 'pelunasan' : 'dp';
+  _kirimWAMsg(ev, tipe);
+}
+
+function _kirimWAMsg(ev, tipe) {
+  const omzet    = ev._omzet    || ev.summary?.omzet    || 0;
+  const terbayar = ev._terbayar || ev.summary?.terbayar || 0;
+  const dpTarget = Math.round(omzet * 0.5);
+  const kurangDp = Math.max(dpTarget - terbayar, 0);
+  const sisa     = Math.max(omzet - terbayar, 0);
+  const nama     = ev.customer || 'Kak';
+  const tgl      = fmtDate(ev.tanggal);
+  const lokasi   = ev.lokasi || '';
+
+  let pesan = '';
+  if (tipe === 'dp') {
+    pesan = `Halo Kak ${nama} 😊\n\nMengingatkan event catering *Gubukan Krasti* tanggal *${tgl}*${lokasi?' di *'+lokasi+'*':''}.\n\nBerikut rekap tagihan:\n` +
+      `• Nilai Order: *${rpFull(omzet)}*\n` +
+      `• Sudah masuk: *${rpFull(terbayar)}*\n` +
+      `• DP (50%): *${rpFull(dpTarget)}*\n` +
+      `• Kurang DP: *${rpFull(kurangDp)}*\n\n` +
+      `Mohon konfirmasi pelunasan DP-nya ya Kak 🙏\n\n` +
+      `Terima kasih 🌿\n*Gubukan Krasti - Catering & Kuliner*`;
+  } else {
+    pesan = `Halo Kak ${nama} 😊\n\nMengingatkan event catering *Gubukan Krasti* tanggal *${tgl}*${lokasi?' di *'+lokasi+'*':''}.\n\nBerikut rekap tagihan:\n` +
+      `• Nilai Order: *${rpFull(omzet)}*\n` +
+      `• Sudah masuk: *${rpFull(terbayar)}*\n` +
+      `• Sisa pelunasan: *${rpFull(sisa)}*\n\n` +
+      `Mohon pelunasannya ya Kak sebelum hari H 🙏\n\n` +
+      `Terima kasih 🌿\n*Gubukan Krasti - Catering & Kuliner*`;
+  }
+
+  const kontak = (ev.kontak||'').replace(/\D/g,'');
+  const waUrl  = kontak
+    ? `https://wa.me/62${kontak.replace(/^0/,'')}?text=${encodeURIComponent(pesan)}`
+    : `https://wa.me/?text=${encodeURIComponent(pesan)}`;
+  window.open(waUrl, '_blank');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1893,7 +2061,11 @@ function renderEvents() {
     el.innerHTML = `<div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">Tidak ada event</div></div>`;
     return;
   }
-  el.innerHTML = list.map(ev => `
+  el.innerHTML = list.map(ev => {
+    const isUpcoming = ev.tanggal >= new Date().toISOString().slice(0,10);
+    const showWA = isUpcoming && ev.summary && ['inquiry','booking','dp'].includes(ev.status);
+    const tipeWA = ev.summary && ev._terbayar < Math.round((ev.summary?.omzet||0)*0.5) ? 'dp' : 'pelunasan';
+    return `
     <div class="ev-item" onclick="openEventDetail('${ev.id}')">
       <div class="ev-top">
         <div>
@@ -1902,6 +2074,7 @@ function renderEvents() {
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span class="badge ${ev.status}">${ev.status}</span>
+          ${showWA ? `<button onclick="event.stopPropagation();kirimWAEvent('${ev.id}')" style="background:#25D366;border:none;border-radius:6px;color:#fff;font-size:11px;padding:3px 7px">📱</button>` : ''}
           <button onclick="event.stopPropagation();openEditEvent('${ev.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 7px">✏️</button>
           <button onclick="event.stopPropagation();deleteEvent('${ev.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 7px">🗑️</button>
         </div>
@@ -1925,7 +2098,7 @@ function renderEvents() {
         <span style="font-size:10px;color:var(--ink4)">HPP+Ops: <span style="color:var(--red)">${rpFull(ev.summary.hppOps)}</span> · Laba Est: <span style="color:var(--green)">${rpFull(ev.summary.laba)} (${ev.summary.margin}%)</span></span>
       </div>` : `
       ${ev.catatan ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px">${ev.catatan}</div>` : ''}`}
-    </div>`).join('');
+    </div>`}).join('');
 }
 
 function openAddEvent() {
