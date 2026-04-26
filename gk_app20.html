@@ -2477,66 +2477,75 @@ function filterBahan() {
 }
 
 function renderBeli(list) {
+  const q = (document.getElementById('beli-search')?.value||'').toLowerCase().trim();
+  const filtered = q ? list.filter(b=>
+    (b.nama_bahan||'').toLowerCase().includes(q) ||
+    (b.toko||'').toLowerCase().includes(q) ||
+    String(b.total||'').includes(q) ||
+    String(b.harga_beli||'').includes(q)
+  ) : list;
+
   const el = document.getElementById('beli-list');
   if (!list.length) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">🛒</div><div class="empty-text">Belum ada pembelian<br>Tap + untuk catat</div></div>`;
     return;
   }
-  el.innerHTML = list.map(b => `
-    <div class="card" style="margin-bottom:8px;padding:12px 14px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600">${b.nama_bahan}</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:2px">
-            ${b.qty} ${b.satuan}${b.toko ? ' · '+b.toko : ''} · ${fmtDate(b.tanggal)}
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-          <div style="font-size:13px;font-weight:600;color:var(--red);font-family:var(--mono)">${rpFull(b.total)}</div>
-          <div style="display:flex;gap:6px">
-            <button onclick="openEditBeli('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 8px">✏️ Edit</button>
-            <button onclick="deleteBeli('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 8px">🗑️</button>
-          </div>
-        </div>
-      </div>
-    </div>`).join('');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Tidak ada hasil untuk "${q}"</div></div>`;
+    return;
+  }
+
+  function hi(s) {
+    if (!q||!s) return s||'';
+    return String(s).replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:var(--gold-dim);color:var(--gold);border-radius:2px">$1</mark>');
+  }
+
+  const totalFilter = filtered.reduce((s,b)=>s+Number(b.total||0),0);
+
+  el.innerHTML = `
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--border)">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:380px">
+      <thead style="background:var(--bg2)">
+        <tr>
+          <th style="padding:8px 8px;text-align:left;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Bahan</th>
+          <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Qty</th>
+          <th style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Total</th>
+          <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map((b,i)=>{
+          const rowBg = i%2===0 ? 'var(--bg)' : 'var(--bg3)';
+          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border)">
+            <td style="padding:9px 8px">
+              <div style="font-size:12px;font-weight:600;color:var(--ink)">${hi(b.nama_bahan)}</div>
+              <div style="font-size:10px;color:var(--ink3)">${fmtDate(b.tanggal)}${b.toko?' · '+hi(b.toko):''}</div>
+            </td>
+            <td style="padding:9px 6px;text-align:center">
+              <div style="font-size:12px;color:var(--ink)">${b.qty} ${b.satuan}</div>
+              <div style="font-size:10px;color:var(--ink4)">${rpFull(b.harga_beli)}/${b.satuan}</div>
+            </td>
+            <td style="padding:9px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--red);white-space:nowrap">${rpFull(b.total)}</td>
+            <td style="padding:7px 4px;text-align:center;white-space:nowrap">
+              <button onclick="openEditBeli('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--blue);font-size:10px;padding:2px 5px">✏️</button>
+              <button onclick="deleteBeli('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:5px;color:var(--red);font-size:10px;padding:2px 5px">🗑️</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+      <tfoot style="background:var(--bg2);border-top:2px solid var(--border)">
+        <tr>
+          <td colspan="2" style="padding:7px 8px;font-size:10px;color:var(--ink3)">${filtered.length} transaksi${list.length!==filtered.length?' dari '+list.length:''}</td>
+          <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--red);font-size:12px">${rpFull(totalFilter)}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>`;
 }
 
 function filterBeli() {
-  const q = (document.getElementById('beli-search')?.value || '').toLowerCase().trim();
-  if (!q) { renderBeli(beliData); return; }
-  const filtered = beliData.filter(b =>
-    (b.nama_bahan||'').toLowerCase().includes(q) ||
-    (b.toko||'').toLowerCase().includes(q) ||
-    String(b.total||'').includes(q) ||
-    String(b.harga_beli||'').includes(q)
-  );
-  const el = document.getElementById('beli-list');
-  if (!filtered.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Tidak ada hasil untuk<br>"${q}"</div></div>`;
-    return;
-  }
-  // Render dengan highlight
-  el.innerHTML = filtered.map(b => {
-    const hi = s => s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:var(--gold-dim);color:var(--gold);border-radius:2px">$1</mark>');
-    return `<div class="card" style="margin-bottom:8px;padding:12px 14px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600">${hi(b.nama_bahan||'')}</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:2px">
-            ${b.qty} ${b.satuan}${b.toko ? ' · '+hi(b.toko) : ''} · ${fmtDate(b.tanggal)}
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-          <div style="font-size:13px;font-weight:600;color:var(--red);font-family:var(--mono)">${rpFull(b.total)}</div>
-          <div style="display:flex;gap:6px">
-            <button onclick="openEditBeli('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 8px">✏️ Edit</button>
-            <button onclick="deleteBeli('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 8px">🗑️</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  renderBeli(beliData);
 }
 
 function openAddBahan() {
