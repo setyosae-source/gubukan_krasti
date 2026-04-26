@@ -1216,8 +1216,6 @@ function rp(n) {
   if (n === null || n === undefined || n === '—') return '—';
   const num = Number(n);
   if (isNaN(num)) return '—';
-  if (Math.abs(num) >= 1000000) return 'Rp ' + (num/1000000).toFixed(1) + 'jt';
-  if (Math.abs(num) >= 1000) return 'Rp ' + (num/1000).toFixed(0) + 'rb';
   return 'Rp ' + num.toLocaleString('id-ID');
 }
 function rpFull(n) {
