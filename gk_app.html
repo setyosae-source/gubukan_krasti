@@ -2793,7 +2793,9 @@ function openEditBayar(id) {
 
 async function saveBayarEdit() {
   const id     = document.getElementById('bayar-edit-id').value;
-  const tahap  = acVal('bayar-edit-tahap');
+  const tahapRaw = acVal('bayar-edit-tahap');
+  const tahapMap = {'Booking Fee':'booking','DP':'dp','Pelunasan':'pelunasan','Lainnya':'lainnya'};
+  const tahap  = tahapMap[tahapRaw] || tahapRaw.toLowerCase();
   const jumlah = Number(document.getElementById('bayar-edit-jumlah').value)||0;
   const metode = acVal('bayar-edit-metode');
   const tgl    = document.getElementById('bayar-edit-tanggal').value;
@@ -2979,7 +2981,9 @@ function openAddBayar() {
 }
 
 async function saveBayar() {
-  const tahap  = acVal('bayar-tahap');
+  const tahapRaw = acVal('bayar-tahap');
+  const tahapMap = {'Booking Fee':'booking','DP':'dp','Pelunasan':'pelunasan','Lainnya':'lainnya'};
+  const tahap  = tahapMap[tahapRaw] || tahapRaw.toLowerCase();
   const jumlah = Number(document.getElementById('bayar-jumlah').value)||0;
   const metode = acVal('bayar-metode');
   const tgl    = document.getElementById('bayar-tanggal').value;
