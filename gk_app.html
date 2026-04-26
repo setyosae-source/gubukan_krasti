@@ -2680,7 +2680,8 @@ async function saveBeli() {
       beliEditId = '';
       toast('✅ Pembelian diperbarui');
     } else {
-      await sbInsert('gk_pembelian', data);
+      const resBeli = await sbInsert('gk_pembelian', data);
+      const pembelianId = resBeli?.[0]?.id || '';
       // Otomatis catat ke kas usaha sebagai keluar
       try {
         const kasUsaha = await sbGet('gk_kas','jenis=eq.usaha&select=id').then(r=>r[0]);
@@ -2692,7 +2693,7 @@ async function saveBeli() {
             keterangan: ket,
             jumlah: data.total,
             tanggal: data.tanggal,
-            referensi: 'pembelian',
+            referensi: 'pembelian:' + pembelianId,
           });
           const saldo = await hitungSaldoKas(kasUsaha.id);
           await sbUpdate('gk_kas', kasUsaha.id, { saldo });
@@ -2784,7 +2785,7 @@ async function deleteBeli(id) {
       const kasUsaha = await sbGet('gk_kas','jenis=eq.usaha&select=id').then(r=>r[0]);
       if (kasUsaha && b) {
         const mutasis = await sbGet('gk_kas_mutasi',
-          `kas_id=eq.${kasUsaha.id}&referensi=eq.pembelian&jumlah=eq.${b.total}&tanggal=eq.${b.tanggal}&select=id`);
+          `kas_id=eq.${kasUsaha.id}&referensi=eq.pembelian:${b.id}&select=id`);
         if (mutasis.length) {
           await sbDelete('gk_kas_mutasi', mutasis[0].id);
           const saldo = await hitungSaldoKas(kasUsaha.id);
