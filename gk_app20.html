@@ -1414,6 +1414,14 @@ let state = {
 };
 
 // ── FORMAT ─────────────────────────────────────────────────
+function localDate(d) {
+  const dt = d ? new Date(d) : new Date();
+  const y  = dt.getFullYear();
+  const m  = String(dt.getMonth()+1).padStart(2,'0');
+  const dd = String(dt.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+
 function rp(n) {
   if (n === null || n === undefined || n === '—') return '—';
   const num = Number(n);
@@ -1439,7 +1447,7 @@ function periodStart() {
   const p = state.period;
   if (p.mode === 'year')     return `${p.year}-01-01`;
   if (p.mode === 'custom')   return p.customStart;
-  if (p.mode === 'upcoming') return new Date().toISOString().slice(0,10);
+  if (p.mode === 'upcoming') return localDate();
   const {year:y,month:m} = p;
   return `${y}-${String(m).padStart(2,'0')}-01`;
 }
@@ -1640,7 +1648,7 @@ async function loadDashboard() {
     const kas = await sbGet('gk_kas', 'select=nama,jenis,saldo');
 
     // Event mendatang + data pembayaran
-    const today = new Date().toISOString().slice(0,10);
+    const today = localDate();
     const upcoming = await sbGet('gk_event',
       `tanggal=gte.${today}&status=in.(inquiry,booking,dp,lunas)&order=tanggal.asc&limit=10&select=*`);
 
@@ -1739,7 +1747,7 @@ function set(id, val) {
 function getDismissed() {
   try {
     const data = JSON.parse(localStorage.getItem('gk_dismissed')||'{}');
-    const today = new Date().toISOString().slice(0,10);
+    const today = localDate();
     // Rollover: hapus semua yang bukan hari ini
     const cleaned = {};
     Object.keys(data).forEach(k => { if (data[k]===today) cleaned[k]=today; });
@@ -1748,7 +1756,7 @@ function getDismissed() {
 }
 
 function dismissReminder(evId) {
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDate();
   const data  = getDismissed();
   data[evId]  = today;
   localStorage.setItem('gk_dismissed', JSON.stringify(data));
@@ -1761,7 +1769,7 @@ function dismissReminder(evId) {
 function renderReminders(upcoming) {
   const el = document.getElementById('d-reminders');
   if (!el) return;
-  const today     = new Date().toISOString().slice(0,10);
+  const today     = localDate();
   const dismissed = getDismissed();
 
   const cards = upcoming
@@ -1910,7 +1918,7 @@ async function loadEvents() {
     const opsMap   = sumBy(opss,   'event_id', 'jumlah');
     const bayarMap = sumBy(bayars, 'event_id', 'jumlah');
 
-    const today = new Date().toISOString().slice(0,10);
+    const today = localDate();
     const enriched = data.map(ev => {
       const omzet    = omzetMap[ev.id]||0;
       const hppOps   = (hppMap[ev.id]||0) + (opsMap[ev.id]||0);
@@ -1993,7 +2001,7 @@ function renderCalendar() {
     evMap[key].push(ev);
   });
 
-  const today    = new Date().toISOString().slice(0,10);
+  const today    = localDate();
   const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const daysInPrev  = new Date(year, month, 0).getDate();
@@ -2078,7 +2086,7 @@ function renderCalEventList(dateStr, events) {
 
 function renderEvents() {
   const f    = state.eventFilter;
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDate();
   const all  = f==='all' ? eventsData : eventsData.filter(e=>e.status===f);
   const el   = document.getElementById('ev-list');
   if (!all.length) {
@@ -2149,7 +2157,7 @@ function renderEvents() {
 function openAddEvent() {
   document.getElementById('ev-id').value = '';
   document.getElementById('ev-customer').value = '';
-  document.getElementById('ev-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ev-tanggal').value = localDate();
   acSet('ev-status', 'inquiry');
   document.getElementById('ev-lokasi').value = '';
   document.getElementById('ev-kontak').value = '';
@@ -2539,7 +2547,7 @@ function openAddBeli() {
   document.getElementById('beli-qty').value = '';
   document.getElementById('beli-harga').value = '';
   document.getElementById('beli-total').textContent = 'Rp 0';
-  document.getElementById('beli-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('beli-tanggal').value = localDate();
   document.getElementById('beli-toko').value = '';
   acSet('beli-satuan', '');
   document.getElementById('beli-baru-nama').value = '';
@@ -3046,7 +3054,7 @@ function openAddOnline() {
   acSet('on-platform', 'shopee');
   document.getElementById('on-jumlah').value = '';
   document.getElementById('on-catatan').value = '';
-  document.getElementById('on-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('on-tanggal').value = localDate();
   document.querySelector('#sheetOnline .sheet-title').textContent = 'Catat Tarik Marketplace';
   openSheet('sheetOnline');
 }
@@ -3121,7 +3129,7 @@ function openAddOffline() {
   document.getElementById('off-customer').value = '';
   document.getElementById('off-kontak').value = '';
   document.getElementById('off-catatan').value = '';
-  document.getElementById('off-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('off-tanggal').value = localDate();
   const titleEl = document.querySelector('#sheetOffline .sheet-title');
   titleEl.textContent = 'Pesanan Offline';
   titleEl.dataset.editId = '';
@@ -3268,7 +3276,7 @@ function openPeriod() {
     <div style="display:flex;align-items:center;gap:8px">
       <span style="font-size:11px;color:var(--ink3);width:40px">S/d</span>
       <input type="date" id="custom-end" class="form-control" style="flex:1;font-size:12px;padding:7px 10px"
-        value="${p.mode==='custom'?p.customEnd:new Date().toISOString().slice(0,10)}">
+        value="${p.mode==='custom'?p.customEnd:localDate()}">
     </div>
     <button class="btn btn-primary" style="padding:9px" onclick="setPeriodCustom()">✅ Terapkan</button>
   </div>`;
@@ -3342,7 +3350,7 @@ async function openKasForm(tipe) {
 }
 
 async function buildKasForm(tipe) {
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDate();
   const tglField = `<div class="form-group"><label class="form-label">Tanggal</label><input type="date" class="form-control" id="kf-tanggal" value="${today}"></div>`;
 
   if (tipe === 'beli-bahan') {
@@ -3614,7 +3622,7 @@ function acModalFilter() {
 }
 
 async function saveKasForm(tipe) {
-  const today = document.getElementById('kf-tanggal')?.value || new Date().toISOString().slice(0,10);
+  const today = document.getElementById('kf-tanggal')?.value || localDate();
   try {
     if (tipe === 'beli-bahan') {
       const bahanVal = document.getElementById('kf-bahan-val').value;
@@ -4160,7 +4168,7 @@ function openAddOpsEvent() {
   document.getElementById('ops-ket').value = '';
   document.getElementById('ops-jumlah').value = '';
   acSet('ops-metode', 'Cash');
-  document.getElementById('ops-tanggal').value = (currentEvent && currentEvent.tanggal) || new Date().toISOString().slice(0,10);
+  document.getElementById('ops-tanggal').value = (currentEvent && currentEvent.tanggal) || localDate();
   openSheet('sheetOpsEvent');
 }
 
@@ -4207,7 +4215,7 @@ function openAddBayar() {
   const sudah = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
   document.getElementById('bayar-jumlah').value = Math.max(omzet-sudah,0)||'';
   acSet('bayar-metode', 'Transfer');
-  document.getElementById('bayar-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('bayar-tanggal').value = localDate();
   document.getElementById('bayar-catatan').value = '';
   openSheet('sheetBayar');
 }
@@ -4427,7 +4435,7 @@ async function loadKas() {
     set('kas-usaha-saldo', rpFull(usaha?.saldo||0));
     set('kas-rt-saldo',    rpFull(rt?.saldo||0));
     const tgl = document.getElementById('transfer-tanggal');
-    if (tgl && !tgl.value) tgl.value = new Date().toISOString().slice(0,10);
+    if (tgl && !tgl.value) tgl.value = localDate();
     // Load buku besar usaha by default (tab aktif)
     await loadBukuBesar('usaha');
   } catch(e) { toast('❌ ' + e.message); }
@@ -4586,7 +4594,7 @@ function openAddMutasiRT() {
   document.getElementById('mutasi-tipe').value = 'keluar';
   document.getElementById('mutasi-ket').value = '';
   document.getElementById('mutasi-jumlah').value = '';
-  document.getElementById('mutasi-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('mutasi-tanggal').value = localDate();
   document.getElementById('mutasi-catatan').value = '';
   document.querySelector('#sheetMutasi .sheet-title').textContent = 'Tambah Kas RT';
   openSheet('sheetMutasi');
