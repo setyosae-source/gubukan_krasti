@@ -2327,9 +2327,10 @@ function renderEventDetail() {
           <div style="font-size:13px;font-weight:500">${o.keterangan}</div>
           <div style="font-size:11px;color:var(--ink3)">${fmtDate(o.tanggal)} · ${o.metode||'cash'}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:13px;font-weight:600;color:var(--orange);font-family:var(--mono)">${rpFull(o.jumlah)}</span>
-          <button onclick="deleteOps('${o.id}')" style="background:none;color:var(--ink4);font-size:16px;padding:2px">×</button>
+          <button onclick="openEditOps('${o.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:2px 7px">✏️</button>
+          <button onclick="deleteOps('${o.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:2px 7px">🗑️</button>
         </div>
       </div>`).join('');
   }
@@ -2345,9 +2346,10 @@ function renderEventDetail() {
           <div style="font-size:13px;font-weight:500;text-transform:capitalize">${b.tahap}</div>
           <div style="font-size:11px;color:var(--ink3)">${fmtDate(b.tanggal)} · ${b.metode||'transfer'}${b.catatan?' · '+b.catatan:''}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:13px;font-weight:600;color:var(--green);font-family:var(--mono)">${rpFull(b.jumlah)}</span>
-          <button onclick="deleteBayar('${b.id}')" style="background:none;color:var(--ink4);font-size:16px;padding:2px">×</button>
+          <button onclick="openEditBayar('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:2px 7px">✏️</button>
+          <button onclick="deleteBayar('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:2px 7px">🗑️</button>
         </div>
       </div>`).join('');
   }
@@ -4911,14 +4913,14 @@ loadSavedTheme();
       <!-- Biaya Ops -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <div class="section-title" style="margin:0">Biaya Ops</div>
-        <button onclick="openAddOpsEvent()" style="background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Tambah</button>
+        <span style="font-size:10px;color:var(--ink4)">via tab Kas</span>
       </div>
       <div id="evd-ops" style="margin-bottom:14px"></div>
 
       <!-- Pembayaran -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <div class="section-title" style="margin:0">Pembayaran</div>
-        <button onclick="openAddBayar()" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Catat</button>
+        <span style="font-size:10px;color:var(--ink4)">via tab Kas</span>
       </div>
       <div id="evd-bayar" style="margin-bottom:14px"></div>
 
