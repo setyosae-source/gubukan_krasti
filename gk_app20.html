@@ -915,6 +915,10 @@ select.form-control { appearance: none; }
 
       <!-- Master bahan -->
       <div id="bahan-master">
+        <div style="margin-bottom:10px">
+          <input type="text" id="bahan-search" placeholder="🔍 Cari nama bahan, satuan..." class="form-control"
+            oninput="filterBahan()" style="font-size:13px">
+        </div>
         <div id="bahan-list">
           <div class="empty"><div class="empty-icon">🥕</div><div class="empty-text">Belum ada bahan</div></div>
         </div>
@@ -2409,28 +2413,67 @@ function renderBahan(list) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">🥕</div><div class="empty-text">Belum ada bahan<br>Tap + untuk tambah</div></div>`;
     return;
   }
-  el.innerHTML = list.map(b => `
-    <div class="card" style="margin-bottom:8px;padding:12px 14px;cursor:pointer" onclick="openBahanDetail('${b.id}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600">${b.nama}</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:2px">
-            1 ${b.satuan_besar} = ${b.konversi} ${b.satuan_kecil}
-          </div>
-          ${b.catatan?`<div style="font-size:10px;color:var(--ink4);margin-top:2px">${b.catatan}</div>`:''}
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-          <div style="text-align:right">
-            <div style="font-size:13px;font-weight:600;color:var(--gold);font-family:var(--mono)">${rpFull(b.harga_rata2)}</div>
-            <div style="font-size:10px;color:var(--ink3)">per ${b.satuan_kecil}</div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button onclick="event.stopPropagation();openEditBahan('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 8px">✏️</button>
-            <button onclick="event.stopPropagation();deleteBahan('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 8px">🗑️</button>
-          </div>
-        </div>
-      </div>
-    </div>`).join('');
+  const q = (document.getElementById('bahan-search')?.value||'').toLowerCase().trim();
+  const filtered = q ? list.filter(b=>
+    b.nama.toLowerCase().includes(q) ||
+    (b.satuan_besar||'').toLowerCase().includes(q) ||
+    (b.satuan_kecil||'').toLowerCase().includes(q)
+  ) : list;
+
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Tidak ada hasil untuk "${q}"</div></div>`;
+    return;
+  }
+
+  function hi(s) {
+    if (!q) return s;
+    return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:var(--gold-dim);color:var(--gold);border-radius:2px">$1</mark>');
+  }
+
+  el.innerHTML = `
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--border)">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:360px">
+      <thead style="background:var(--bg2)">
+        <tr>
+          <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Nama</th>
+          <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Satuan</th>
+          <th style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Harga/Kecil</th>
+          <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map((b,i)=>{
+          const rowBg = i%2===0 ? 'var(--bg)' : 'var(--bg3)';
+          const { harga } = getHargaBahan(b.id);
+          const hargaDisplay = harga > 0 ? rpFull(harga) : (b.harga_rata2 > 0 ? rpFull(b.harga_rata2) : '—');
+          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border)" onclick="openBahanDetail('${b.id}')">
+            <td style="padding:10px 10px;cursor:pointer">
+              <div style="font-size:13px;font-weight:600;color:var(--ink)">${hi(b.nama)}</div>
+              ${b.catatan?`<div style="font-size:10px;color:var(--ink4)">${b.catatan}</div>`:''}
+            </td>
+            <td style="padding:10px 6px;text-align:center;cursor:pointer">
+              <div style="font-size:11px;color:var(--ink3)">${hi(b.satuan_besar)}</div>
+              <div style="font-size:9px;color:var(--ink4)">${b.konversi}x ${hi(b.satuan_kecil)}</div>
+            </td>
+            <td style="padding:10px 6px;text-align:right;font-family:var(--mono);font-weight:600;color:var(--gold);white-space:nowrap;cursor:pointer">${hargaDisplay}</td>
+            <td style="padding:8px 6px;text-align:center;white-space:nowrap">
+              <button onclick="event.stopPropagation();openEditBahan('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--blue);font-size:10px;padding:2px 6px">✏️</button>
+              <button onclick="event.stopPropagation();deleteBahan('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:5px;color:var(--red);font-size:10px;padding:2px 6px">🗑️</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+      <tfoot style="background:var(--bg2);border-top:2px solid var(--border)">
+        <tr>
+          <td colspan="4" style="padding:7px 10px;font-size:10px;color:var(--ink3)">${filtered.length} bahan${q?' ditemukan':''}${list.length!==filtered.length?' dari '+list.length:''}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>`;
+}
+
+function filterBahan() {
+  renderBahan(bahanData);
 }
 
 function renderBeli(list) {
