@@ -2125,14 +2125,16 @@ function acBeliRender(query) {
   if (q && !bahanData.some(b => b.nama.toLowerCase() === q)) {
     html += `<div class="acm-item new-item" onclick="acBeliSelectBaru('${query.replace(/'/g,"\\'")}')"> Tambah bahan baru: "${query}"</div>`;
   }
-  html += items.map(b =>
-    `<div class="acm-item" onclick="acBeliSelectExisting('${b.id}')">
+  html += items.map(b => {
+    const { harga, satuan } = getHargaBahan(b.id);
+    const hargaLabel = harga > 0 ? rpFull(harga)+'/'+satuan : '';
+    return `<div class="acm-item" onclick="acBeliSelectExisting('${b.id}')">
       <div>
         <div style="font-size:14px">${hi(b.nama)}</div>
-        <div style="font-size:11px;color:var(--ink3)">${b.satuan_besar} / ${b.satuan_kecil} · ${rpFull(b.harga_rata2||0)}/${b.satuan_kecil}</div>
+        <div style="font-size:11px;color:var(--ink3)">${b.satuan_besar} / ${b.satuan_kecil}${hargaLabel ? ' · '+hargaLabel : ''}</div>
       </div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
   if (!html) html = '<div class="acm-empty">Belum ada bahan</div>';
   list.innerHTML = html;
 }
@@ -3055,6 +3057,20 @@ function acEvbOpen() {
   setTimeout(() => document.getElementById('acModal-search').focus(), 100);
 }
 
+function getHargaBahan(bahanId) {
+  // Coba harga_rata2 dulu, fallback ke pembelian terakhir
+  const b = bahanData.find(x => x.id === bahanId);
+  if (b?.harga_rata2 && b.harga_rata2 > 0) return { harga: b.harga_rata2, satuan: b.satuan_kecil };
+  // Cari dari beliData — harga_kecil = harga per satuan kecil
+  const beli = beliData
+    .filter(x => x.bahan_id === bahanId && (x.harga_kecil || x.harga_beli))
+    .sort((a,b) => (b.tanggal||'').localeCompare(a.tanggal||''));
+  if (beli.length) {
+    return { harga: beli[0].harga_kecil || beli[0].harga_beli, satuan: b?.satuan_kecil || beli[0].satuan };
+  }
+  return { harga: 0, satuan: b?.satuan_kecil || '' };
+}
+
 function acEvbRender(query) {
   const q    = (query||'').toLowerCase().trim();
   const list = document.getElementById('acModal-list');
@@ -3064,19 +3080,20 @@ function acEvbRender(query) {
     return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<b>$1</b>');
   }
   let html = '';
-  // Manual input selalu di atas
   if (q && !bahanData.some(b => b.nama.toLowerCase() === q)) {
     html += `<div class="acm-item new-item" onclick="acEvbSelectManual('${query.replace(/'/g,"\\'")}')"> Input manual: "${query}"</div>`;
   }
   html += `<div class="acm-item new-item" style="background:var(--bg3);color:var(--ink2)" onclick="acEvbSelectManual('')"> ✏️ Input manual...</div>`;
-  html += items.map(b =>
-    `<div class="acm-item" onclick="acEvbSelectExisting('${b.id}')">
+  html += items.map(b => {
+    const { harga, satuan } = getHargaBahan(b.id);
+    const hargaLabel = harga > 0 ? rpFull(harga)+'/'+satuan : '<span style="color:var(--ink4)">belum ada harga</span>';
+    return `<div class="acm-item" onclick="acEvbSelectExisting('${b.id}')">
       <div>
         <div style="font-size:14px">${hi(b.nama)}</div>
-        <div style="font-size:11px;color:var(--ink3)">${b.satuan_kecil} · ${rpFull(b.harga_rata2||0)}/${b.satuan_kecil}</div>
+        <div style="font-size:11px;color:var(--ink3)">${satuan||b.satuan_kecil} · ${hargaLabel}</div>
       </div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
   if (!html) html = '<div class="acm-empty">Belum ada bahan</div>';
   list.innerHTML = html;
 }
@@ -3089,8 +3106,9 @@ function acEvbSelectExisting(id) {
   const t = document.getElementById('evb-bahan-trigger');
   if (t) t.innerHTML = b.nama;
   document.getElementById('evb-nama-manual').style.display = 'none';
-  acSet('evb-satuan', b.satuan_kecil || '');
-  document.getElementById('evb-harga').value = b.harga_rata2 || '';
+  const { harga, satuan } = getHargaBahan(id);
+  acSet('evb-satuan', satuan || b.satuan_kecil || '');
+  document.getElementById('evb-harga').value = harga || '';
   calcEvbTotal();
   acModalClose();
 }
