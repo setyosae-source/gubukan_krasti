@@ -764,6 +764,31 @@ select.form-control { appearance: none; }
           <option value="">-- Pilih Bahan --</option>
         </select>
       </div>
+
+      <!-- Section bahan baru (muncul kalau pilih "+ Bahan Baru") -->
+      <div id="beli-baru-section" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📦 Data Bahan Baru</div>
+        <div class="form-group">
+          <label class="form-label">Nama Bahan</label>
+          <input type="text" class="form-control" id="beli-baru-nama" placeholder="Contoh: Tepung Terigu">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Satuan Besar</label>
+            <input type="text" class="form-control" id="beli-baru-sat-besar" placeholder="karung, dus" oninput="updateBeliBaruHint()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Satuan Kecil</label>
+            <input type="text" class="form-control" id="beli-baru-sat-kecil" placeholder="kg, gram" oninput="updateBeliBaruHint()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Konversi</label>
+          <input type="number" class="form-control" id="beli-baru-konversi" placeholder="25" min="0.001" step="0.001" oninput="updateBeliBaruHint()">
+          <div class="form-hint" id="beli-baru-hint">1 satuan besar = ? satuan kecil</div>
+        </div>
+      </div>
+
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Qty</label>
@@ -1507,22 +1532,54 @@ async function saveBahan() {
 }
 
 function openAddBeli() {
-  // Populate dropdown bahan
   const sel = document.getElementById('beli-bahan');
   sel.innerHTML = '<option value="">-- Pilih Bahan --</option>' +
-    bahanData.map(b=>`<option value="${b.id}" data-sb="${b.satuan_besar}" data-sk="${b.satuan_kecil}" data-k="${b.konversi}" data-h="${b.harga_rata2}">${b.nama}</option>`).join('');
+    bahanData.map(b=>`<option value="${b.id}" data-sb="${b.satuan_besar}" data-sk="${b.satuan_kecil}" data-k="${b.konversi}" data-h="${b.harga_rata2}">${b.nama}</option>`).join('') +
+    '<option value="__baru__">➕ Bahan Baru...</option>';
+  sel.dataset.editId = '';
+  document.getElementById('beli-baru-section').style.display = 'none';
   document.getElementById('beli-qty').value = '';
   document.getElementById('beli-harga').value = '';
   document.getElementById('beli-total').textContent = 'Rp 0';
   document.getElementById('beli-tanggal').value = new Date().toISOString().slice(0,10);
   document.getElementById('beli-toko').value = '';
   document.getElementById('beli-satuan').innerHTML = '<option value="">--</option>';
+  document.getElementById('beli-baru-nama').value = '';
+  document.getElementById('beli-baru-sat-besar').value = '';
+  document.getElementById('beli-baru-sat-kecil').value = '';
+  document.getElementById('beli-baru-konversi').value = '';
+  document.getElementById('beli-baru-hint').textContent = '1 satuan besar = ? satuan kecil';
   openSheet('sheetBeli');
+}
+
+function updateBeliBaruHint() {
+  const sb = document.getElementById('beli-baru-sat-besar').value || 'satuan besar';
+  const sk = document.getElementById('beli-baru-sat-kecil').value || 'satuan kecil';
+  const k  = document.getElementById('beli-baru-konversi').value || '?';
+  document.getElementById('beli-baru-hint').textContent = `1 ${sb} = ${k} ${sk}`;
+  // Update satuan dropdown sesuai isian
+  const satuanSel = document.getElementById('beli-satuan');
+  if (sb || sk) {
+    satuanSel.innerHTML = 
+      (sb ? `<option value="${sb}">${sb}</option>` : '') +
+      (sk ? `<option value="${sk}">${sk}</option>` : '');
+  }
 }
 
 function onBeliSelectBahan() {
   const sel = document.getElementById('beli-bahan');
   const opt = sel.options[sel.selectedIndex];
+  const baruSection = document.getElementById('beli-baru-section');
+
+  if (opt.value === '__baru__') {
+    baruSection.style.display = '';
+    document.getElementById('beli-satuan').innerHTML = '<option value="">--</option>';
+    document.getElementById('beli-harga').value = '';
+    calcBeliTotal();
+    return;
+  }
+
+  baruSection.style.display = 'none';
   if (!opt.value) return;
   const sb = opt.dataset.sb, sk = opt.dataset.sk;
   const satuanSel = document.getElementById('beli-satuan');
@@ -1540,22 +1597,46 @@ function calcBeliTotal() {
 }
 
 async function saveBeli() {
-  const sel = document.getElementById('beli-bahan');
-  const opt = sel.options[sel.selectedIndex];
-  if (!opt.value) { toast('⚠️ Pilih bahan'); return; }
+  const sel    = document.getElementById('beli-bahan');
+  const opt    = sel.options[sel.selectedIndex];
   const editId = sel.dataset.editId || '';
-  const bahanId = opt.value;
-  const satuan  = document.getElementById('beli-satuan').value;
-  const qty     = Number(document.getElementById('beli-qty').value)||0;
-  const harga   = Number(document.getElementById('beli-harga').value)||0;
+  const satuan = document.getElementById('beli-satuan').value;
+  const qty    = Number(document.getElementById('beli-qty').value)||0;
+  const harga  = Number(document.getElementById('beli-harga').value)||0;
   if (!satuan || !qty || !harga) { toast('⚠️ Lengkapi data'); return; }
 
+  let bahanId, namaBahan, satBesar, satKecil, konversi;
+
+  if (opt.value === '__baru__') {
+    // Validasi & simpan bahan baru dulu
+    namaBahan = document.getElementById('beli-baru-nama').value.trim();
+    satBesar  = document.getElementById('beli-baru-sat-besar').value.trim();
+    satKecil  = document.getElementById('beli-baru-sat-kecil').value.trim();
+    konversi  = Number(document.getElementById('beli-baru-konversi').value)||1;
+    if (!namaBahan || !satBesar || !satKecil) { toast('⚠️ Lengkapi data bahan baru'); return; }
+    // Cek duplikat
+    const dup = bahanData.find(b => b.nama.toLowerCase() === namaBahan.toLowerCase());
+    if (dup) { toast(`⚠️ Bahan "${namaBahan}" sudah ada di master`); return; }
+    try {
+      const res = await sbInsert('gk_bahan', { nama: namaBahan, satuan_besar: satBesar, satuan_kecil: satKecil, konversi });
+      bahanId = res[0].id;
+      // Reload bahanData
+      bahanData = await sbGet('gk_bahan', 'order=nama.asc&select=*');
+    } catch(e) { toast('❌ Gagal simpan bahan: ' + e.message); return; }
+  } else {
+    if (!opt.value) { toast('⚠️ Pilih bahan'); return; }
+    bahanId   = opt.value;
+    namaBahan = opt.text;
+    satBesar  = opt.dataset.sb;
+    satKecil  = opt.dataset.sk;
+    konversi  = Number(opt.dataset.k)||1;
+  }
+
   // Hitung qty_kecil dan harga_kecil
-  const sb = opt.dataset.sb, sk = opt.dataset.sk, k = Number(opt.dataset.k)||1;
   let qty_kecil, harga_kecil;
-  if (satuan === sb) {
-    qty_kecil   = qty * k;
-    harga_kecil = harga / k;
+  if (satuan === satBesar) {
+    qty_kecil   = qty * konversi;
+    harga_kecil = harga / konversi;
   } else {
     qty_kecil   = qty;
     harga_kecil = harga;
@@ -1563,7 +1644,7 @@ async function saveBeli() {
 
   const data = {
     bahan_id:    bahanId,
-    nama_bahan:  opt.text,
+    nama_bahan:  namaBahan,
     tanggal:     document.getElementById('beli-tanggal').value,
     qty, satuan,
     qty_kecil:   Math.round(qty_kecil*1000)/1000,
@@ -1579,7 +1660,7 @@ async function saveBeli() {
       toast('✅ Pembelian diperbarui');
     } else {
       await sbInsert('gk_pembelian', data);
-      toast('✅ Pembelian dicatat');
+      toast(opt.value === '__baru__' ? '✅ Bahan baru + pembelian disimpan' : '✅ Pembelian dicatat');
     }
     closeSheet('sheetBeli');
     await loadBahan();
