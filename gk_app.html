@@ -1187,9 +1187,10 @@ function openAddEvent() {
   openSheet('sheetEvent');
 }
 
-function openEditEvent() {
-  if (!currentEvent) return;
-  const ev = currentEvent;
+function openEditEvent(id) {
+  // Bisa dipanggil dari list (dengan id) atau dari detail sheet (tanpa id)
+  const ev = id ? eventsData.find(x => x.id === id) : currentEvent;
+  if (!ev) return;
   document.getElementById('ev-id').value = ev.id;
   document.getElementById('ev-customer').value = ev.customer || '';
   document.getElementById('ev-tanggal').value = ev.tanggal || '';
@@ -1398,9 +1399,10 @@ async function loadBahan() {
   try {
     const [bahan, beli] = await Promise.all([
       sbGet('gk_bahan', 'order=nama.asc&select=*'),
-      sbGet('gk_pembelian', 'order=tanggal.desc&limit=50&select=*,gk_bahan(nama)')
+      sbGet('gk_pembelian', 'order=tanggal.desc&limit=200&select=*,gk_bahan(nama)')
     ]);
     bahanData = bahan;
+    beliData  = beli;
     renderBahan(bahan);
     renderBeli(beli);
   } catch(e) { toast('❌ ' + e.message); }
@@ -1675,6 +1677,7 @@ async function loadTokba() {
       sbGet('gk_tokba_online',  `tanggal=gte.${s}&tanggal=lte.${e}&order=tanggal.desc&select=*`),
       sbGet('gk_tokba_pesanan', `tanggal=gte.${s}&tanggal=lte.${e}&order=tanggal.desc&select=*`),
     ]);
+    tokbaOnlineData = online;
     renderTokbaOnline(online);
     renderTokbaOffline(offline);
   } catch(e) { toast('❌ ' + e.message); }
@@ -1764,9 +1767,10 @@ function renderPesananDetail() {
           <div style="font-size:13px;font-weight:500">${i.nama_produk}</div>
           <div style="font-size:11px;color:var(--ink3)">${i.qty} ${i.satuan} × ${rpFull(i.harga)}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:13px;font-weight:600;color:var(--gold);font-family:var(--mono)">${rpFull(i.total)}</span>
-          <button onclick="deletePesananItem('${i.id}')" style="background:none;color:var(--ink4);font-size:16px;padding:2px">×</button>
+          <button onclick="openEditPesananItem('${i.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:2px 7px">✏️</button>
+          <button onclick="deletePesananItem('${i.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:2px 7px">🗑️</button>
         </div>
       </div>`).join('');
   }
@@ -1788,23 +1792,48 @@ function openAddPesananItem() {
   document.getElementById('pitem-satuan').value = 'pcs';
   document.getElementById('pitem-harga').value = '';
   document.getElementById('pitem-total').textContent = 'Rp 0';
+  document.querySelector('#sheetPesananItem .sheet-title').textContent = 'Tambah Item';
+  document.querySelector('#sheetPesananItem .sheet-title').dataset.editId = '';
+  openSheet('sheetPesananItem');
+}
+
+function openEditPesananItem(id) {
+  const i = currentPesananItems.find(x => x.id === id);
+  if (!i) return;
+  document.getElementById('pitem-nama').value  = i.nama_produk || '';
+  document.getElementById('pitem-qty').value   = i.qty || '';
+  document.getElementById('pitem-satuan').value= i.satuan || 'pcs';
+  document.getElementById('pitem-harga').value = i.harga || '';
+  document.getElementById('pitem-total').textContent = rpFull((i.qty||0)*(i.harga||0));
+  document.querySelector('#sheetPesananItem .sheet-title').textContent = 'Edit Item';
+  document.querySelector('#sheetPesananItem .sheet-title').dataset.editId = id;
   openSheet('sheetPesananItem');
 }
 
 async function savePesananItem() {
+  const titleEl = document.querySelector('#sheetPesananItem .sheet-title');
+  const editId  = titleEl.dataset.editId || '';
   const nama  = document.getElementById('pitem-nama').value.trim();
   const qty   = Number(document.getElementById('pitem-qty').value)||0;
   const satuan= document.getElementById('pitem-satuan').value.trim();
   const harga = Number(document.getElementById('pitem-harga').value)||0;
   if (!nama || !qty || !harga) { toast('⚠️ Lengkapi semua field'); return; }
   try {
-    const res = await sbInsert('gk_tokba_item', {
-      pesanan_id: currentPesanan.id, nama_produk: nama, qty, satuan, harga
-    });
-    currentPesananItems.push(res[0]);
+    if (editId) {
+      await sbUpdate('gk_tokba_item', editId, {nama_produk:nama, qty, satuan, harga, total:qty*harga});
+      const idx = currentPesananItems.findIndex(x=>x.id===editId);
+      if (idx>=0) currentPesananItems[idx] = {...currentPesananItems[idx], nama_produk:nama, qty, satuan, harga, total:qty*harga};
+      toast('✅ Item diperbarui');
+    } else {
+      const res = await sbInsert('gk_tokba_item', {
+        pesanan_id: currentPesanan.id, nama_produk: nama, qty, satuan, harga, total: qty*harga
+      });
+      currentPesananItems.push(res[0]);
+      toast('✅ Item ditambah');
+    }
+    titleEl.dataset.editId = '';
     closeSheet('sheetPesananItem');
     renderPesananDetail();
-    toast('✅ Item ditambah');
   } catch(e) { toast('❌ ' + e.message); }
 }
 
@@ -1849,11 +1878,38 @@ function openPesananInvoice() {
   openSheet('sheetInvoice');
 }
 
+let onlineEditId = '';
+let tokbaOnlineData = [];
+
 function openAddOnline() {
+  onlineEditId = '';
+  document.getElementById('on-platform').value = 'shopee';
   document.getElementById('on-jumlah').value = '';
   document.getElementById('on-catatan').value = '';
   document.getElementById('on-tanggal').value = new Date().toISOString().slice(0,10);
+  document.querySelector('#sheetOnline .sheet-title').textContent = 'Catat Tarik Marketplace';
   openSheet('sheetOnline');
+}
+
+function openEditOnline(id) {
+  const r = tokbaOnlineData.find(x => x.id === id);
+  if (!r) return;
+  onlineEditId = id;
+  document.getElementById('on-platform').value = r.platform || 'shopee';
+  document.getElementById('on-jumlah').value = r.jumlah || '';
+  document.getElementById('on-catatan').value = r.catatan || '';
+  document.getElementById('on-tanggal').value = r.tanggal || '';
+  document.querySelector('#sheetOnline .sheet-title').textContent = 'Edit Tarik Marketplace';
+  openSheet('sheetOnline');
+}
+
+async function deleteOnline(id) {
+  if (!confirm('Hapus data tarik ini?')) return;
+  try {
+    await sbDelete('gk_tokba_online', id);
+    toast('✅ Data dihapus');
+    await loadTokba();
+  } catch(e) { toast('❌ ' + e.message); }
 }
 
 async function saveOnline() {
@@ -1865,9 +1921,38 @@ async function saveOnline() {
   };
   if (!data.jumlah) { toast('⚠️ Isi jumlah'); return; }
   try {
-    await sbInsert('gk_tokba_online', data);
+    if (onlineEditId) {
+      await sbUpdate('gk_tokba_online', onlineEditId, data);
+      toast('✅ Data diperbarui');
+    } else {
+      await sbInsert('gk_tokba_online', data);
+      toast('✅ Tarik dicatat');
+    }
+    onlineEditId = '';
     closeSheet('sheetOnline');
-    toast('✅ Tarik dicatat');
+    await loadTokba();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+function openEditPesanan() {
+  if (!currentPesanan) return;
+  const p = currentPesanan;
+  document.getElementById('off-customer').value = p.customer || '';
+  document.getElementById('off-kontak').value   = p.kontak   || '';
+  document.getElementById('off-catatan').value  = p.catatan  || '';
+  document.getElementById('off-tanggal').value  = p.tanggal  || '';
+  document.querySelector('#sheetOffline .sheet-title').textContent = 'Edit Pesanan';
+  document.querySelector('#sheetOffline .sheet-title').dataset.editId = p.id;
+  openSheet('sheetOffline');
+}
+
+async function deletePesanan() {
+  if (!currentPesanan) return;
+  if (!confirm('Hapus pesanan ini beserta semua item-nya?')) return;
+  try {
+    await sbDelete('gk_tokba_pesanan', currentPesanan.id);
+    closeSheet('sheetPesananDetail');
+    toast('✅ Pesanan dihapus');
     await loadTokba();
   } catch(e) { toast('❌ ' + e.message); }
 }
@@ -1877,22 +1962,36 @@ function openAddOffline() {
   document.getElementById('off-kontak').value = '';
   document.getElementById('off-catatan').value = '';
   document.getElementById('off-tanggal').value = new Date().toISOString().slice(0,10);
+  const titleEl = document.querySelector('#sheetOffline .sheet-title');
+  titleEl.textContent = 'Pesanan Offline';
+  titleEl.dataset.editId = '';
   openSheet('sheetOffline');
 }
 
 async function saveOffline() {
+  const titleEl = document.querySelector('#sheetOffline .sheet-title');
+  const editId  = titleEl.dataset.editId || '';
   const data = {
     customer: document.getElementById('off-customer').value.trim(),
     tanggal:  document.getElementById('off-tanggal').value,
     kontak:   document.getElementById('off-kontak').value.trim(),
     catatan:  document.getElementById('off-catatan').value.trim(),
-    status:   'proses',
   };
   if (!data.customer) { toast('⚠️ Isi nama customer'); return; }
   try {
-    await sbInsert('gk_tokba_pesanan', data);
-    closeSheet('sheetOffline');
-    toast('✅ Pesanan dicatat');
+    if (editId) {
+      await sbUpdate('gk_tokba_pesanan', editId, data);
+      if (currentPesanan) Object.assign(currentPesanan, data);
+      closeSheet('sheetOffline');
+      renderPesananDetail();
+      toast('✅ Pesanan diperbarui');
+    } else {
+      data.status = 'proses';
+      await sbInsert('gk_tokba_pesanan', data);
+      closeSheet('sheetOffline');
+      toast('✅ Pesanan dicatat');
+    }
+    titleEl.dataset.editId = '';
     await loadTokba();
   } catch(e) { toast('❌ ' + e.message); }
 }
@@ -2595,9 +2694,11 @@ init();
     <div style="padding:14px 18px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <span style="font-size:14px;font-weight:700;color:var(--gold);font-family:var(--mono)" id="pes-total">—</span>
-        <div style="display:flex;gap:8px">
-          <button onclick="setPesananStatus('lunas')" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:600">✅ Lunas</button>
-          <button onclick="setPesananStatus('cancel')" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:600">❌ Cancel</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <button onclick="openEditPesanan()" style="background:var(--bg3);color:var(--blue);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600">✏️ Edit</button>
+          <button onclick="deletePesanan()" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600">🗑️ Hapus</button>
+          <button onclick="setPesananStatus('lunas')" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600">✅ Lunas</button>
+          <button onclick="setPesananStatus('cancel')" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600">❌ Cancel</button>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
