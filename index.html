@@ -408,64 +408,6 @@ body {
 .topbar-sync.spinning { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Filter Button Global */
-.topbar-filter-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gold);
-  transition: border-color 0.2s;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-.topbar-filter-btn:hover { border-color: var(--gold); }
-
-/* Dropdown filter */
-.filter-dropdown {
-  position: fixed;
-  top: 56px;
-  right: 12px;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  padding: 8px;
-  z-index: 300;
-  min-width: 180px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-  display: none;
-  flex-direction: column;
-  gap: 4px;
-  animation: slideDown 0.15s ease;
-}
-.filter-dropdown.open { display: flex; }
-@keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
-.filter-opt {
-  padding: 10px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--ink2);
-  transition: background 0.1s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.filter-opt:hover { background: var(--surface2); }
-.filter-opt.active { background: var(--gold-dim); color: var(--gold); font-weight: 600; }
-.filter-divider { height: 1px; background: var(--border); margin: 4px 0; }
-.filter-custom { padding: 8px; }
-.filter-custom-row { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
-.filter-custom-row input { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:6px; color:var(--ink); font-size:11px; padding:5px 8px; outline:none; }
-.filter-custom-row input:focus { border-color:var(--gold); }
-.filter-apply-btn { width:100%; margin-top:6px; padding:7px; background:var(--gold); color:#000; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
-
 /* Body layout */
 .app-body {
   flex: 1;
@@ -1472,30 +1414,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
       </div>
     </div>
     <button class="topbar-sync" id="syncBtn" onclick="syncData()" title="Sync data">🔄</button>
-    <div class="topbar-filter-btn" id="filterBtn" onclick="toggleFilterDropdown()">
-      <span id="filterLabel">Bln Ini</span>
-      <span style="font-size:9px;opacity:0.6;">▾</span>
-    </div>
   </header>
-
-  <!-- FILTER DROPDOWN GLOBAL -->
-  <div class="filter-dropdown" id="filterDropdown">
-    <div class="filter-opt" id="fo_this_month" onclick="setFilterOpt('this_month','Bln Ini')">📅 Bulan Ini</div>
-    <div class="filter-opt" id="fo_last_month" onclick="setFilterOpt('last_month','Bln Lalu')">◀ Bulan Lalu</div>
-    <div class="filter-divider"></div>
-    <div class="filter-opt" id="fo_this_year"  onclick="setFilterOpt('this_year','Thn Ini')">📆 Tahun Ini</div>
-    <div class="filter-opt" id="fo_last_year"  onclick="setFilterOpt('last_year','Thn Lalu')">📆 Tahun Lalu</div>
-    <div class="filter-divider"></div>
-    <div class="filter-custom">
-      <div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Custom Range</div>
-      <div class="filter-custom-row">
-        <input type="date" id="fdFrom" placeholder="Dari">
-        <span style="color:var(--ink3);font-size:11px;">s/d</span>
-        <input type="date" id="fdTo" placeholder="Sampai">
-      </div>
-      <button class="filter-apply-btn" onclick="applyFilterCustom()">Terapkan</button>
-    </div>
-  </div>
 
   <div class="app-body">
 
@@ -1548,7 +1467,12 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
               <div class="page-title" id="dashTitle">Dashboard</div>
               <div class="page-subtitle" id="dashPeriod">—</div>
             </div>
-            
+            <div class="topbar-period" onclick="openMonthPicker()" style="flex-shrink:0;margin-top:4px;">
+              <div>
+                <div class="topbar-period-label" id="monthLabel">Loading...</div>
+              </div>
+              <span style="color:var(--ink3);font-size:10px;margin-left:4px;">▾</span>
+            </div>
           </div>
         </div>
 
@@ -1637,7 +1561,10 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
               <div class="page-title" id="kasTitle">Kas &amp; Jurnal</div>
               <div class="page-subtitle" id="kasPeriod">—</div>
             </div>
-            
+            <div class="topbar-period" onclick="openMonthPicker()" style="flex-shrink:0;margin-top:4px;">
+              <div class="topbar-period-label" id="monthLabelKas">—</div>
+              <span style="color:var(--ink3);font-size:10px;margin-left:4px;">&#9662;</span>
+            </div>
           </div>
         </div>
 
@@ -1681,7 +1608,10 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
               <div class="page-title" id="laporanTitle">Laporan</div>
               <div class="page-subtitle" id="laporanPeriod">—</div>
             </div>
-            
+            <div class="topbar-period" onclick="openMonthPicker()" style="flex-shrink:0;margin-top:4px;">
+              <div class="topbar-period-label" id="monthLabelLap">—</div>
+              <span style="color:var(--ink3);font-size:10px;margin-left:4px;">▾</span>
+            </div>
           </div>
         </div>
         <div id="laporanContent">
@@ -4041,28 +3971,74 @@ function openTerimaForEvent(eventId, jenis, amount) {
 }
 
 function openOpsForEvent(eventId) {
-  // Tutup sheet yang sedang buka
-  closeSheet('detailSheet');
-  closeSheet('eventFormSheet');
-  setTimeout(() => {
-    // Navigasi ke halaman Kas, tab Biaya
-    gotoPage('kas');
-    setTimeout(() => {
-      setKasInputType('ops');
-      populateEventDropdowns();
-      // Set dropdown event otomatis
-      const evDrop = document.getElementById('ki_ops_event');
-      if (evDrop) evDrop.value = eventId;
-      // Set tanggal hari ini
-      const tgl = document.getElementById('ki_ops_tgl');
-      if (tgl && !tgl.value) tgl.value = new Date().toISOString().slice(0,10);
-      // Scroll ke form
-      setTimeout(() => {
-        const el = document.getElementById('ki_ops_ket');
-        if (el) el.focus();
-      }, 100);
-    }, 150);
-  }, 300);
+  const ev = state.events.find(e=>e.id===eventId);
+  const today = new Date().toISOString().slice(0,10);
+  const opsKats = ['transport','fee','parkir','bensin','listrik','ongkir','akomodasi','waiters','vendor','operasional','lainnya'];
+  // Render mini sheet ops
+  document.getElementById('quickOpsBody').innerHTML = `
+    <div style="padding:0 20px 24px;">
+      <div style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;padding:8px 12px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--gold);text-transform:uppercase;font-weight:600;">Event</div>
+        <div style="font-size:13px;color:var(--ink);font-weight:600;">${ev?ev.customer+' · '+fmtDate(ev.tanggal):eventId}</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kategori</label>
+        <select class="form-control" id="qo_kat">
+          ${opsKats.map(k=>`<option value="${k}">${k.charAt(0).toUpperCase()+k.slice(1)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <input type="text" class="form-control" id="qo_ket" placeholder="Transport ke GOR, Fee Bu Dewi...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" class="form-control" id="qo_tgl" value="${today}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-control" id="qo_jumlah" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Metode</label>
+        <select class="form-control" id="qo_metode">
+          <option value="cash">Cash</option>
+          <option value="transfer">Transfer</option>
+          <option value="qris">QRIS</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:8px;" onclick="saveQuickOps('${eventId}')">💾 Simpan Biaya Ops</button>
+      <button class="btn btn-secondary" onclick="closeSheet('quickOpsSheet')">Batal</button>
+    </div>`;
+  openSheet('quickOpsSheet');
+  setTimeout(()=>{ const el=document.getElementById('qo_ket'); if(el) el.focus(); },300);
+}
+
+async function saveQuickOps(eventId) {
+  const kat    = document.getElementById('qo_kat')?.value;
+  const ket    = document.getElementById('qo_ket')?.value.trim();
+  const tgl    = document.getElementById('qo_tgl')?.value;
+  const jumlah = Number(document.getElementById('qo_jumlah')?.value)||0;
+  const metode = document.getElementById('qo_metode')?.value;
+  if (!ket)    { toast('⚠️ Isi keterangan!'); return; }
+  if (!jumlah) { toast('⚠️ Isi jumlah!'); return; }
+  if (!tgl)    { toast('⚠️ Isi tanggal!'); return; }
+  const data = {
+    tanggal: tgl, keterangan: ket, jumlah,
+    kategori: kat, metode, event_id: eventId, toko: '', catatan: ''
+  };
+  try {
+    const res = await apiWrite('insert','expenses', data);
+    state.expenses = state.expenses || [];
+    state.expenses.push({...data, id: res?.id});
+    cacheState();
+    closeSheet('quickOpsSheet');
+    toast('✅ Biaya ops disimpan!');
+    // refresh detail event
+    setTimeout(()=>{ if(typeof renderDetailTab==='function') renderDetailTab('stok'); },200);
+  } catch(e) { toast('❌ '+e.message); }
 }
 
 function openStokKeluar(eventId) {
@@ -5169,61 +5145,8 @@ function init() {
 
 init();
 
-// ============================================================
-// FILTER DROPDOWN GLOBAL
-// ============================================================
-function toggleFilterDropdown() {
-  const dd = document.getElementById('filterDropdown');
-  dd.classList.toggle('open');
-  // tutup kalau klik di luar
-  if (dd.classList.contains('open')) {
-    setTimeout(() => {
-      document.addEventListener('click', closeFilterOnOutside, { once: true });
-    }, 10);
-    // set tanggal hari ini sebagai default custom
-    const today = new Date().toISOString().slice(0,10);
-    const fdFrom = document.getElementById('fdFrom');
-    const fdTo   = document.getElementById('fdTo');
-    if (fdFrom && !fdFrom.value) fdFrom.value = today.slice(0,7) + '-01';
-    if (fdTo   && !fdTo.value)   fdTo.value   = today;
-    // highlight opsi aktif
-    updateFilterOptActive();
-  }
-}
-function closeFilterOnOutside(e) {
-  const dd  = document.getElementById('filterDropdown');
-  const btn = document.getElementById('filterBtn');
-  if (!dd.contains(e.target) && !btn.contains(e.target)) {
-    dd.classList.remove('open');
-  }
-}
-function setFilterOpt(type, label) {
-  setPeriod(type);
-  document.getElementById('filterLabel').textContent = label;
-  document.getElementById('filterDropdown').classList.remove('open');
-  updateFilterOptActive();
-}
-function applyFilterCustom() {
-  const from = document.getElementById('fdFrom').value;
-  const to   = document.getElementById('fdTo').value;
-  if (!from || !to) { toast('⚠️ Pilih tanggal dari dan sampai!'); return; }
-  const label = fmtDate(from) + '–' + fmtDate(to);
-  setPeriod('custom_range', { from, to, label });
-  document.getElementById('filterLabel').textContent = 'Custom';
-  document.getElementById('filterDropdown').classList.remove('open');
-  updateFilterOptActive();
-}
-function updateFilterOptActive() {
-  const t = currentPeriod.type;
-  const map = { this_month:'fo_this_month', last_month:'fo_last_month', this_year:'fo_this_year', last_year:'fo_last_year' };
-  document.querySelectorAll('.filter-opt').forEach(el => el.classList.remove('active'));
-  if (map[t]) {
-    const el = document.getElementById(map[t]);
-    if (el) el.classList.add('active');
-  }
-}
 
-// ============================================================
+
 // ============================================================
 // KAS EDIT
 // ============================================================
@@ -5362,5 +5285,16 @@ async function deleteKasItem() {
 })();
 
 </script>
+  <!-- QUICK OPS SHEET -->
+  <div class="overlay" id="quickOpsSheet" onclick="overlayClose(event,'quickOpsSheet')">
+    <div class="sheet">
+      <div class="sheet-header">
+        <div class="sheet-title">🚗 Tambah Biaya Ops</div>
+        <div class="sheet-close" onclick="closeSheet('quickOpsSheet')">✕</div>
+      </div>
+      <div id="quickOpsBody"></div>
+    </div>
+  </div>
+
 </body>
 </html>
