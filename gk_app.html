@@ -1901,9 +1901,10 @@ async function loadEvents() {
     });
 
     // Upcoming (tanggal >= today) asc terdekat dulu, lalu past desc terbaru dulu
-    const upcoming = enriched.filter(e => e.tanggal >= today).sort((a,b)=>a.tanggal.localeCompare(b.tanggal));
+    const onFire   = enriched.filter(e => e.tanggal === today);
+    const upcoming = enriched.filter(e => e.tanggal > today).sort((a,b)=>a.tanggal.localeCompare(b.tanggal));
     const past     = enriched.filter(e => e.tanggal <  today).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
-    eventsData = [...upcoming, ...past];
+    eventsData = [...onFire, ...upcoming, ...past];
     renderEvents();
   } catch(e) {
     try {
@@ -2064,7 +2065,8 @@ function renderEvents() {
     return;
   }
 
-  const upcoming = all.filter(e => e.tanggal >= today);
+  const onFire   = all.filter(e => e.tanggal === today);
+  const upcoming = all.filter(e => e.tanggal > today);
   const past     = all.filter(e => e.tanggal <  today);
 
   const renderCard = ev => {
@@ -2106,8 +2108,14 @@ function renderEvents() {
   };
 
   let html = '';
+  if (onFire.length) {
+    html += `<div style="font-size:11px;font-weight:800;color:#ff6b35;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:flex;align-items:center;gap:4px">
+      <span style="font-size:16px">🔥</span> ON FIRE (${onFire.length})
+    </div>`;
+    html += onFire.map(renderCard).join('');
+  }
   if (upcoming.length) {
-    html += `<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">📅 Mendatang (${upcoming.length})</div>`;
+    html += `<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin:${onFire.length?'12px':'0'} 0 6px">📅 Mendatang (${upcoming.length})</div>`;
     html += upcoming.map(renderCard).join('');
   }
   if (past.length) {
