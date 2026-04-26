@@ -3906,6 +3906,12 @@ async function loadKas() {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+// ── BUKU BESAR STATE ────────────────────────────────────────
+const bbState = {
+  usaha: { rows:[], sort:'tanggal', dir:'asc' },
+  rt:    { rows:[], sort:'tanggal', dir:'asc' },
+};
+
 async function loadBukuBesar(jenis) {
   const s = periodStart(), e = periodEnd();
   const label = new Date(state.period.year, state.period.month-1, 1)
@@ -3914,11 +3920,9 @@ async function loadBukuBesar(jenis) {
   set(`${prefix}-period`, label);
 
   try {
-    // Query buku besar untuk periode ini
     const rows = await sbGet('gk_buku_besar',
       `kas_jenis=eq.${jenis}&tanggal=gte.${s}&tanggal=lte.${e}&order=tanggal.asc,created_at.asc&select=*`);
 
-    // Summary
     const totalMasuk  = rows.reduce((sum,r)=>sum+Number(r.masuk||0), 0);
     const totalKeluar = rows.reduce((sum,r)=>sum+Number(r.keluar||0), 0);
     const saldoAkhir  = rows.length ? Number(rows[rows.length-1].saldo_berjalan||0) : 0;
@@ -3927,49 +3931,100 @@ async function loadBukuBesar(jenis) {
     set(`${prefix}-keluar`,      rp(totalKeluar));
     set(`${prefix}-saldo-akhir`, rp(saldoAkhir));
 
-    // Render rows
-    const listEl = document.getElementById(`${prefix}-list`);
-    if (!rows.length) {
-      listEl.innerHTML = `<div class="empty"><div class="empty-icon">${jenis==='usaha'?'📒':'🏠'}</div><div class="empty-text">Tidak ada transaksi bulan ini</div></div>`;
-      return;
-    }
-
-    // Tampilkan dari terbaru ke terlama (reverse untuk tampilan)
-    const reversed = [...rows].reverse();
-    listEl.innerHTML = reversed.map(r=>{
-      const isIn  = Number(r.masuk||0) > 0;
-      const jumlah= isIn ? Number(r.masuk) : Number(r.keluar);
-      const color = isIn ? 'var(--green)' : 'var(--red)';
-      const sign  = isIn ? '+' : '-';
-      const saldo = Number(r.saldo_berjalan||0);
-      const tipeLabel = {
-        masuk:'Masuk', keluar:'Keluar',
-        transfer_masuk:'Transfer Masuk', transfer_keluar:'Transfer Keluar'
-      }[r.tipe] || r.tipe;
-      // id mutasi untuk edit — bisa dari kolom kas_mutasi_id atau id
-      const mutasiId = r.kas_mutasi_id || r.id || '';
-
-      return `<div class="card" style="margin-bottom:6px;padding:10px 14px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-          <div style="flex:1">
-            <div style="font-size:12px;font-weight:500;color:var(--ink)">${r.keterangan||tipeLabel}</div>
-            <div style="font-size:10px;color:var(--ink3);margin-top:1px">${fmtDate(r.tanggal)} · ${tipeLabel}</div>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:8px">
-            <div style="text-align:right">
-              <div style="font-size:13px;font-weight:700;color:${color};font-family:var(--mono)">${sign}${rp(jumlah)}</div>
-              <div style="font-size:10px;color:var(--ink3);font-family:var(--mono)">Saldo: ${rp(saldo)}</div>
-            </div>
-            ${mutasiId ? `<div style="display:flex;flex-direction:column;gap:4px;margin-top:1px">
-              <button onclick="openEditMutasiJenis('${mutasiId}','${jenis}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:10px;padding:2px 6px">✏️</button>
-              <button onclick="deleteMutasiJenis('${mutasiId}','${jenis}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:10px;padding:2px 6px">🗑️</button>
-            </div>` : ''}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
+    bbState[jenis].rows = rows;
+    renderBukuBesar(jenis);
   } catch(e) { toast('❌ ' + e.message); }
 }
+
+function bbSort(jenis, col) {
+  const st = bbState[jenis];
+  if (st.sort === col) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+  else { st.sort = col; st.dir = col === 'tanggal' ? 'asc' : 'desc'; }
+  renderBukuBesar(jenis);
+}
+
+function renderBukuBesar(jenis) {
+  const prefix = jenis==='usaha' ? 'bb-usaha' : 'bb-rt';
+  const listEl = document.getElementById(`${prefix}-list`);
+  const st = bbState[jenis];
+  const rows = st.rows;
+
+  if (!rows.length) {
+    listEl.innerHTML = `<div class="empty"><div class="empty-icon">${jenis==='usaha'?'📒':'🏠'}</div><div class="empty-text">Tidak ada transaksi bulan ini</div></div>`;
+    return;
+  }
+
+  const sorted = [...rows].sort((a,b) => {
+    let va, vb;
+    if      (st.sort==='tanggal') { va=a.tanggal||''; vb=b.tanggal||''; }
+    else if (st.sort==='masuk')   { va=Number(a.masuk||0);  vb=Number(b.masuk||0); }
+    else if (st.sort==='keluar')  { va=Number(a.keluar||0); vb=Number(b.keluar||0); }
+    else if (st.sort==='saldo')   { va=Number(a.saldo_berjalan||0); vb=Number(b.saldo_berjalan||0); }
+    else if (st.sort==='ket')     { va=(a.keterangan||'').toLowerCase(); vb=(b.keterangan||'').toLowerCase(); }
+    if (va<vb) return st.dir==='asc'?-1:1;
+    if (va>vb) return st.dir==='asc'?1:-1;
+    return 0;
+  });
+
+  const totalMasuk  = rows.reduce((s,r)=>s+Number(r.masuk||0),0);
+  const totalKeluar = rows.reduce((s,r)=>s+Number(r.keluar||0),0);
+  const saldoAkhir  = rows.length ? Number(rows[rows.length-1].saldo_berjalan||0) : 0;
+
+  const th = (col, label, align='right') => {
+    const active = st.sort===col;
+    const arrow  = active ? (st.dir==='asc'?'↑':'↓') : '↕';
+    const color  = active ? 'var(--gold)' : 'var(--ink4)';
+    const border = active ? '2px solid var(--gold)' : '2px solid var(--border)';
+    return `<th onclick="bbSort('${jenis}','${col}')" style="padding:8px 6px;font-size:10px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:.05em;cursor:pointer;white-space:nowrap;border-bottom:${border};text-align:${align}">${label} ${arrow}</th>`;
+  };
+
+  listEl.innerHTML = `
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--border);margin-top:2px">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:440px">
+      <thead style="background:var(--bg2)">
+        <tr>
+          ${th('tanggal','Tgl','left')}
+          ${th('ket','Keterangan','left')}
+          ${th('masuk','Debit')}
+          ${th('keluar','Kredit')}
+          ${th('saldo','Saldo')}
+          <th style="padding:8px 6px;font-size:10px;font-weight:700;color:var(--ink4);border-bottom:2px solid var(--border);text-align:center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${sorted.map((r,i)=>{
+          const masuk  = Number(r.masuk||0);
+          const keluar = Number(r.keluar||0);
+          const saldo  = Number(r.saldo_berjalan||0);
+          const mutasiId = r.kas_mutasi_id || r.id || '';
+          const tipeLabel = {masuk:'Masuk',keluar:'Keluar',transfer_masuk:'↔ Masuk',transfer_keluar:'↔ Keluar'}[r.tipe]||r.tipe;
+          const rowBg = i%2===0 ? 'var(--bg)' : 'var(--bg3)';
+          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border)">
+            <td style="padding:8px 6px;white-space:nowrap;color:var(--ink3);font-size:10px">${fmtDate(r.tanggal)}<br><span style="color:var(--ink4);font-size:9px">${tipeLabel}</span></td>
+            <td style="padding:8px 6px;color:var(--ink);max-width:130px;word-break:break-word;font-size:11px">${r.keterangan||'—'}</td>
+            <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--green);font-weight:600;white-space:nowrap">${masuk>0?rpFull(masuk):'—'}</td>
+            <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--red);font-weight:600;white-space:nowrap">${keluar>0?rpFull(keluar):'—'}</td>
+            <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--gold);font-weight:700;white-space:nowrap">${rpFull(saldo)}</td>
+            <td style="padding:6px 4px;text-align:center;white-space:nowrap">
+              ${mutasiId?`<button onclick="openEditMutasiJenis('${mutasiId}','${jenis}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--blue);font-size:10px;padding:2px 5px">✏️</button>
+              <button onclick="deleteMutasiJenis('${mutasiId}','${jenis}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:5px;color:var(--red);font-size:10px;padding:2px 5px">🗑️</button>`:'—'}
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+      <tfoot style="background:var(--bg2);border-top:2px solid var(--border2)">
+        <tr>
+          <td colspan="2" style="padding:8px 6px;font-size:11px;font-weight:700;color:var(--ink)">TOTAL</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--green);font-weight:700;white-space:nowrap">${rpFull(totalMasuk)}</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--red);font-weight:700;white-space:nowrap">${rpFull(totalKeluar)}</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--gold);font-weight:700;white-space:nowrap">${rpFull(saldoAkhir)}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>`;
+}
+
 
 function renderKasMutasi(list) {
   const el = document.getElementById('kas-mutasi-list');
