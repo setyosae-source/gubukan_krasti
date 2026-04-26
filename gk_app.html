@@ -1657,9 +1657,42 @@ let eventsData = [];
 async function loadEvents() {
   try {
     const data = await sbGet('gk_event', 'order=tanggal.desc&select=*');
-    eventsData = data;
+    // Fetch summary per event dari view gk_event_summary kalau ada,
+    // atau hitung dari sub-tables
+    const [menus, bahans, opss, bayars] = await Promise.all([
+      sbGet('gk_event_menu',  'select=event_id,total'),
+      sbGet('gk_event_bahan', 'select=event_id,total'),
+      sbGet('gk_biaya_ops', 'select=event_id,jumlah'),
+      sbGet('gk_event_bayar', 'select=event_id,jumlah'),
+    ]);
+
+    // Index by event_id
+    const sumBy = (arr, idKey, valKey) => arr.reduce((m,r)=>{
+      m[r[idKey]] = (m[r[idKey]]||0) + Number(r[valKey]||0); return m;
+    }, {});
+    const omzetMap   = sumBy(menus,  'event_id', 'total');
+    const hppMap     = sumBy(bahans, 'event_id', 'total');
+    const opsMap     = sumBy(opss,   'event_id', 'jumlah');
+    const bayarMap   = sumBy(bayars, 'event_id', 'jumlah');
+
+    eventsData = data.map(ev => {
+      const omzet    = omzetMap[ev.id]||0;
+      const hppOps   = (hppMap[ev.id]||0) + (opsMap[ev.id]||0);
+      const laba     = omzet - hppOps;
+      const terbayar = bayarMap[ev.id]||0;
+      const sisa     = omzet - terbayar;
+      const margin   = omzet>0 ? Math.round(laba/omzet*100) : 0;
+      return { ...ev, summary: { omzet, hppOps, laba, terbayar, sisa, margin } };
+    });
     renderEvents();
-  } catch(e) { toast('❌ ' + e.message); }
+  } catch(e) {
+    // Fallback: load tanpa summary
+    try {
+      const data = await sbGet('gk_event', 'order=tanggal.desc&select=*');
+      eventsData = data;
+      renderEvents();
+    } catch(e2) { toast('❌ ' + e2.message); }
+  }
 }
 
 function filterEvent(el) {
@@ -1690,7 +1723,25 @@ function renderEvents() {
           <button onclick="event.stopPropagation();deleteEvent('${ev.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 7px">🗑️</button>
         </div>
       </div>
-      ${ev.catatan ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px">${ev.catatan}</div>` : ''}
+      ${ev.summary ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+        <div>
+          <div style="font-size:9px;color:var(--ink4);text-transform:uppercase;letter-spacing:.04em">Nilai Order</div>
+          <div style="font-size:12px;font-weight:700;color:var(--gold);font-family:var(--mono)">${rpFull(ev.summary.omzet)}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--ink4);text-transform:uppercase;letter-spacing:.04em">Terbayar</div>
+          <div style="font-size:12px;font-weight:700;color:var(--green);font-family:var(--mono)">${rpFull(ev.summary.terbayar)}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--ink4);text-transform:uppercase;letter-spacing:.04em">${ev.summary.sisa<=0?'✅ Lunas':'Sisa'}</div>
+          <div style="font-size:12px;font-weight:700;font-family:var(--mono);color:${ev.summary.sisa<=0?'var(--green)':'var(--red)'}">${ev.summary.sisa<=0?'Lunas':rpFull(ev.summary.sisa)}</div>
+        </div>
+      </div>
+      <div style="margin-top:5px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:var(--ink4)">HPP+Ops: <span style="color:var(--red)">${rpFull(ev.summary.hppOps)}</span> · Laba Est: <span style="color:var(--green)">${rpFull(ev.summary.laba)} (${ev.summary.margin}%)</span></span>
+      </div>` : `
+      ${ev.catatan ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px">${ev.catatan}</div>` : ''}`}
     </div>`).join('');
 }
 
@@ -1781,13 +1832,15 @@ async function openEventDetail(id) {
 
 function renderEventDetail() {
   const ev = currentEvent;
-  const omzet    = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
-  const hpp      = currentEventBahan.reduce((s,b)=>s+Number(b.total||0),0);
-  const ops      = currentEventOps.reduce((s,o)=>s+Number(o.jumlah||0),0);
-  const laba     = omzet - hpp - ops;
-  const terbayar = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
-  const sisa     = omzet - terbayar;
-  const margin   = omzet>0 ? Math.round(laba/omzet*100) : 0;
+  const nilaiOrder = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
+  const hpp        = currentEventBahan.reduce((s,b)=>s+Number(b.total||0),0);
+  const ops        = currentEventOps.reduce((s,o)=>s+Number(o.jumlah||0),0);
+  const hppOps     = hpp + ops;
+  const laba       = nilaiOrder - hppOps;
+  const terbayar   = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
+  const sisa       = nilaiOrder - terbayar;
+  const margin     = nilaiOrder>0 ? Math.round(laba/nilaiOrder*100) : 0;
+  const bayarPct   = nilaiOrder>0 ? Math.min(Math.round(terbayar/nilaiOrder*100),100) : 0;
 
   // Header
   set('evd-customer', ev.customer);
@@ -1795,14 +1848,24 @@ function renderEventDetail() {
   document.getElementById('evd-status').className = 'badge '+ev.status;
   set('evd-status', ev.status);
 
-  // Summary bar
-  set('evd-omzet',    rpFull(omzet));
-  set('evd-terbayar', rpFull(terbayar));
-  set('evd-sisa',     rpFull(sisa));
-  set('evd-laba',     rpFull(laba));
-  set('evd-margin',   margin+'%');
+  // Summary baris 1: Nilai Order | HPP+Ops | Laba Est
+  set('evd-omzet',   rpFull(nilaiOrder));
+  set('evd-hpp-ops', rpFull(hppOps));
+  set('evd-laba',    rpFull(laba));
+  set('evd-margin',  margin+'%');
   const labaBar = document.getElementById('evd-laba-bar');
   if (labaBar) labaBar.style.width = Math.min(Math.max(margin,0),100)+'%';
+
+  // Summary baris 2: Terbayar | Sisa
+  set('evd-terbayar', rpFull(terbayar));
+  const sisaEl = document.getElementById('evd-sisa');
+  if (sisaEl) {
+    sisaEl.textContent = rpFull(Math.abs(sisa));
+    sisaEl.style.color = sisa <= 0 ? 'var(--green)' : 'var(--red)';
+  }
+  set('evd-bayar-pct', bayarPct+'%');
+  const bayarBar = document.getElementById('evd-bayar-bar');
+  if (bayarBar) bayarBar.style.width = bayarPct+'%';
 
   // Status buttons
   renderStatusBtns(ev.status);
@@ -3749,25 +3812,45 @@ loadSavedTheme();
     </div>
     <div style="padding:14px 18px">
       <!-- Summary -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-        <div class="stat-card" style="padding:10px">
-          <div class="stat-label">Omzet</div>
-          <div class="stat-val gold" style="font-size:14px" id="evd-omzet">—</div>
+      <!-- Baris 1: Nilai Kontrak | HPP+Ops | Laba Est -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+        <div class="stat-card" style="padding:9px 8px">
+          <div class="stat-label" style="font-size:9px">Nilai Order</div>
+          <div class="stat-val gold" style="font-size:13px" id="evd-omzet">—</div>
         </div>
-        <div class="stat-card" style="padding:10px">
-          <div class="stat-label">Terbayar</div>
-          <div class="stat-val green" style="font-size:14px" id="evd-terbayar">—</div>
+        <div class="stat-card" style="padding:9px 8px">
+          <div class="stat-label" style="font-size:9px">HPP+Ops</div>
+          <div class="stat-val red" style="font-size:13px" id="evd-hpp-ops">—</div>
         </div>
-        <div class="stat-card" style="padding:10px">
-          <div class="stat-label">Sisa</div>
-          <div class="stat-val red" style="font-size:14px" id="evd-sisa">—</div>
+        <div class="stat-card" style="padding:9px 8px">
+          <div class="stat-label" style="font-size:9px">Laba Est.</div>
+          <div class="stat-val green" style="font-size:13px" id="evd-laba">—</div>
         </div>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="font-size:11px;color:var(--ink3)">Laba: <span id="evd-laba" style="color:var(--green);font-weight:600">—</span></span>
-        <span style="font-size:11px;color:var(--gold)" id="evd-margin">—</span>
+      <!-- Progress laba -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <span style="font-size:10px;color:var(--ink3)">Margin laba</span>
+        <span style="font-size:10px;color:var(--gold)" id="evd-margin">—</span>
       </div>
-      <div class="prog-wrap" style="margin-bottom:14px"><div class="prog-bar green" id="evd-laba-bar" style="width:0%"></div></div>
+      <div class="prog-wrap" style="margin-bottom:10px"><div class="prog-bar green" id="evd-laba-bar" style="width:0%"></div></div>
+      <!-- Baris 2: Terbayar | Sisa Tagihan | Progress bayar -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div>
+            <div style="font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Terbayar</div>
+            <div style="font-size:15px;font-weight:700;color:var(--green);font-family:var(--mono)" id="evd-terbayar">—</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Sisa Tagihan</div>
+            <div style="font-size:15px;font-weight:700;font-family:var(--mono)" id="evd-sisa">—</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:10px;color:var(--ink3)">Progress bayar</span>
+          <span style="font-size:10px;color:var(--green)" id="evd-bayar-pct">—</span>
+        </div>
+        <div class="prog-wrap"><div class="prog-bar" id="evd-bayar-bar" style="width:0%;background:var(--green)"></div></div>
+      </div>
 
       <!-- Status Buttons -->
       <div id="evd-status-btns" style="margin-bottom:14px"></div>
