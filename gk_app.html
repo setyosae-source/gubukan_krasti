@@ -1443,7 +1443,7 @@ function switchTab(el) {
 
 function loadPage(page) {
   if (page==='dashboard') loadDashboard();
-  else if (page==='event') loadEvents();
+  else if (page==='event') { loadEvents(); if (!bahanData.length) loadBahan(); }
   else if (page==='bahan') loadBahan();
   else if (page==='tokba') loadTokba();
   else if (page==='kas') loadKas();
