@@ -857,6 +857,10 @@ select.form-control { appearance: none; }
 
       <!-- Pembelian bahan -->
       <div id="bahan-pembelian" style="display:none">
+        <div style="margin-bottom:10px">
+          <input type="text" id="beli-search" placeholder="🔍 Cari nama bahan, toko..." class="form-control"
+            oninput="filterBeli()" style="font-size:13px">
+        </div>
         <div id="beli-list">
           <div class="empty"><div class="empty-icon">🛒</div><div class="empty-text">Belum ada pembelian</div></div>
         </div>
@@ -1978,6 +1982,43 @@ function renderBeli(list) {
         </div>
       </div>
     </div>`).join('');
+}
+
+function filterBeli() {
+  const q = (document.getElementById('beli-search')?.value || '').toLowerCase().trim();
+  if (!q) { renderBeli(beliData); return; }
+  const filtered = beliData.filter(b =>
+    (b.nama_bahan||'').toLowerCase().includes(q) ||
+    (b.toko||'').toLowerCase().includes(q) ||
+    String(b.total||'').includes(q) ||
+    String(b.harga_beli||'').includes(q)
+  );
+  const el = document.getElementById('beli-list');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Tidak ada hasil untuk<br>"${q}"</div></div>`;
+    return;
+  }
+  // Render dengan highlight
+  el.innerHTML = filtered.map(b => {
+    const hi = s => s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:var(--gold-dim);color:var(--gold);border-radius:2px">$1</mark>');
+    return `<div class="card" style="margin-bottom:8px;padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${hi(b.nama_bahan||'')}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:2px">
+            ${b.qty} ${b.satuan}${b.toko ? ' · '+hi(b.toko) : ''} · ${fmtDate(b.tanggal)}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div style="font-size:13px;font-weight:600;color:var(--red);font-family:var(--mono)">${rpFull(b.total)}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="openEditBeli('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 8px">✏️ Edit</button>
+            <button onclick="deleteBeli('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 8px">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function openAddBahan() {
