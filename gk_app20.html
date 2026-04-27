@@ -3732,15 +3732,7 @@ function acBeliKasSelectBaru(nama) {
   acModalClose();
 }
 
-// Patch acModalFilter
-const _origAcModalFilter = acModalFilter;
-function acModalFilter() {
-  const q = document.getElementById('acModal-search').value;
-  if (acModalCurrentId === '__kf-event__')   { acKasEventRender(q);   return; }
-  if (acModalCurrentId === '__kf-pesanan__') { acKasPesananRender(q); return; }
-  if (acModalCurrentId === '__kf-bahan__')   { acBeliKasRender(q);    return; }
-  _origAcModalFilter();
-}
+// acModalFilter handles all modal types - defined in AC engine below
 
 async function saveKasForm(tipe) {
   const today = document.getElementById('kf-tanggal')?.value || localDate();
@@ -5655,8 +5647,11 @@ function acModalClose() {
 
 function acModalFilter() {
   const q = document.getElementById('acModal-search').value;
-  if (acModalCurrentId === '__beli-bahan__') { acBeliRender(q); return; }
-  if (acModalCurrentId === '__evb-bahan__')  { acEvbRender(q);  return; }
+  if (acModalCurrentId === '__beli-bahan__') { acBeliRender(q);    return; }
+  if (acModalCurrentId === '__evb-bahan__')  { acEvbRender(q);     return; }
+  if (acModalCurrentId === '__kf-bahan__')   { acBeliKasRender(q); return; }
+  if (acModalCurrentId === '__kf-event__')   { acKasEventRender(q); return; }
+  if (acModalCurrentId === '__kf-pesanan__') { acKasPesananRender(q); return; }
   acModalRender(q);
 }
 
