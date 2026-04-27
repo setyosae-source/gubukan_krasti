@@ -2522,7 +2522,7 @@ function renderBeli(list) {
       <tbody>
         ${filtered.map((b,i)=>{
           const rowBg = i%2===0 ? 'var(--bg)' : 'var(--bg3)';
-          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border);cursor:pointer" onclick="showTxDetail('beli',${JSON.stringify(b).replace(/`/g,'\`')})">
+          const _kb = txStore(b); return `<tr style="background:${rowBg};border-bottom:1px solid var(--border);cursor:pointer" onclick="showTxDetailByKey('beli','${_kb}')">
             <td style="padding:9px 8px">
               <div style="font-size:12px;font-weight:600;color:var(--ink)">${hi(b.nama_bahan)}</div>
               <div style="font-size:10px;color:var(--ink3)">${fmtDate(b.tanggal)}${b.toko?' · '+hi(b.toko):''}</div>
@@ -2861,7 +2861,7 @@ async function openBahanDetail(id) {
       beliEl.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum ada pembelian</div>';
     } else {
       beliEl.innerHTML = belis.map(r=>`
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick='showTxDetail("beli",${JSON.stringify(r)})'>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="showTxDetailByKey('beli',txStore(r))">
           <div>
             <div style="font-size:12px;font-weight:500">${r.qty} ${r.satuan}${r.toko?' · '+r.toko:''}</div>
             <div style="font-size:10px;color:var(--ink3)">${fmtDate(r.tanggal)} · ${rpFull(r.harga_beli)}/${r.satuan}</div>
@@ -2876,7 +2876,7 @@ async function openBahanDetail(id) {
       tarikEl.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum pernah ditarik ke event</div>';
     } else {
       tarikEl.innerHTML = tariks.map(r=>`
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick='showTxDetail("tarik",${JSON.stringify(r)})'>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="showTxDetailByKey('tarik',txStore(r))">
           <div>
             <div style="font-size:12px;font-weight:500">${r.gk_event?.customer||'—'}</div>
             <div style="font-size:10px;color:var(--ink3)">${fmtDate(r.gk_event?.tanggal)} · ${r.qty} ${r.satuan} × ${rpFull(r.harga_avg)}</div>
@@ -2990,7 +2990,7 @@ function renderTokbaOnline(list) {
     return;
   }
   el.innerHTML = list.map(r => `
-    <div class="card" style="margin-bottom:8px;padding:12px 14px;cursor:pointer" onclick='showTxDetailMP(${JSON.stringify(r)})'>
+    <div class="card" style="margin-bottom:8px;padding:12px 14px;cursor:pointer" onclick="showTxDetailByKey('mp',txStore(r))">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
           <div style="font-size:13px;font-weight:600;text-transform:capitalize">${r.platform}</div>
@@ -3884,6 +3884,22 @@ async function saveKasForm(tipe) {
 }
 
 // ── DETAIL TRANSAKSI ───────────────────────────────────────
+// Cache untuk onclick detail — hindari masalah quote di HTML attribute
+const txCache = new Map();
+let txCacheIdx = 0;
+function txStore(data) {
+  const key = 'tx_' + (txCacheIdx++);
+  txCache.set(key, data);
+  return key;
+}
+
+function showTxDetailByKey(tipe, key) {
+  const data = txCache.get(key);
+  if (!data) { toast('❌ Data tidak ditemukan'); return; }
+  if (tipe === 'mp') showTxDetailMP(data);
+  else showTxDetail(tipe, data);
+}
+
 function showTxDetailMP(r) {
   const fmt = (label, val, color='var(--ink)') =>
     `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
@@ -4744,7 +4760,7 @@ function renderBukuBesar(jenis) {
           const mutasiId = r.kas_mutasi_id || r.id || '';
           const tipeLabel = {masuk:'Masuk',keluar:'Keluar',transfer_masuk:'↔ Masuk',transfer_keluar:'↔ Keluar'}[r.tipe]||r.tipe;
           const rowBg = i%2===0 ? 'var(--bg)' : 'var(--bg3)';
-          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border);cursor:pointer" onclick="showTxDetail('kas',${JSON.stringify(r).replace(/`/g,'\`')})">
+          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border);cursor:pointer" onclick="showTxDetailByKey('kas',txStore(r))">
             <td style="padding:8px 6px;white-space:nowrap;color:var(--ink3);font-size:10px">${fmtDate(r.tanggal)}<br><span style="color:var(--ink4);font-size:9px">${tipeLabel}</span></td>
             <td style="padding:8px 6px;color:var(--ink);max-width:130px;word-break:break-word;font-size:11px">${hi(r.keterangan)||'—'}</td>
             <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--green);font-weight:600;white-space:nowrap">${masuk>0?rpFull(masuk):'—'}</td>
