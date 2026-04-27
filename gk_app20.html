@@ -1743,6 +1743,7 @@ function renderDashboard(row, kas, upcoming) {
         </div>
         <span class="badge ${ev.status}">${ev.status}</span>
       </div>
+      ${ev.catatan?`<div style="font-size:11px;color:#7c4a00;margin-top:6px;background:#fff3cd;border-left:3px solid #f0a500;padding:4px 8px;border-radius:0 6px 6px 0;font-style:italic">📝 ${ev.catatan}</div>`:''}
     </div>`).join('');
 }
 
