@@ -1016,6 +1016,9 @@ select.form-control { appearance: none; }
             <div class="stat-val gold" style="font-size:13px" id="bb-usaha-saldo-akhir">—</div>
           </div>
         </div>
+        <input type="text" id="bb-usaha-search" placeholder="🔍 Cari keterangan, nominal..." class="form-control"
+          oninput="filterBukuBesar('usaha')" style="font-size:13px;margin-bottom:8px">
+        <div style="margin-bottom:8px"><input type="text" id="bb-usaha-search" placeholder="🔍 Cari keterangan, nominal..." class="form-control" oninput="filterBukuBesar('usaha')" style="font-size:13px"></div>
         <div id="bb-usaha-list">
           <div class="empty"><div class="empty-icon">📒</div><div class="empty-text">Belum ada data</div></div>
         </div>
@@ -1042,6 +1045,9 @@ select.form-control { appearance: none; }
             <div class="stat-val gold" style="font-size:13px" id="bb-rt-saldo-akhir">—</div>
           </div>
         </div>
+        <input type="text" id="bb-rt-search" placeholder="🔍 Cari keterangan, nominal..." class="form-control"
+          oninput="filterBukuBesar('rt')" style="font-size:13px;margin-bottom:8px">
+        <div style="margin-bottom:8px"><input type="text" id="bb-rt-search" placeholder="🔍 Cari keterangan, nominal..." class="form-control" oninput="filterBukuBesar('rt')" style="font-size:13px"></div>
         <div id="bb-rt-list">
           <div class="empty"><div class="empty-icon">🏠</div><div class="empty-text">Belum ada data</div></div>
         </div>
@@ -2833,10 +2839,16 @@ async function openBahanDetail(id) {
   openSheet('sheetBahanDetail');
 
   try {
-    const [belis, tariks] = await Promise.all([
+    // Query by bahan_id ATAU nama_bahan (untuk data lama tanpa bahan_id)
+    const [byId, byNama, tariks] = await Promise.all([
       sbGet('gk_pembelian', `bahan_id=eq.${id}&order=tanggal.desc&select=*`),
+      sbGet('gk_pembelian', `bahan_id=is.null&nama_bahan=ilike.${b.nama}&order=tanggal.desc&select=*`),
       sbGet('gk_event_bahan', `bahan_id=eq.${id}&order=created_at.desc&select=*,gk_event(customer,tanggal)`),
     ]);
+    // Gabung + deduplikasi
+    const seen = new Set();
+    const belis = [...byId, ...byNama].filter(r=>{ if(seen.has(r.id)) return false; seen.add(r.id); return true; })
+      .sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
 
     const totalBeli  = belis.reduce((s,r)=>s+Number(r.total||0),0);
     const totalTarik = tariks.reduce((s,r)=>s+Number(r.total||0),0);
@@ -4582,10 +4594,7 @@ async function loadBukuBesar(jenis) {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
-function bbSort(jenis, col) {
-  const st = bbState[jenis];
-  if (st.sort === col) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
-  else { st.sort = col; st.dir = col === 'tanggal' ? 'asc' : 'desc'; }
+function filterBukuBesar(jenis) {
   renderBukuBesar(jenis);
 }
 
@@ -4594,13 +4603,34 @@ function renderBukuBesar(jenis) {
   const listEl = document.getElementById(`${prefix}-list`);
   const st = bbState[jenis];
   const rows = st.rows;
+  const q = (document.getElementById(`${prefix}-search`)?.value||'').toLowerCase().trim();
 
   if (!rows.length) {
     listEl.innerHTML = `<div class="empty"><div class="empty-icon">${jenis==='usaha'?'📒':'🏠'}</div><div class="empty-text">Tidak ada transaksi bulan ini</div></div>`;
     return;
   }
 
-  const sorted = [...rows].sort((a,b) => {
+  // Filter
+  const filtered = q ? rows.filter(r=>
+    (r.keterangan||'').toLowerCase().includes(q) ||
+    String(r.masuk||'').includes(q) ||
+    String(r.keluar||'').includes(q) ||
+    (r.tipe||'').toLowerCase().includes(q) ||
+    (r.tanggal||'').includes(q)
+  ) : rows;
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Tidak ada hasil untuk "${q}"</div></div>`;
+    return;
+  }
+
+  function hi(s) {
+    if (!q||!s) return s||'';
+    return String(s).replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:var(--gold-dim);color:var(--gold);border-radius:2px">$1</mark>');
+  }
+
+  // Sort
+  const sorted = [...filtered].sort((a,b) => {
     let va, vb;
     if      (st.sort==='tanggal') { va=a.tanggal||''; vb=b.tanggal||''; }
     else if (st.sort==='masuk')   { va=Number(a.masuk||0);  vb=Number(b.masuk||0); }
@@ -4612,8 +4642,8 @@ function renderBukuBesar(jenis) {
     return 0;
   });
 
-  const totalMasuk  = rows.reduce((s,r)=>s+Number(r.masuk||0),0);
-  const totalKeluar = rows.reduce((s,r)=>s+Number(r.keluar||0),0);
+  const totalMasuk  = filtered.reduce((s,r)=>s+Number(r.masuk||0),0);
+  const totalKeluar = filtered.reduce((s,r)=>s+Number(r.keluar||0),0);
   const saldoAkhir  = rows.length ? Number(rows[rows.length-1].saldo_berjalan||0) : 0;
 
   const th = (col, label, align='right') => {
@@ -4647,7 +4677,7 @@ function renderBukuBesar(jenis) {
           const rowBg = i%2===0 ? 'var(--bg)' : 'var(--bg3)';
           return `<tr style="background:${rowBg};border-bottom:1px solid var(--border)">
             <td style="padding:8px 6px;white-space:nowrap;color:var(--ink3);font-size:10px">${fmtDate(r.tanggal)}<br><span style="color:var(--ink4);font-size:9px">${tipeLabel}</span></td>
-            <td style="padding:8px 6px;color:var(--ink);max-width:130px;word-break:break-word;font-size:11px">${r.keterangan||'—'}</td>
+            <td style="padding:8px 6px;color:var(--ink);max-width:130px;word-break:break-word;font-size:11px">${hi(r.keterangan)||'—'}</td>
             <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--green);font-weight:600;white-space:nowrap">${masuk>0?rpFull(masuk):'—'}</td>
             <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--red);font-weight:600;white-space:nowrap">${keluar>0?rpFull(keluar):'—'}</td>
             <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--gold);font-weight:700;white-space:nowrap">${rpFull(saldo)}</td>
@@ -4660,18 +4690,16 @@ function renderBukuBesar(jenis) {
       </tbody>
       <tfoot style="background:var(--bg2);border-top:2px solid var(--border2)">
         <tr>
-          <td colspan="2" style="padding:8px 6px;font-size:11px;font-weight:700;color:var(--ink)">TOTAL</td>
-          <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--green);font-weight:700;white-space:nowrap">${rpFull(totalMasuk)}</td>
-          <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--red);font-weight:700;white-space:nowrap">${rpFull(totalKeluar)}</td>
-          <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--gold);font-weight:700;white-space:nowrap">${rpFull(saldoAkhir)}</td>
+          <td colspan="2" style="padding:7px 6px;font-size:10px;color:var(--ink3)">${filtered.length} transaksi${q?' ditemukan':''}</td>
+          <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:var(--green);font-weight:700;white-space:nowrap">${rpFull(totalMasuk)}</td>
+          <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:var(--red);font-weight:700;white-space:nowrap">${rpFull(totalKeluar)}</td>
+          <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:var(--gold);font-weight:700;white-space:nowrap">${q?'':rpFull(saldoAkhir)}</td>
           <td></td>
         </tr>
       </tfoot>
     </table>
   </div>`;
 }
-
-
 function renderKasMutasi(list) {
   const el = document.getElementById('kas-mutasi-list');
   if (!list.length) {
