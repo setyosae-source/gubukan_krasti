@@ -4609,13 +4609,16 @@ function renderBukuBesar(jenis) {
   }
 
   // Filter
-  const filtered = q ? rows.filter(r=>
-    (r.keterangan||'').toLowerCase().includes(q) ||
-    String(r.masuk||'').includes(q) ||
-    String(r.keluar||'').includes(q) ||
-    (r.tipe||'').toLowerCase().includes(q) ||
-    (r.tanggal||'').includes(q)
-  ) : rows;
+  const filtered = q ? rows.filter(r=>{
+    const tglFormatted = fmtDate(r.tanggal||'').toLowerCase(); // "1 Apr 2026"
+    const tglRaw = (r.tanggal||'').toLowerCase();              // "2026-04-01"
+    return (r.keterangan||'').toLowerCase().includes(q) ||
+      String(r.masuk||'').includes(q) ||
+      String(r.keluar||'').includes(q) ||
+      (r.tipe||'').toLowerCase().includes(q) ||
+      tglFormatted.includes(q) ||
+      tglRaw.includes(q);
+  }) : rows;
 
   if (!filtered.length) {
     listEl.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Tidak ada hasil untuk "${q}"</div></div>`;
