@@ -4592,6 +4592,13 @@ async function loadBukuBesar(jenis) {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+function bbSort(jenis, col) {
+  const st = bbState[jenis];
+  if (st.sort === col) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+  else { st.sort = col; st.dir = col === 'tanggal' ? 'asc' : 'desc'; }
+  renderBukuBesar(jenis);
+}
+
 function filterBukuBesar(jenis) {
   renderBukuBesar(jenis);
 }
