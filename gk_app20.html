@@ -2522,7 +2522,7 @@ function renderBeli(list) {
       <tbody>
         ${filtered.map((b,i)=>{
           const rowBg = i%2===0 ? 'var(--bg)' : 'var(--bg3)';
-          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border)">
+          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border);cursor:pointer" onclick="showTxDetail('beli',${JSON.stringify(b).replace(/`/g,'\`')})">
             <td style="padding:9px 8px">
               <div style="font-size:12px;font-weight:600;color:var(--ink)">${hi(b.nama_bahan)}</div>
               <div style="font-size:10px;color:var(--ink3)">${fmtDate(b.tanggal)}${b.toko?' · '+hi(b.toko):''}</div>
@@ -2861,7 +2861,7 @@ async function openBahanDetail(id) {
       beliEl.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum ada pembelian</div>';
     } else {
       beliEl.innerHTML = belis.map(r=>`
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick='showTxDetail("beli",${JSON.stringify(r)})'>
           <div>
             <div style="font-size:12px;font-weight:500">${r.qty} ${r.satuan}${r.toko?' · '+r.toko:''}</div>
             <div style="font-size:10px;color:var(--ink3)">${fmtDate(r.tanggal)} · ${rpFull(r.harga_beli)}/${r.satuan}</div>
@@ -2876,7 +2876,7 @@ async function openBahanDetail(id) {
       tarikEl.innerHTML = '<div style="color:var(--ink4);font-size:12px;padding:8px 0">Belum pernah ditarik ke event</div>';
     } else {
       tarikEl.innerHTML = tariks.map(r=>`
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick='showTxDetail("tarik",${JSON.stringify(r)})'>
           <div>
             <div style="font-size:12px;font-weight:500">${r.gk_event?.customer||'—'}</div>
             <div style="font-size:10px;color:var(--ink3)">${fmtDate(r.gk_event?.tanggal)} · ${r.qty} ${r.satuan} × ${rpFull(r.harga_avg)}</div>
@@ -2990,7 +2990,7 @@ function renderTokbaOnline(list) {
     return;
   }
   el.innerHTML = list.map(r => `
-    <div class="card" style="margin-bottom:8px;padding:12px 14px">
+    <div class="card" style="margin-bottom:8px;padding:12px 14px;cursor:pointer" onclick='showTxDetailMP(${JSON.stringify(r)})'>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
           <div style="font-size:13px;font-weight:600;text-transform:capitalize">${r.platform}</div>
@@ -2998,8 +2998,8 @@ function renderTokbaOnline(list) {
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <div style="font-size:14px;font-weight:700;color:var(--green);font-family:var(--mono)">${rpFull(r.jumlah)}</div>
-          <button onclick="openEditOnline('${r.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 7px">✏️</button>
-          <button onclick="deleteOnline('${r.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 7px">🗑️</button>
+          <button onclick="event.stopPropagation();openEditOnline('${r.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 7px">✏️</button>
+          <button onclick="event.stopPropagation();deleteOnline('${r.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:3px 7px">🗑️</button>
         </div>
       </div>
     </div>`).join('');
@@ -3883,6 +3883,73 @@ async function saveKasForm(tipe) {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+// ── DETAIL TRANSAKSI ───────────────────────────────────────
+function showTxDetailMP(r) {
+  const fmt = (label, val, color='var(--ink)') =>
+    `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--ink3)">${label}</span>
+      <span style="font-size:13px;font-weight:600;color:${color};font-family:var(--mono)">${val}</span>
+    </div>`;
+  const html =
+    fmt('Platform', `<span style="font-family:var(--font);text-transform:capitalize">${r.platform}</span>`, 'var(--ink)') +
+    fmt('Tanggal', fmtDate(r.tanggal), 'var(--ink)') +
+    fmt('Jumlah', rpFull(r.jumlah), 'var(--green)') +
+    (r.catatan ? fmt('Catatan', `<span style="font-family:var(--font)">${r.catatan}</span>`, 'var(--ink)') : '');
+  document.getElementById('txd-title').textContent = '🛒 Detail Tarik Marketplace';
+  document.getElementById('txd-body').innerHTML = `<div style="padding:0 2px">${html}</div>`;
+  openSheet('sheetTxDetail');
+}
+
+function showTxDetail(tipe, data) {
+  const fmt = (label, val, color='var(--ink)') =>
+    `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--ink3)">${label}</span>
+      <span style="font-size:13px;font-weight:600;color:${color};font-family:var(--mono)">${val}</span>
+    </div>`;
+
+  let title = '', html = '';
+
+  if (tipe === 'beli') {
+    title = '🛒 Detail Pembelian';
+    html = fmt('Bahan', `<span style="font-family:var(--font)">${data.nama_bahan}</span>`, 'var(--ink)') +
+      fmt('Tanggal', fmtDate(data.tanggal), 'var(--ink)') +
+      fmt('Qty', `${data.qty} ${data.satuan}`, 'var(--ink)') +
+      fmt('Harga / Satuan', rpFull(data.harga_beli), 'var(--ink)') +
+      (data.qty_kecil ? fmt('Qty Kecil', `${data.qty_kecil} ${data.satuan_kecil||''}`, 'var(--ink3)') : '') +
+      (data.harga_kecil ? fmt('Harga / Satuan Kecil', rpFull(data.harga_kecil), 'var(--ink3)') : '') +
+      fmt('Total', rpFull(data.total), 'var(--red)') +
+      (data.toko ? fmt('Toko', `<span style="font-family:var(--font)">${data.toko}</span>`, 'var(--ink)') : '');
+  }
+
+  else if (tipe === 'tarik') {
+    title = '📤 Detail Tarik HPP';
+    const ev = data.gk_event || {};
+    html = fmt('Bahan', `<span style="font-family:var(--font)">${data.nama_bahan}</span>`, 'var(--ink)') +
+      fmt('Event', `<span style="font-family:var(--font)">${ev.customer||'—'}</span>`, 'var(--ink)') +
+      fmt('Tanggal Event', fmtDate(ev.tanggal), 'var(--ink)') +
+      fmt('Qty', `${data.qty} ${data.satuan}`, 'var(--ink)') +
+      fmt('Harga Avg', rpFull(data.harga_avg), 'var(--ink)') +
+      fmt('Total HPP', rpFull(data.total), 'var(--blue)');
+  }
+
+  else if (tipe === 'kas') {
+    title = data.masuk > 0 ? '💰 Detail Pemasukan' : '💸 Detail Pengeluaran';
+    const jumlah = data.masuk > 0 ? data.masuk : data.keluar;
+    const color  = data.masuk > 0 ? 'var(--green)' : 'var(--red)';
+    const tipeLabel = {masuk:'Masuk',keluar:'Keluar',transfer_masuk:'Transfer Masuk',transfer_keluar:'Transfer Keluar'}[data.tipe]||data.tipe;
+    html = fmt('Keterangan', `<span style="font-family:var(--font)">${data.keterangan||'—'}</span>`, 'var(--ink)') +
+      fmt('Tanggal', fmtDate(data.tanggal), 'var(--ink)') +
+      fmt('Tipe', tipeLabel, 'var(--ink)') +
+      fmt('Jumlah', rpFull(jumlah), color) +
+      fmt('Saldo Setelah', rpFull(data.saldo_berjalan||0), 'var(--gold)') +
+      (data.referensi ? fmt('Referensi', `<span style="font-family:var(--font);font-size:11px">${data.referensi}</span>`, 'var(--ink4)') : '');
+  }
+
+  document.getElementById('txd-title').textContent = title;
+  document.getElementById('txd-body').innerHTML = `<div style="padding:0 2px">${html}</div>`;
+  openSheet('sheetTxDetail');
+}
+
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
@@ -4677,7 +4744,7 @@ function renderBukuBesar(jenis) {
           const mutasiId = r.kas_mutasi_id || r.id || '';
           const tipeLabel = {masuk:'Masuk',keluar:'Keluar',transfer_masuk:'↔ Masuk',transfer_keluar:'↔ Keluar'}[r.tipe]||r.tipe;
           const rowBg = i%2===0 ? 'var(--bg)' : 'var(--bg3)';
-          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border)">
+          return `<tr style="background:${rowBg};border-bottom:1px solid var(--border);cursor:pointer" onclick="showTxDetail('kas',${JSON.stringify(r).replace(/`/g,'\`')})">
             <td style="padding:8px 6px;white-space:nowrap;color:var(--ink3);font-size:10px">${fmtDate(r.tanggal)}<br><span style="color:var(--ink4);font-size:9px">${tipeLabel}</span></td>
             <td style="padding:8px 6px;color:var(--ink);max-width:130px;word-break:break-word;font-size:11px">${hi(r.keterangan)||'—'}</td>
             <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--green);font-weight:600;white-space:nowrap">${masuk>0?rpFull(masuk):'—'}</td>
@@ -5327,6 +5394,18 @@ loadSavedTheme();
       <div class="section-title" style="margin-bottom:8px">📤 Riwayat Tarik ke Event</div>
       <div id="bdet-tarik-list"></div>
     </div>
+  </div>
+</div>
+
+<!-- SHEET: Detail Transaksi -->
+<div class="overlay" id="sheetTxDetail" onclick="overlayClose(event,'sheetTxDetail')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="txd-title">Detail Transaksi</span>
+      <span class="sheet-close" onclick="closeSheet('sheetTxDetail')">✕</span>
+    </div>
+    <div class="sheet-body" id="txd-body"></div>
   </div>
 </div>
 
