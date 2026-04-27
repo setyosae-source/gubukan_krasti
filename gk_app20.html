@@ -2140,7 +2140,9 @@ function renderEvents() {
       </div>
       <div style="margin-top:5px">
         <span style="font-size:10px;color:var(--ink4)">HPP+Ops: <span style="color:var(--red)">${rpFull(ev.summary.hppOps)}</span> · Laba Est: <span style="color:var(--green)">${rpFull(ev.summary.laba)} (${ev.summary.margin}%)</span></span>
-      </div>` : `${ev.catatan ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px">${ev.catatan}</div>` : ''}`}
+      </div>
+      ${ev.catatan?`<div style="font-size:11px;color:var(--ink3);margin-top:4px;font-style:italic">📝 ${ev.catatan}</div>`:''}` : `
+      ${ev.catatan ? `<div style="font-size:11px;color:var(--ink3);margin-top:4px;font-style:italic">📝 ${ev.catatan}</div>` : ''}`}
     </div>`;
   };
 
