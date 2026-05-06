@@ -229,6 +229,8 @@ a{color:inherit;text-decoration:none;}
 /* ── PAGE ─────────────────────────────────────────── */
 .page { display:none; padding: 16px; }
 .page.active { display:block; }
+/* Konvensional pages — dikontrol sepenuhnya via JS inline style */
+#page-gubukan, #page-kvtokba, #page-rt { display:none; padding: 16px; }
 
 /* ── SECTION TITLE ────────────────────────────────── */
 .section-title {
@@ -1459,7 +1461,7 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- KONVENSIONAL: PAGE GUBUKAN                              -->
 <!-- ════════════════════════════════════════════════════════ -->
-<div class="page" id="page-gubukan">
+<div class="kv-page" id="page-gubukan" style="display:none;padding:16px">
   <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none">
     <button class="chip active" data-kvtab="masuk" onclick="switchKvTab(this,'gubukan')">💰 Pemasukan</button>
     <button class="chip" data-kvtab="keluar" onclick="switchKvTab(this,'gubukan')">💸 Pengeluaran</button>
@@ -1475,7 +1477,7 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- KONVENSIONAL: PAGE TOKBA                                -->
 <!-- ════════════════════════════════════════════════════════ -->
-<div class="page" id="page-kvtokba">
+<div class="kv-page" id="page-kvtokba" style="display:none;padding:16px">
   <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none">
     <button class="chip active" data-kvtab="masuk" onclick="switchKvTab(this,'tokba')">💰 Pemasukan</button>
     <button class="chip" data-kvtab="keluar" onclick="switchKvTab(this,'tokba')">💸 Pengeluaran</button>
@@ -1491,7 +1493,7 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- KONVENSIONAL: PAGE RT                                   -->
 <!-- ════════════════════════════════════════════════════════ -->
-<div class="page" id="page-rt">
+<div class="kv-page" id="page-rt" style="display:none;padding:16px">
   <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none">
     <button class="chip active" data-kvtab="masuk" onclick="switchKvTab(this,'rt')">💰 Pemasukan</button>
     <button class="chip" data-kvtab="keluar" onclick="switchKvTab(this,'rt')">💸 Pengeluaran</button>
@@ -5388,17 +5390,16 @@ function applyMode(mode) {
   const isModern = mode === 'modern';
   document.getElementById('tabbarModern').style.display = isModern ? '' : 'none';
   document.getElementById('tabbarKonven').style.display = isModern ? 'none' : '';
-  // Force semua page hidden via inline style + hapus active
-  document.querySelectorAll('.page').forEach(p => {
-    p.classList.remove('active');
-    p.style.display = 'none';
-  });
-  // Aktifkan dashboard saja
+  // Sembunyikan semua page modern
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display='none'; });
+  // Sembunyikan semua kv-page
+  document.querySelectorAll('.kv-page').forEach(p => p.style.display='none');
+  // Aktifkan dashboard
   const dash = document.getElementById('page-dashboard');
   dash.style.display = 'block';
   dash.classList.add('active');
   state.currentTab = 'dashboard';
-  // Reset active tab
+  // Reset tab highlight
   if (isModern) {
     document.querySelectorAll('#tabbarModern .tab-item').forEach(t=>t.classList.remove('active'));
     document.querySelector('#tabbarModern [data-page="dashboard"]').classList.add('active');
@@ -5406,7 +5407,6 @@ function applyMode(mode) {
     document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
     document.querySelector('#tabbarKonven [data-page="dashboard"]').classList.add('active');
   }
-  // Force close semua overlay
   document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
 }
 
@@ -5424,22 +5424,20 @@ function updateModeToggleUI() {
 }
 
 function switchTabKv(el) {
-  if (!_initDone) return;
   const page = el.dataset.page;
   state.currentTab = page;
+  // Tab highlight
   document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  // Force semua page tersembunyi via inline style
-  document.querySelectorAll('.page').forEach(p => {
-    p.classList.remove('active');
-    p.style.display = 'none';
-  });
-  // Tampilkan hanya page yang dipilih
+  // Sembunyikan semua page (modern + konven)
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display='none'; });
+  document.querySelectorAll('.kv-page').forEach(p => p.style.display='none');
+  // Tampilkan page yang dipilih
   const pEl = document.getElementById('page-'+page);
-  if (pEl) { pEl.style.display = 'block'; pEl.classList.add('active'); }
+  if (pEl) pEl.style.display = 'block';
   document.getElementById('fab').classList.toggle('hidden', false);
-  if (page === 'dashboard') loadKvDashboard();
-  else if (page === 'event') { loadEvents(); if (!bahanData.length) loadBahan(); }
+  if (page === 'dashboard') { document.getElementById('page-dashboard').style.display='block'; loadKvDashboard(); }
+  else if (page === 'event') { document.getElementById('page-event').style.display='block'; loadEvents(); if (!bahanData.length) loadBahan(); }
   else if (page === 'gubukan') loadKvPage('gubukan');
   else if (page === 'kvtokba') loadKvPage('tokba');
   else if (page === 'rt') loadKvPage('rt');
