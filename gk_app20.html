@@ -566,6 +566,38 @@ select.form-control { appearance: none; }
 .menu-ac-item.menu-ac-new { color: var(--gold); }
 .menu-ac-item b { color: var(--gold); font-weight: 700; }
 
+/* ── MENU NAMA AUTOCOMPLETE INLINE ────────────────────────── */
+.menu-ac-wrap { position: relative; }
+.menu-ac-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  z-index: 200;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  display: none;
+}
+.menu-ac-dropdown.open { display: block; }
+.menu-ac-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--ink2);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.1s;
+}
+.menu-ac-item:last-child { border-bottom: none; }
+.menu-ac-item:active, .menu-ac-item.ac-hover { background: var(--surface); }
+.menu-ac-item.menu-ac-new { color: var(--gold); }
+.menu-ac-item b { color: var(--gold); font-weight: 700; }
+
 /* Tema buttons */
 .theme-btn {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
