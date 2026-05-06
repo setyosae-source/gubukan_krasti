@@ -5626,11 +5626,7 @@ function fmtDateShort(d) {
   return dt.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
 }
 function rpShort(n) {
-  const abs = Math.abs(Number(n||0));
-  const sign = Number(n||0) < 0 ? '-' : '';
-  if (abs >= 1000000) return sign + (abs/1000000).toFixed(1).replace(/\.0$/,'') + 'jt';
-  if (abs >= 1000) return sign + (abs/1000).toFixed(0) + 'rb';
-  return sign + abs.toLocaleString('id-ID');
+  return 'Rp ' + Number(n||0).toLocaleString('id-ID');
 }
 
 function switchKvTab(el, entitas) {
