@@ -1132,48 +1132,51 @@ select.form-control { appearance: none; }
 <!-- KONVENSIONAL: PAGE GUBUKAN                              -->
 <!-- ════════════════════════════════════════════════════════ -->
 <div class="kv-page" id="page-gubukan" style="display:none;padding:16px">
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-gubukan-masuk" style="font-size:13px">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-gubukan-keluar" style="font-size:13px">—</div></div>
     <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo</div><div class="stat-val gold" id="kv-gubukan-saldo" style="font-size:13px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:10px">
-    <button onclick="openKvForm('gubukan','masuk')" style="flex:1;padding:9px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:13px;cursor:pointer">+ Pemasukan</button>
-    <button onclick="openKvForm('gubukan','keluar')" style="flex:1;padding:9px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:13px;cursor:pointer">+ Pengeluaran</button>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button onclick="openKvForm('gubukan','masuk')" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer">+ Masuk</button>
+    <button onclick="openKvForm('gubukan','keluar')" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer">+ Keluar</button>
   </div>
-  <div id="kv-gubukan-list"><div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">Belum ada catatan</div></div></div>
+  <input type="text" class="form-control" id="kv-gubukan-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('gubukan',this.value)">
+  <div id="kv-gubukan-list"></div>
 </div>
 
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- KONVENSIONAL: PAGE TOKBA                                -->
 <!-- ════════════════════════════════════════════════════════ -->
 <div class="kv-page" id="page-kvtokba" style="display:none;padding:16px">
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-tokba-masuk" style="font-size:13px">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-tokba-keluar" style="font-size:13px">—</div></div>
     <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo</div><div class="stat-val gold" id="kv-tokba-saldo" style="font-size:13px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:10px">
-    <button onclick="openKvForm('tokba','masuk')" style="flex:1;padding:9px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:13px;cursor:pointer">+ Pemasukan</button>
-    <button onclick="openKvForm('tokba','keluar')" style="flex:1;padding:9px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:13px;cursor:pointer">+ Pengeluaran</button>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button onclick="openKvForm('tokba','masuk')" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer">+ Masuk</button>
+    <button onclick="openKvForm('tokba','keluar')" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer">+ Keluar</button>
   </div>
-  <div id="kv-tokba-list"><div class="empty"><div class="empty-icon">🛒</div><div class="empty-text">Belum ada catatan</div></div></div>
+  <input type="text" class="form-control" id="kv-tokba-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('tokba',this.value)">
+  <div id="kv-tokba-list"></div>
 </div>
 
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- KONVENSIONAL: PAGE RT                                   -->
 <!-- ════════════════════════════════════════════════════════ -->
 <div class="kv-page" id="page-rt" style="display:none;padding:16px">
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-rt-masuk" style="font-size:13px">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-rt-keluar" style="font-size:13px">—</div></div>
     <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo+Awal</div><div class="stat-val gold" id="kv-rt-saldo" style="font-size:13px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:10px">
-    <button onclick="openKvForm('rt','masuk')" style="flex:1;padding:9px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:13px;cursor:pointer">+ Pemasukan</button>
-    <button onclick="openKvForm('rt','keluar')" style="flex:1;padding:9px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:13px;cursor:pointer">+ Pengeluaran</button>
-    <button onclick="openRtSaldoAwal()" style="padding:9px 12px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:700;font-size:12px;cursor:pointer">⚖️</button>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button onclick="openKvForm('rt','masuk')" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer">+ Masuk</button>
+    <button onclick="openKvForm('rt','keluar')" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer">+ Keluar</button>
+    <button onclick="openRtSaldoAwal()" style="padding:8px 12px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:700;font-size:12px;cursor:pointer">⚖️</button>
   </div>
+  <input type="text" class="form-control" id="kv-rt-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('rt',this.value)">
   <div id="kv-rt-saldoawal-panel" style="display:none;margin-bottom:14px">
     <div class="section-title">⚖️ Rekonsiliasi Saldo Awal</div>
     <div class="card">
@@ -1185,7 +1188,7 @@ select.form-control { appearance: none; }
     <div class="section-title" style="margin-top:14px">Riwayat Saldo Awal</div>
     <div id="kv-rt-saldoawal-list"><div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">Belum ada data</div></div></div>
   </div>
-  <div id="kv-rt-list"><div class="empty"><div class="empty-icon">🏠</div><div class="empty-text">Belum ada catatan</div></div></div>
+  <div id="kv-rt-list"></div>
 </div>
 
   </div><!-- /body -->
@@ -1569,12 +1572,17 @@ select.form-control { appearance: none; }
         <input type="number" class="form-control" id="kv-jumlah" placeholder="0" min="0"
           style="color:var(--gold);font-family:var(--mono);font-weight:600" oninput="kvCalcHarga()">
       </div>
+      <div class="form-group" id="kv-vendor-wrap" style="display:none">
+        <label class="form-label">Nama Toko / Vendor <span style="color:var(--ink4)">(opsional)</span></label>
+        <input type="text" class="form-control" id="kv-vendor" placeholder="Pasar, Alfamart, Supplier...">
+      </div>
       <div class="form-group">
         <label class="form-label">Tanggal</label>
         <input type="date" class="form-control" id="kv-tanggal">
       </div>
       <button class="btn btn-primary" onclick="saveKvMutasi()">💾 Simpan</button>
       <button class="btn btn-secondary" onclick="closeSheet('sheetKvForm')">Batal</button>
+      <button class="btn" id="kv-delete-btn" style="display:none;background:var(--red-dim);color:var(--red);border:1px solid var(--red)" onclick="deleteKvMutasi()">🗑 Hapus</button>
     </div>
   </div>
 </div>
@@ -5512,7 +5520,6 @@ async function loadKvPage(entitas) {
 }
 
 function renderKvList(entitas, data, tipe) {
-  // Tampilkan SEMUA mutasi (masuk+keluar) dalam satu list, diurutkan tanggal desc
   const listId = `kv-${entitas}-list`;
   const el = document.getElementById(listId);
   if (!el) return;
@@ -5520,35 +5527,110 @@ function renderKvList(entitas, data, tipe) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Belum ada catatan</div></div>`;
     return;
   }
-  // Hitung saldo running dari bawah ke atas
-  let saldo = 0;
-  if (entitas === 'rt') {
-    saldo = (kvSaldoAwal||[]).reduce((s,r)=>s+Number(r.jumlah||0),0);
-  }
-  // Urutkan ascending untuk hitung saldo, lalu reverse untuk tampil desc
-  const sorted = [...data].sort((a,b)=>a.tanggal<b.tanggal?-1:a.tanggal>b.tanggal?1:0);
-  const withSaldo = [];
-  sorted.forEach(r => {
+
+  // State sort & search per entitas
+  if (!window._kvState) window._kvState = {};
+  if (!window._kvState[entitas]) window._kvState[entitas] = { sortCol: 'tanggal', sortDir: -1, search: '' };
+  const st = window._kvState[entitas];
+
+  // Hitung saldo running — selalu ascending by tanggal
+  let saldoAwal = 0;
+  if (entitas === 'rt') saldoAwal = (kvSaldoAwal||[]).reduce((s,r)=>s+Number(r.jumlah||0),0);
+  const sorted_asc = [...data].sort((a,b)=>a.tanggal<b.tanggal?-1:a.tanggal>b.tanggal?1:0);
+  let saldo = saldoAwal;
+  const withSaldo = sorted_asc.map(r => {
     if (r.tipe==='masuk') saldo += Number(r.jumlah||0);
     else saldo -= Number(r.jumlah||0);
-    withSaldo.push({...r, _saldo: saldo});
+    return {...r, _saldo: saldo};
   });
-  withSaldo.reverse();
-  el.innerHTML = withSaldo.map(r => {
-    const color  = r.tipe==='masuk' ? 'var(--green)' : 'var(--red)';
-    const sign   = r.tipe==='masuk' ? '+' : '-';
-    const detail = [r.qty ? `${r.qty}${r.satuan?' '+r.satuan:''}` : '', r.harga ? rpFull(r.harga)+'/sat' : ''].filter(Boolean).join(' · ');
-    return `<div class="card" style="margin-bottom:8px;cursor:pointer;border-left:3px solid ${color}" onclick="kvOpenDetail('${r.id}','${entitas}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.deskripsi||'—'}</div>
-          ${detail ? `<div style="font-size:11px;color:var(--ink3);margin-top:2px">${detail}</div>` : ''}
-          <div style="font-size:11px;color:var(--ink4);margin-top:2px">${fmtDate(r.tanggal)} · Saldo: ${rpFull(r._saldo)}</div>
-        </div>
-        <div style="font-weight:700;font-size:15px;color:${color};white-space:nowrap">${sign}${rpFull(r.jumlah)}</div>
-      </div>
-    </div>`;
-  }).join('');
+
+  // Filter by search
+  const q = st.search.toLowerCase();
+  let filtered = q ? withSaldo.filter(r =>
+    (r.deskripsi||'').toLowerCase().includes(q) ||
+    String(r.jumlah||'').includes(q) ||
+    (r.tanggal||'').includes(q) ||
+    (r.vendor||'').toLowerCase().includes(q) ||
+    (r.satuan||'').toLowerCase().includes(q)
+  ) : withSaldo;
+
+  // Sort
+  filtered = [...filtered].sort((a,b) => {
+    let av = a[st.sortCol], bv = b[st.sortCol];
+    if (st.sortCol==='tanggal') return (av<bv?-1:av>bv?1:0) * st.sortDir;
+    if (['jumlah','_saldo'].includes(st.sortCol)) return (Number(av||0)-Number(bv||0)) * st.sortDir;
+    return ((av||'') < (bv||'') ? -1 : (av||'') > (bv||'') ? 1 : 0) * st.sortDir;
+  });
+
+  const saldoColor = s => Number(s) >= 0 ? 'var(--green)' : 'var(--red)';
+  const arrow = col => st.sortCol===col ? (st.sortDir===1?'▲':'▼') : '⇅';
+  const thStyle = `padding:8px 6px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;`;
+
+  el.innerHTML = `
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:340px">
+    <thead>
+      <tr style="background:var(--bg3)">
+        <th onclick="kvSort('${entitas}','tanggal')" style="${thStyle}color:var(--ink3);text-align:left">Tgl ${arrow('tanggal')}</th>
+        <th onclick="kvSort('${entitas}','deskripsi')" style="${thStyle}color:var(--ink3);text-align:left">Keterangan ${arrow('deskripsi')}</th>
+        <th onclick="kvSort('${entitas}','masuk')" style="${thStyle}color:var(--green);text-align:right">Masuk ${arrow('masuk')}</th>
+        <th onclick="kvSort('${entitas}','keluar')" style="${thStyle}color:var(--red);text-align:right">Keluar ${arrow('keluar')}</th>
+        <th onclick="kvSort('${entitas}','_saldo')" style="${thStyle}color:var(--gold);text-align:right">Saldo ${arrow('_saldo')}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${filtered.length ? filtered.map((r,i) => {
+        const masuk  = r.tipe==='masuk'  ? Number(r.jumlah||0) : 0;
+        const keluar = r.tipe==='keluar' ? Number(r.jumlah||0) : 0;
+        const bg = i%2===0 ? 'var(--bg2)' : 'var(--bg3)';
+        const detail = [r.qty ? `${r.qty}${r.satuan?' '+r.satuan:''}` : '', r.vendor ? `🏪 ${r.vendor}` : ''].filter(Boolean).join(' · ');
+        return `<tr style="background:${bg};cursor:pointer" onclick="kvOpenDetail('${r.id}','${entitas}')">
+          <td style="padding:8px 6px;color:var(--ink4);white-space:nowrap;border-bottom:1px solid var(--border);vertical-align:top">${fmtDateShort(r.tanggal)}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid var(--border);vertical-align:top;max-width:120px">
+            <div style="font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.deskripsi||'—'}</div>
+            ${detail?`<div style="font-size:10px;color:var(--ink4)">${detail}</div>`:''}
+          </td>
+          <td style="padding:8px 6px;text-align:right;color:var(--green);font-family:var(--mono);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:top">${masuk?rpShort(masuk):''}</td>
+          <td style="padding:8px 6px;text-align:right;color:var(--red);font-family:var(--mono);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:top">${keluar?rpShort(keluar):''}</td>
+          <td style="padding:8px 6px;text-align:right;color:${saldoColor(r._saldo)};font-family:var(--mono);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:top">${rpShort(r._saldo)}</td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink3)">Tidak ada hasil untuk "<b>${st.search}</b>"</td></tr>`}
+    </tbody>
+  </table>
+  </div>`;
+}
+
+function kvSort(entitas, col) {
+  if (!window._kvState) window._kvState = {};
+  if (!window._kvState[entitas]) window._kvState[entitas] = { sortCol:'tanggal', sortDir:-1, search:'' };
+  const st = window._kvState[entitas];
+  // Map masuk/keluar to jumlah for sort
+  const realCol = col==='masuk'||col==='keluar' ? 'jumlah' : col;
+  if (st.sortCol === realCol) st.sortDir *= -1;
+  else { st.sortCol = realCol; st.sortDir = col==='tanggal' ? -1 : 1; }
+  renderKvList(entitas, kvMutasiCache[entitas]||[], 'all');
+}
+
+function kvSearch(entitas, val) {
+  if (!window._kvState) window._kvState = {};
+  if (!window._kvState[entitas]) window._kvState[entitas] = { sortCol:'tanggal', sortDir:-1, search:'' };
+  // Baca dari input HTML yang ada di page, atau dari parameter
+  const inputEl = document.getElementById(`kv-${entitas}-search`);
+  window._kvState[entitas].search = val !== undefined ? val : (inputEl?.value||'');
+  renderKvList(entitas, kvMutasiCache[entitas]||[], 'all');
+}
+
+function fmtDateShort(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+}
+function rpShort(n) {
+  const abs = Math.abs(Number(n||0));
+  const sign = Number(n||0) < 0 ? '-' : '';
+  if (abs >= 1000000) return sign + (abs/1000000).toFixed(1).replace(/\.0$/,'') + 'jt';
+  if (abs >= 1000) return sign + (abs/1000).toFixed(0) + 'rb';
+  return sign + abs.toLocaleString('id-ID');
 }
 
 function switchKvTab(el, entitas) {
@@ -5629,12 +5711,19 @@ function openKvForm(entitas, tipe) {
   document.getElementById('kv-form-entitas').value = entitas;
   document.getElementById('kv-form-tipe').value    = tipe;
   document.getElementById('kv-form-id').value      = '';
+  // Sembunyikan tombol hapus saat tambah baru
+  const delBtn = document.getElementById('kv-delete-btn');
+  if (delBtn) delBtn.style.display = 'none';
   document.getElementById('kv-deskripsi').value    = '';
   document.getElementById('kv-qty').value          = '';
   document.getElementById('kv-satuan').value       = '';
   document.getElementById('kv-harga').value        = '';
   document.getElementById('kv-jumlah').value       = '';
+  document.getElementById('kv-vendor').value       = '';
   document.getElementById('kv-tanggal').value      = localDate();
+  // Vendor hanya untuk pengeluaran
+  const vendorWrap = document.getElementById('kv-vendor-wrap');
+  if (vendorWrap) vendorWrap.style.display = (tipe==='keluar') ? '' : 'none';
   kvAcClose(); kvSatuanAcClose();
   openSheet('sheetKvForm');
   setTimeout(()=>document.getElementById('kv-deskripsi').focus(), 350);
@@ -5653,6 +5742,7 @@ function kvCalcHarga() {
 }
 
 async function saveKvMutasi() {
+  const id       = document.getElementById('kv-form-id').value;
   const entitas  = document.getElementById('kv-form-entitas').value;
   const tipe     = document.getElementById('kv-form-tipe').value;
   const deskripsi= document.getElementById('kv-deskripsi').value.trim();
@@ -5661,16 +5751,34 @@ async function saveKvMutasi() {
   const harga    = Number(document.getElementById('kv-harga').value)||null;
   const jumlah   = Number(document.getElementById('kv-jumlah').value)||0;
   const tanggal  = document.getElementById('kv-tanggal').value;
+  const vendor   = document.getElementById('kv-vendor').value.trim()||null;
 
   if (!deskripsi) { toast('⚠️ Isi deskripsi'); return; }
   if (!jumlah)    { toast('⚠️ Isi jumlah'); return; }
   if (!tanggal)   { toast('⚠️ Isi tanggal'); return; }
 
   try {
-    await sbInsert('gk_mutasi', {entitas, tipe, deskripsi, qty, satuan, harga, jumlah, tanggal});
-    // Simpan ke master deskripsi
+    if (id) {
+      await sbUpdate('gk_mutasi', id, {deskripsi, qty, satuan, harga, jumlah, tanggal, vendor});
+      toast('✅ Data diupdate');
+    } else {
+      await sbInsert('gk_mutasi', {entitas, tipe, deskripsi, qty, satuan, harga, jumlah, tanggal, vendor});
+      toast('✅ Catatan disimpan');
+    }
     await kvSaveToMaster(entitas, tipe, deskripsi, satuan, harga);
-    toast('✅ Catatan disimpan');
+    closeSheet('sheetKvForm');
+    loadKvPage(entitas);
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+async function deleteKvMutasi() {
+  const id      = document.getElementById('kv-form-id').value;
+  const entitas = document.getElementById('kv-form-entitas').value;
+  if (!id) return;
+  if (!confirm('Hapus catatan ini?')) return;
+  try {
+    await sbDelete('gk_mutasi', id);
+    toast('✅ Data dihapus');
     closeSheet('sheetKvForm');
     loadKvPage(entitas);
   } catch(e) { toast('❌ '+e.message); }
@@ -5694,27 +5802,46 @@ function kvOpenDetail(id, entitas) {
   const data = kvMutasiCache[entitas]||[];
   const r = data.find(x=>x.id===id);
   if (!r) return;
-  // Simple detail via toast-like — open edit or just show
-  if (confirm(`Edit catatan?\n${r.deskripsi}\n${rpFull(r.jumlah)}`)) {
-    // Populate edit form
-    kvCurrentEntitas = entitas;
-    kvCurrentTipe    = r.tipe;
-    const label = {gubukan:'Gubukan',tokba:'Toko Bahan',rt:'RT'}[entitas]||entitas;
-    document.getElementById('kvFormTitle').textContent = `✏️ Edit ${label}`;
-    document.getElementById('kv-form-entitas').value = entitas;
-    document.getElementById('kv-form-tipe').value    = r.tipe;
-    document.getElementById('kv-form-id').value      = r.id;
-    document.getElementById('kv-deskripsi').value    = r.deskripsi||'';
-    document.getElementById('kv-qty').value          = r.qty||'';
-    document.getElementById('kv-satuan').value       = r.satuan||'';
-    document.getElementById('kv-harga').value        = r.harga||'';
-    document.getElementById('kv-jumlah').value       = r.jumlah||'';
-    document.getElementById('kv-tanggal').value      = r.tanggal||localDate();
-    openSheet('sheetKvForm');
-  }
+  kvCurrentEntitas = entitas;
+  kvCurrentTipe    = r.tipe;
+  const label = {gubukan:'Gubukan',tokba:'Toko Bahan',rt:'RT'}[entitas]||entitas;
+  const icon  = r.tipe==='masuk'?'💰':'💸';
+  document.getElementById('kvFormTitle').textContent = `✏️ Edit ${label}`;
+  document.getElementById('kv-form-entitas').value = entitas;
+  document.getElementById('kv-form-tipe').value    = r.tipe;
+  document.getElementById('kv-form-id').value      = r.id;
+  document.getElementById('kv-deskripsi').value    = r.deskripsi||'';
+  document.getElementById('kv-qty').value          = r.qty||'';
+  document.getElementById('kv-satuan').value       = r.satuan||'';
+  document.getElementById('kv-harga').value        = r.harga||'';
+  document.getElementById('kv-jumlah').value       = r.jumlah||'';
+  document.getElementById('kv-tanggal').value      = r.tanggal||localDate();
+  document.getElementById('kv-vendor').value       = r.vendor||'';
+  // Vendor hanya untuk pengeluaran
+  const vendorWrap = document.getElementById('kv-vendor-wrap');
+  if (vendorWrap) vendorWrap.style.display = (r.tipe==='keluar') ? '' : 'none';
+  // Tampilkan tombol hapus
+  const delBtn = document.getElementById('kv-delete-btn');
+  if (delBtn) delBtn.style.display = '';
+  kvAcClose(); kvSatuanAcClose();
+  openSheet('sheetKvForm');
 }
 
-// ── KV AUTOCOMPLETE (Deskripsi) ────────────────────────────
+// ── KV SORT STATE ──────────────────────────────────────────
+let kvSortState = {}; // {gubukan: {col:'tanggal', dir:'desc'}, ...}
+
+function kvSortBy(entitas, col) {
+  const cur = kvSortState[entitas] || {col:'tanggal', dir:'desc'};
+  const dir = cur.col === col ? (cur.dir==='asc'?'desc':'asc') : 'desc';
+  kvSortState[entitas] = {col, dir};
+  const q = document.getElementById(`kv-${entitas}-search`)?.value || '';
+  renderKvList(entitas, kvMutasiCache[entitas]||[], 'all', q);
+}
+
+function kvSearch(entitas) {
+  const q = document.getElementById(`kv-${entitas}-search`)?.value || '';
+  renderKvList(entitas, kvMutasiCache[entitas]||[], 'all', q);
+}
 let _kvAcHover = -1;
 
 function kvAcFilter() {
@@ -6848,4 +6975,3 @@ initAcFields();
 
 </body>
 </html>
-   
