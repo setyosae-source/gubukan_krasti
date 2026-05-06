@@ -1629,7 +1629,12 @@ let state = {
     kas: [],
   }
 };
-let _initDone = false; // guard: block tab/popstate events sebelum init selesai
+let _initDone = false;
+let _initTime = 0; // timestamp saat init selesai
+
+function switchTabKv(el) {
+  if (!_initDone || Date.now() - _initTime < 500) return;
+  const page = el.dataset.page;
 
 // ── FORMAT ─────────────────────────────────────────────────
 function localDate(d) {
@@ -1734,13 +1739,17 @@ window.addEventListener('popstate', function() {
 
 // ── TAB NAVIGATION ─────────────────────────────────────────
 function switchTab(el) {
+  if (!_initDone || Date.now() - _initTime < 500) return;
   const page = el.dataset.page;
   state.currentTab = page;
   document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
-  // FAB visibility
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+  const pEl = document.getElementById('page-'+page);
+  if (pEl) { pEl.style.display = ''; pEl.classList.add('active'); }
   const noFab = ['laporan'];
   document.getElementById('fab').classList.toggle('hidden', noFab.includes(page));
   loadPage(page);
@@ -4314,6 +4323,7 @@ function init() {
     document.getElementById('tabbarKonven').style.pointerEvents = '';
     document.getElementById('tabbarModern').style.pointerEvents = '';
     _initDone = true;
+    _initTime = Date.now();
   }, 300);
 }
 
@@ -5382,10 +5392,15 @@ function applyMode(mode) {
   const isModern = mode === 'modern';
   document.getElementById('tabbarModern').style.display = isModern ? '' : 'none';
   document.getElementById('tabbarKonven').style.display = isModern ? 'none' : '';
-  // Reset semua page
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  // Aktifkan dashboard
-  document.getElementById('page-dashboard').classList.add('active');
+  // Force semua page hidden via inline style + hapus active
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+  // Aktifkan dashboard saja
+  const dash = document.getElementById('page-dashboard');
+  dash.style.display = '';
+  dash.classList.add('active');
   state.currentTab = 'dashboard';
   // Reset active tab
   if (isModern) {
@@ -5395,7 +5410,7 @@ function applyMode(mode) {
     document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
     document.querySelector('#tabbarKonven [data-page="dashboard"]').classList.add('active');
   }
-  // Pastikan tidak ada sheet/overlay terbuka
+  // Force close semua overlay
   document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
 }
 
@@ -5418,9 +5433,14 @@ function switchTabKv(el) {
   state.currentTab = page;
   document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  // Force semua page tersembunyi via inline style
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+  // Tampilkan hanya page yang dipilih
   const pEl = document.getElementById('page-'+page);
-  if (pEl) pEl.classList.add('active');
+  if (pEl) { pEl.style.display = ''; pEl.classList.add('active'); }
   document.getElementById('fab').classList.toggle('hidden', false);
   if (page === 'dashboard') loadKvDashboard();
   else if (page === 'event') { loadEvents(); if (!bahanData.length) loadBahan(); }
