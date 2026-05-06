@@ -1459,7 +1459,7 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- KONVENSIONAL: PAGE GUBUKAN                              -->
 <!-- ════════════════════════════════════════════════════════ -->
-<div class="page" id="page-gubukan" style="display:none">
+<div class="page" id="page-gubukan">
   <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none">
     <button class="chip active" data-kvtab="masuk" onclick="switchKvTab(this,'gubukan')">💰 Pemasukan</button>
     <button class="chip" data-kvtab="keluar" onclick="switchKvTab(this,'gubukan')">💸 Pengeluaran</button>
@@ -1475,7 +1475,7 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- KONVENSIONAL: PAGE TOKBA                                -->
 <!-- ════════════════════════════════════════════════════════ -->
-<div class="page" id="page-kvtokba" style="display:none">
+<div class="page" id="page-kvtokba">
   <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none">
     <button class="chip active" data-kvtab="masuk" onclick="switchKvTab(this,'tokba')">💰 Pemasukan</button>
     <button class="chip" data-kvtab="keluar" onclick="switchKvTab(this,'tokba')">💸 Pengeluaran</button>
@@ -1491,7 +1491,7 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- KONVENSIONAL: PAGE RT                                   -->
 <!-- ════════════════════════════════════════════════════════ -->
-<div class="page" id="page-rt" style="display:none">
+<div class="page" id="page-rt">
   <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none">
     <button class="chip active" data-kvtab="masuk" onclick="switchKvTab(this,'rt')">💰 Pemasukan</button>
     <button class="chip" data-kvtab="keluar" onclick="switchKvTab(this,'rt')">💸 Pengeluaran</button>
@@ -5366,29 +5366,18 @@ function applyMode(mode) {
   const isModern = mode === 'modern';
   document.getElementById('tabbarModern').style.display = isModern ? '' : 'none';
   document.getElementById('tabbarKonven').style.display = isModern ? 'none' : '';
-  // Pages modern
-  ['dashboard','event','bahan','tokba','kas','laporan'].forEach(p => {
-    const el = document.getElementById('page-'+p);
-    if (el) el.style.display = '';
-  });
-  // Pages konvensional — sembunyikan dulu kecuali dashboard (shared)
-  ['gubukan','kvtokba','rt'].forEach(p => {
-    const el = document.getElementById('page-'+p);
-    if (el) el.style.display = 'none';
-  });
-  // Reset active tab sesuai mode
+  // Reset semua page non-active dulu
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Aktifkan dashboard
+  document.getElementById('page-dashboard').classList.add('active');
+  state.currentTab = 'dashboard';
+  // Reset active tab
   if (isModern) {
     document.querySelectorAll('#tabbarModern .tab-item').forEach(t=>t.classList.remove('active'));
     document.querySelector('#tabbarModern [data-page="dashboard"]').classList.add('active');
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-dashboard').classList.add('active');
-    state.currentTab = 'dashboard';
   } else {
     document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
     document.querySelector('#tabbarKonven [data-page="dashboard"]').classList.add('active');
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-dashboard').classList.add('active');
-    state.currentTab = 'dashboard';
   }
 }
 
@@ -5411,12 +5400,9 @@ function switchTabKv(el) {
   document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  // Show page
   const pEl = document.getElementById('page-'+page);
-  if (pEl) { pEl.style.display=''; pEl.classList.add('active'); }
-  // FAB
+  if (pEl) pEl.classList.add('active');
   document.getElementById('fab').classList.toggle('hidden', false);
-  // Load
   if (page === 'dashboard') loadKvDashboard();
   else if (page === 'event') { loadEvents(); if (!bahanData.length) loadBahan(); }
   else if (page === 'gubukan') loadKvPage('gubukan');
