@@ -4290,8 +4290,13 @@ function init() {
   // Pull to refresh
   initPullToRefresh();
 
-  // Defer applyMode agar browser selesai render DOM dulu
+  // Disable tab klik sampai init selesai
+  document.getElementById('tabbarKonven').style.pointerEvents = 'none';
+  document.getElementById('tabbarModern').style.pointerEvents = 'none';
+
+  // Defer applyMode agar DOM fully ready dan popstate selesai
   setTimeout(() => {
+    state.currentTab = 'dashboard'; // force reset
     if (appMode === 'konvensional') {
       applyMode('konvensional');
       updateModeToggleUI();
@@ -4303,6 +4308,10 @@ function init() {
     } else {
       showModeScreen();
     }
+    // Re-enable tab setelah apply
+    document.getElementById('tabbarKonven').style.pointerEvents = '';
+    document.getElementById('tabbarModern').style.pointerEvents = '';
+    _initDone = true;
   }, 300);
 }
 
@@ -5399,7 +5408,10 @@ function updateModeToggleUI() {
   }
 }
 
+let _initDone = false;
+
 function switchTabKv(el) {
+  if (!_initDone) return;
   const page = el.dataset.page;
   state.currentTab = page;
   document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
