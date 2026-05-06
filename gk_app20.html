@@ -3583,8 +3583,8 @@ async function buildKasForm(tipe) {
           <div class="ac-wrap"><input type="hidden" id="kf-satuan-val"><button type="button" class="ac-trigger" id="kf-satuan-trigger" data-placeholder="Satuan" onclick="acModalOpen('kf-satuan')"><span class="ac-placeholder">Satuan</span></button></div>
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Harga / Satuan</label><input type="number" class="form-control" id="kf-harga" placeholder="0" oninput="kfCalcTotal()"></div>
-      <div class="form-group"><label class="form-label">Total</label><div class="form-control" id="kf-total" style="color:var(--gold);font-family:var(--mono);font-weight:600">Rp 0</div></div>
+      <div class="form-group"><label class="form-label">Harga / Satuan (Rp)</label><input type="number" class="form-control" id="kf-harga" placeholder="0" oninput="kfCalcFromHarga()"><div class="form-hint">Isi harga/satuan → total otomatis terhitung</div></div>
+      <div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:6px">Total (Rp)<span style="font-size:9px;background:var(--gold-dim);color:var(--gold);border-radius:4px;padding:1px 6px;font-weight:600">ATAU ISI INI</span></label><input type="number" class="form-control" id="kf-total" placeholder="0" min="0" style="color:var(--gold);font-family:var(--mono);font-weight:600" oninput="kfCalcFromTotal()"><div class="form-hint">Isi total → harga/satuan otomatis terhitung</div></div>
       <div class="form-group"><label class="form-label">Toko / Supplier</label><input type="text" class="form-control" id="kf-toko" placeholder="Nama toko (opsional)"></div>
       ${tglField}
       <button class="btn btn-primary" onclick="saveKasForm('beli-bahan')">💾 Simpan</button>
@@ -3693,11 +3693,26 @@ function initKasFormAC(tipe) {
   acSet('kf-platform', 'shopee');
 }
 
-function kfCalcTotal() {
+function kfCalcFromHarga() {
   const qty   = Number(document.getElementById('kf-qty')?.value)||0;
   const harga = Number(document.getElementById('kf-harga')?.value)||0;
   const el    = document.getElementById('kf-total');
-  if (el) el.textContent = rpFull(qty*harga);
+  if (el) el.value = (qty > 0 && harga > 0) ? qty * harga : '';
+}
+
+function kfCalcFromTotal() {
+  const qty = Number(document.getElementById('kf-qty')?.value)||0;
+  const tot = Number(document.getElementById('kf-total')?.value)||0;
+  const el  = document.getElementById('kf-harga');
+  if (el) el.value = (qty > 0 && tot > 0) ? Math.round(tot / qty * 100) / 100 : '';
+}
+
+function kfCalcTotal() {
+  // dipanggil dari qty oninput
+  const hrg = Number(document.getElementById('kf-harga')?.value)||0;
+  const tot = Number(document.getElementById('kf-total')?.value)||0;
+  if (hrg > 0) kfCalcFromHarga();
+  else if (tot > 0) kfCalcFromTotal();
 }
 
 function acKasEventOpen() {
@@ -3828,10 +3843,19 @@ async function saveKasForm(tipe) {
       const bahanVal = document.getElementById('kf-bahan-val').value;
       const satuan   = acVal('kf-satuan');
       const qty      = Number(document.getElementById('kf-qty').value)||0;
-      const harga    = Number(document.getElementById('kf-harga').value)||0;
+      const hargaRaw = Number(document.getElementById('kf-harga').value)||0;
+      const totalRaw = Number(document.getElementById('kf-total').value)||0;
       const toko     = document.getElementById('kf-toko').value.trim();
+
+      let harga = hargaRaw;
+      let total = totalRaw;
+      if (qty > 0 && harga > 0 && total === 0) total = qty * harga;
+      if (qty > 0 && total > 0 && harga === 0) harga = Math.round(total / qty * 100) / 100;
+      if (qty > 0 && harga > 0 && total > 0)   harga = Math.round(total / qty * 100) / 100;
+
       if (!bahanVal) { toast('⚠️ Pilih bahan'); return; }
-      if (!satuan||!qty||!harga) { toast('⚠️ Lengkapi qty, satuan, harga'); return; }
+      if (!satuan||!qty) { toast('⚠️ Lengkapi qty dan satuan'); return; }
+      if (!harga && !total) { toast('⚠️ Isi harga/satuan atau total'); return; }
       let bahanId, namaBahan, satBesar, satKecil, konversi;
       if (bahanVal === '__baru__') {
         namaBahan = document.getElementById('kf-baru-nama').value.trim();
@@ -3849,12 +3873,12 @@ async function saveKasForm(tipe) {
       const isBesar   = satuan===satBesar;
       const qtyKecil  = isBesar ? qty*konversi : qty;
       const hargaKecil= isBesar ? harga/konversi : harga;
-      const data = {bahan_id:bahanId,nama_bahan:namaBahan,tanggal:today,qty,satuan,qty_kecil:Math.round(qtyKecil*1000)/1000,harga_beli:harga,harga_kecil:Math.round(hargaKecil*100)/100,total:qty*harga,toko};
+      const data = {bahan_id:bahanId,nama_bahan:namaBahan,tanggal:today,qty,satuan,qty_kecil:Math.round(qtyKecil*1000)/1000,harga_beli:harga,harga_kecil:Math.round(hargaKecil*100)/100,total,toko};
       const res = await sbInsert('gk_pembelian', data);
       const pid = res[0]?.id||'';
       const kasU = await sbGet('gk_kas','jenis=eq.usaha&select=id').then(r=>r[0]);
       if (kasU) {
-        await sbInsert('gk_kas_mutasi',{kas_id:kasU.id,tipe:'keluar',keterangan:`Beli: ${namaBahan}${toko?' ('+toko+')':''}`,jumlah:qty*harga,tanggal:today,referensi:'pembelian:'+pid});
+        await sbInsert('gk_kas_mutasi',{kas_id:kasU.id,tipe:'keluar',keterangan:`Beli: ${namaBahan}${toko?' ('+toko+')':''}`,jumlah:total,tanggal:today,referensi:'pembelian:'+pid});
         await sbUpdate('gk_kas',kasU.id,{saldo:await hitungSaldoKas(kasU.id)});
       }
       beliData = await sbGet('gk_pembelian','order=tanggal.desc&limit=200&select=*');
