@@ -1632,10 +1632,6 @@ let state = {
 let _initDone = false;
 let _initTime = 0; // timestamp saat init selesai
 
-function switchTabKv(el) {
-  if (!_initDone || Date.now() - _initTime < 500) return;
-  const page = el.dataset.page;
-
 // ── FORMAT ─────────────────────────────────────────────────
 function localDate(d) {
   const dt = d ? new Date(d) : new Date();
