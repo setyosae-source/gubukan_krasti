@@ -4290,8 +4290,8 @@ function init() {
   // Pull to refresh
   initPullToRefresh();
 
-  // Load dashboard — defer ke next frame agar DOM fully ready
-  requestAnimationFrame(() => {
+  // Defer applyMode agar browser selesai render DOM dulu
+  setTimeout(() => {
     if (appMode === 'konvensional') {
       applyMode('konvensional');
       updateModeToggleUI();
@@ -4303,7 +4303,7 @@ function init() {
     } else {
       showModeScreen();
     }
-  });
+  }, 300);
 }
 
 
