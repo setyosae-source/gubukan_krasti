@@ -1745,7 +1745,7 @@ function switchTab(el) {
     p.style.display = 'none';
   });
   const pEl = document.getElementById('page-'+page);
-  if (pEl) { pEl.style.display = ''; pEl.classList.add('active'); }
+  if (pEl) { pEl.style.display = 'block'; pEl.classList.add('active'); }
   const noFab = ['laporan'];
   document.getElementById('fab').classList.toggle('hidden', noFab.includes(page));
   loadPage(page);
@@ -5395,7 +5395,7 @@ function applyMode(mode) {
   });
   // Aktifkan dashboard saja
   const dash = document.getElementById('page-dashboard');
-  dash.style.display = '';
+  dash.style.display = 'block';
   dash.classList.add('active');
   state.currentTab = 'dashboard';
   // Reset active tab
@@ -5436,7 +5436,7 @@ function switchTabKv(el) {
   });
   // Tampilkan hanya page yang dipilih
   const pEl = document.getElementById('page-'+page);
-  if (pEl) { pEl.style.display = ''; pEl.classList.add('active'); }
+  if (pEl) { pEl.style.display = 'block'; pEl.classList.add('active'); }
   document.getElementById('fab').classList.toggle('hidden', false);
   if (page === 'dashboard') loadKvDashboard();
   else if (page === 'event') { loadEvents(); if (!bahanData.length) loadBahan(); }
