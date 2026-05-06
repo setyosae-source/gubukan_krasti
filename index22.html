@@ -1437,7 +1437,7 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- MODE SELECT SCREEN                                      -->
 <!-- ════════════════════════════════════════════════════════ -->
-<div id="modeScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:0">
+<div id="modeScreen" style="position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:0;display:none">
   <div style="font-size:40px;margin-bottom:12px">🍽️</div>
   <div style="font-size:22px;font-weight:800;color:var(--ink);margin-bottom:4px">Gubukan Krasti</div>
   <div style="font-size:13px;color:var(--ink3);margin-bottom:36px">Pilih mode pencatatan</div>
@@ -4301,7 +4301,7 @@ function init() {
     loadDashboard();
   } else {
     // Belum pilih mode — tampilkan mode screen
-    document.getElementById('modeScreen').style.display = 'flex';
+    showModeScreen();
   }
 }
 
@@ -5348,18 +5348,22 @@ function loadSavedTheme() {
 // ══════════════════════════════════════════════════════════
 // MODE MANAGER
 // ══════════════════════════════════════════════════════════
-let appMode = localStorage.getItem('gk_mode') || null; // 'modern' | 'konvensional'
+let appMode = localStorage.getItem('gk_mode');
+if (appMode !== 'modern' && appMode !== 'konvensional') appMode = null;
 
 function selectMode(mode) {
   appMode = mode;
   localStorage.setItem('gk_mode', mode);
   document.getElementById('modeScreen').style.display = 'none';
   applyMode(mode);
-  // Update toggle button styling
   updateModeToggleUI();
   closeSheet('sheetTheme');
   if (mode === 'modern') loadDashboard();
   else loadKvDashboard();
+}
+
+function showModeScreen() {
+  document.getElementById('modeScreen').style.display = 'flex';
 }
 
 function applyMode(mode) {
@@ -5761,8 +5765,10 @@ function openKvTypePicker(entitas) {
   openKvForm(entitas, tipe);
 }
 
-init();
-loadSavedTheme();
+document.addEventListener('DOMContentLoaded', function() {
+  init();
+  loadSavedTheme();
+});
 </script>
 
 <!-- ══════════════════════════════════════════════════════════ -->
