@@ -5536,7 +5536,11 @@ function renderKvList(entitas, data, tipe) {
   // Hitung saldo running — selalu ascending by tanggal
   let saldoAwal = 0;
   if (entitas === 'rt') saldoAwal = (kvSaldoAwal||[]).reduce((s,r)=>s+Number(r.jumlah||0),0);
-  const sorted_asc = [...data].sort((a,b)=>a.tanggal<b.tanggal?-1:a.tanggal>b.tanggal?1:0);
+  const sorted_asc = [...data].sort((a,b) => {
+    const tCmp = (a.tanggal||'') < (b.tanggal||'') ? -1 : (a.tanggal||'') > (b.tanggal||'') ? 1 : 0;
+    if (tCmp !== 0) return tCmp;
+    return (a.created_at||'') < (b.created_at||'') ? -1 : (a.created_at||'') > (b.created_at||'') ? 1 : 0;
+  });
   let saldo = saldoAwal;
   const withSaldo = sorted_asc.map(r => {
     if (r.tipe==='masuk') saldo += Number(r.jumlah||0);
@@ -5557,7 +5561,13 @@ function renderKvList(entitas, data, tipe) {
   // Sort
   filtered = [...filtered].sort((a,b) => {
     let av = a[st.sortCol], bv = b[st.sortCol];
-    if (st.sortCol==='tanggal') return (av<bv?-1:av>bv?1:0) * st.sortDir;
+    if (st.sortCol==='tanggal') {
+      // Primary: tanggal, Secondary: created_at
+      const tCmp = (av||'') < (bv||'') ? -1 : (av||'') > (bv||'') ? 1 : 0;
+      if (tCmp !== 0) return tCmp * st.sortDir;
+      const ca = a.created_at||'', cb = b.created_at||'';
+      return (ca < cb ? -1 : ca > cb ? 1 : 0) * st.sortDir;
+    }
     if (['jumlah','_saldo'].includes(st.sortCol)) return (Number(av||0)-Number(bv||0)) * st.sortDir;
     return ((av||'') < (bv||'') ? -1 : (av||'') > (bv||'') ? 1 : 0) * st.sortDir;
   });
