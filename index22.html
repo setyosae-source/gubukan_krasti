@@ -4290,19 +4290,20 @@ function init() {
   // Pull to refresh
   initPullToRefresh();
 
-  // Load dashboard
-  if (appMode === 'konvensional') {
-    applyMode('konvensional');
-    updateModeToggleUI();
-    loadKvDashboard();
-  } else if (appMode === 'modern') {
-    applyMode('modern');
-    updateModeToggleUI();
-    loadDashboard();
-  } else {
-    // Belum pilih mode — tampilkan mode screen
-    showModeScreen();
-  }
+  // Load dashboard — defer ke next frame agar DOM fully ready
+  requestAnimationFrame(() => {
+    if (appMode === 'konvensional') {
+      applyMode('konvensional');
+      updateModeToggleUI();
+      loadKvDashboard();
+    } else if (appMode === 'modern') {
+      applyMode('modern');
+      updateModeToggleUI();
+      loadDashboard();
+    } else {
+      showModeScreen();
+    }
+  });
 }
 
 
