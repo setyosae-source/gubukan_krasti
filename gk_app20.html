@@ -5466,18 +5466,22 @@ function updateModeToggleUI() {
 function switchTabKv(el) {
   const page = el.dataset.page;
   state.currentTab = page;
-  // Tab highlight
   document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  // Sembunyikan semua page (modern + konven)
-  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display='none'; });
-  document.querySelectorAll('.kv-page').forEach(p => p.style.display='none');
-  // Tampilkan page yang dipilih
+  // Force semua page & kv-page hidden
+  document.querySelectorAll('.page, .kv-page').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+  // Tampilkan target
   const pEl = document.getElementById('page-'+page);
-  if (pEl) pEl.style.display = 'block';
+  if (pEl) { pEl.style.display = 'block'; pEl.classList.add('active'); }
+  // Scroll ke atas agar page mulai dari posisi 0
+  const body = document.getElementById('mainBody');
+  if (body) body.scrollTop = 0;
   document.getElementById('fab').classList.toggle('hidden', false);
-  if (page === 'dashboard') { document.getElementById('page-dashboard').style.display='block'; loadKvDashboard(); }
-  else if (page === 'event') { document.getElementById('page-event').style.display='block'; loadEvents(); if (!bahanData.length) loadBahan(); }
+  if (page === 'dashboard') loadDashboard();
+  else if (page === 'event') { loadEvents(); if (!bahanData.length) loadBahan(); }
   else if (page === 'gubukan') loadKvPage('gubukan');
   else if (page === 'kvtokba') loadKvPage('tokba');
   else if (page === 'rt') loadKvPage('rt');
@@ -5764,9 +5768,9 @@ function openKvForm(entitas, tipe) {
   // Vendor hanya untuk pengeluaran
   const vendorWrap = document.getElementById('kv-vendor-wrap');
   if (vendorWrap) vendorWrap.style.display = (tipe==='keluar') ? '' : 'none';
-  kvAcClose(); kvSatuanAcClose();
+  kvAcClose(); kvSatuanAcClose(); kvKategoriAcClose();
   openSheet('sheetKvForm');
-  setTimeout(()=>document.getElementById('kv-deskripsi').focus(), 350);
+  setTimeout(()=>{ const el=document.getElementById('kv-deskripsi'); if(el) el.focus(); }, 350);
 }
 
 function kvCalcJumlah() {
