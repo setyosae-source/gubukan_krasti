@@ -1581,6 +1581,17 @@ select.form-control { appearance: none; }
         <input type="number" class="form-control" id="kv-jumlah" placeholder="0" min="0"
           style="color:var(--gold);font-family:var(--mono);font-weight:600" oninput="kvCalcHarga()">
       </div>
+      <div class="form-group" id="kv-ref-event-wrap" style="display:none">
+        <label class="form-label">Referensi Event <span style="color:var(--ink4)">(opsional)</span></label>
+        <div class="menu-ac-wrap">
+          <input type="text" class="form-control" id="kv-ref-event" placeholder="Cari no. event atau nama customer..."
+            autocomplete="off" oninput="kvRefEventFilter()" onfocus="kvRefEventFilter()"
+            onblur="setTimeout(()=>kvRefEventClose(),200)">
+          <input type="hidden" id="kv-ref-event-id">
+          <div class="menu-ac-dropdown" id="kv-ref-event-drop"></div>
+        </div>
+        <div class="form-hint">Otomatis update status bayar di event terkait</div>
+      </div>
       <div class="form-group" id="kv-vendor-wrap" style="display:none">
         <label class="form-label">Nama Toko / Vendor <span style="color:var(--ink4)">(opsional)</span></label>
         <input type="text" class="form-control" id="kv-vendor" placeholder="Pasar, Alfamart, Supplier...">
@@ -2482,10 +2493,6 @@ async function saveEvent() {
     if (id) {
       await sbUpdate('gk_event', id, data);
     } else {
-      // Auto-assign no_event = MAX + 1
-      const maxRes = await sbGet('gk_event', 'select=no_event&order=no_event.desc&limit=1');
-      const lastNo = parseInt(maxRes[0]?.no_event||'0')||0;
-      data.no_event = String(lastNo + 1);
       await sbInsert('gk_event', data);
     }
     closeSheet('sheetEvent');
@@ -4392,12 +4399,21 @@ function init() {
 async function changeEventStatus(status) {
   if (!currentEvent) return;
   try {
-    await sbUpdate('gk_event', currentEvent.id, { status });
+    const updateData = { status };
+    // Assign no_event saat status jadi selesai (hanya kalau belum punya nomor)
+    if (status === 'selesai' && !currentEvent.no_event) {
+      const maxRes = await sbGet('gk_event', 'select=no_event&order=no_event.desc&limit=1');
+      const lastNo = parseInt(maxRes[0]?.no_event||'0')||0;
+      updateData.no_event = String(lastNo + 1);
+      currentEvent.no_event = updateData.no_event;
+    }
+    await sbUpdate('gk_event', currentEvent.id, updateData);
     currentEvent.status = status;
     renderStatusBtns(status);
     document.getElementById('evd-status').className = 'badge '+status;
     set('evd-status', status);
-    toast('✅ Status: ' + status);
+    if (updateData.no_event) toast(`✅ Status: selesai · No. Event: #${updateData.no_event}`);
+    else toast('✅ Status: ' + status);
     loadEvents();
   } catch(e) { toast('❌ ' + e.message); }
 }
@@ -4419,22 +4435,27 @@ function openEditMenu(id) {
   document.getElementById('menu-edit-nama').value = m.nama || '';
   document.getElementById('menu-edit-qty').value = m.qty || '';
   document.getElementById('menu-edit-harga').value = m.harga || '';
-  document.getElementById('menu-edit-total').textContent = rpFull((m.qty||0)*(m.harga||0));
+  document.getElementById('menu-edit-total').value = (m.qty||0)*(m.harga||0) || '';
   menuAcClose('menu-ac-drop2');
   openSheet('sheetMenuEdit');
 }
 
 async function saveMenuEdit() {
-  const id    = document.getElementById('menu-edit-id').value;
-  const nama  = document.getElementById('menu-edit-nama').value.trim();
-  const qty   = Number(document.getElementById('menu-edit-qty').value)||0;
-  const harga = Number(document.getElementById('menu-edit-harga').value)||0;
+  const id       = document.getElementById('menu-edit-id').value;
+  const nama     = document.getElementById('menu-edit-nama').value.trim();
+  const qty      = Number(document.getElementById('menu-edit-qty').value)||0;
+  const hargaRaw = Number(document.getElementById('menu-edit-harga').value)||0;
+  const totalRaw = Number(document.getElementById('menu-edit-total').value)||0;
+  let harga = hargaRaw, total = totalRaw;
+  if (qty>0 && harga>0 && total===0) total = qty*harga;
+  if (qty>0 && total>0 && harga===0) harga = Math.round(total/qty*100)/100;
+  if (qty>0 && harga>0 && total>0)   harga = Math.round(total/qty*100)/100;
   if (!nama||!qty) { toast('⚠️ Lengkapi nama dan qty'); return; }
   try {
-    await sbUpdate('gk_event_menu', id, {nama, qty, harga});
+    await sbUpdate('gk_event_menu', id, {nama, qty, harga, total: total||qty*harga});
     const idx = currentEventMenus.findIndex(x=>x.id===id);
-    if (idx>=0) currentEventMenus[idx] = {...currentEventMenus[idx], nama, qty, harga, total: qty*harga};
-    menuAcAddToMaster(nama); // nama baru (jika berubah) masuk master
+    if (idx>=0) currentEventMenus[idx] = {...currentEventMenus[idx], nama, qty, harga, total: total||qty*harga};
+    menuAcAddToMaster(nama);
     closeSheet('sheetMenuEdit');
     renderEventDetail();
     toast('✅ Menu diperbarui');
@@ -4591,21 +4612,27 @@ function openAddMenu() {
   document.getElementById('menu-nama').value = '';
   document.getElementById('menu-qty').value = '';
   document.getElementById('menu-harga').value = '';
-  document.getElementById('menu-total').textContent = 'Rp 0';
+  document.getElementById('menu-total').value = '';
   menuAcClose('menu-ac-drop1');
   openSheet('sheetMenu');
   setTimeout(()=>document.getElementById('menu-nama').focus(), 350);
 }
 
 async function saveMenu() {
-  const nama  = document.getElementById('menu-nama').value.trim();
-  const qty   = Number(document.getElementById('menu-qty').value)||0;
-  const harga = Number(document.getElementById('menu-harga').value)||0;
+  const nama     = document.getElementById('menu-nama').value.trim();
+  const qty      = Number(document.getElementById('menu-qty').value)||0;
+  const hargaRaw = Number(document.getElementById('menu-harga').value)||0;
+  const totalRaw = Number(document.getElementById('menu-total').value)||0;
+  let harga = hargaRaw, total = totalRaw;
+  if (qty>0 && harga>0 && total===0) total = qty*harga;
+  if (qty>0 && total>0 && harga===0) harga = Math.round(total/qty*100)/100;
+  if (qty>0 && harga>0 && total>0)   harga = Math.round(total/qty*100)/100;
   if (!nama || !qty) { toast('⚠️ Lengkapi nama dan qty'); return; }
+  if (!harga && !total) { toast('⚠️ Isi harga/pax atau total'); return; }
   try {
-    const res = await sbInsert('gk_event_menu', { event_id: currentEvent.id, nama, qty, harga });
+    const res = await sbInsert('gk_event_menu', { event_id: currentEvent.id, nama, qty, harga, total: total||qty*harga });
     currentEventMenus.push(res[0]);
-    menuAcAddToMaster(nama); // tambah ke master list
+    menuAcAddToMaster(nama);
     closeSheet('sheetMenu');
     renderEventDetail();
     toast('✅ Menu ditambah');
@@ -5847,9 +5874,13 @@ function openKvForm(entitas, tipe) {
   document.getElementById('kv-vendor').value       = '';
   document.getElementById('kv-kategori').value     = '';
   document.getElementById('kv-tanggal').value      = localDate();
-  // Vendor hanya untuk pengeluaran
-  const vendorWrap = document.getElementById('kv-vendor-wrap');
-  if (vendorWrap) vendorWrap.style.display = (tipe==='keluar') ? '' : 'none';
+  // Vendor hanya untuk pengeluaran, Ref Event hanya untuk pemasukan Gubukan
+  const vendorWrap   = document.getElementById('kv-vendor-wrap');
+  const refEventWrap = document.getElementById('kv-ref-event-wrap');
+  if (vendorWrap)   vendorWrap.style.display   = (tipe==='keluar') ? '' : 'none';
+  if (refEventWrap) refEventWrap.style.display = (tipe==='masuk' && entitas==='gubukan') ? '' : 'none';
+  document.getElementById('kv-ref-event').value    = '';
+  document.getElementById('kv-ref-event-id').value = '';
   kvAcClose(); kvSatuanAcClose(); kvKategoriAcClose();
   openSheet('sheetKvForm');
   setTimeout(()=>{ const el=document.getElementById('kv-deskripsi'); if(el) el.focus(); }, 350);
@@ -5877,8 +5908,10 @@ async function saveKvMutasi() {
   const harga    = Number(document.getElementById('kv-harga').value)||null;
   const jumlah   = Number(document.getElementById('kv-jumlah').value)||0;
   const tanggal  = document.getElementById('kv-tanggal').value;
-  const vendor   = document.getElementById('kv-vendor').value.trim()||null;
-  const kategori = document.getElementById('kv-kategori').value.trim()||null;
+  const vendor      = document.getElementById('kv-vendor').value.trim()||null;
+  const kategori    = document.getElementById('kv-kategori').value.trim()||null;
+  const refEventId  = document.getElementById('kv-ref-event-id').value||null;
+  const refEventLbl = document.getElementById('kv-ref-event').value.trim()||null;
 
   if (!deskripsi) { toast('⚠️ Isi deskripsi'); return; }
   if (!jumlah)    { toast('⚠️ Isi jumlah'); return; }
@@ -5886,11 +5919,25 @@ async function saveKvMutasi() {
 
   try {
     if (id) {
-      await sbUpdate('gk_mutasi', id, {deskripsi, qty, satuan, harga, jumlah, tanggal, vendor, kategori});
+      await sbUpdate('gk_mutasi', id, {deskripsi, qty, satuan, harga, jumlah, tanggal, vendor, kategori, ref_event_id: refEventId, ref_event_label: refEventLbl});
       toast('✅ Data diupdate');
     } else {
-      await sbInsert('gk_mutasi', {entitas, tipe, deskripsi, qty, satuan, harga, jumlah, tanggal, vendor, kategori});
+      await sbInsert('gk_mutasi', {entitas, tipe, deskripsi, qty, satuan, harga, jumlah, tanggal, vendor, kategori, ref_event_id: refEventId, ref_event_label: refEventLbl});
       toast('✅ Catatan disimpan');
+      // Auto-create gk_event_bayar jika ada referensi event
+      if (refEventId && tipe==='masuk' && entitas==='gubukan') {
+        try {
+          await sbInsert('gk_event_bayar', {
+            event_id: refEventId,
+            tahap: 'dp',
+            jumlah,
+            metode: 'transfer',
+            tanggal,
+            catatan: `Via Gubukan: ${deskripsi}`
+          });
+          toast('✅ Catatan disimpan & bayar event terupdate');
+        } catch(e2) { /* silent - jangan block save utama */ }
+      }
     }
     await kvSaveToMaster(entitas, tipe, deskripsi, satuan, harga, kategori);
     closeSheet('sheetKvForm');
@@ -5949,9 +5996,12 @@ function kvOpenDetail(id, entitas) {
   document.getElementById('kv-tanggal').value      = r.tanggal||localDate();
   document.getElementById('kv-vendor').value       = r.vendor||'';
   document.getElementById('kv-kategori').value     = r.kategori||'';
-  // Vendor hanya untuk pengeluaran
-  const vendorWrap = document.getElementById('kv-vendor-wrap');
-  if (vendorWrap) vendorWrap.style.display = (r.tipe==='keluar') ? '' : 'none';
+  document.getElementById('kv-ref-event').value    = r.ref_event_label||'';
+  document.getElementById('kv-ref-event-id').value = r.ref_event_id||'';
+  const vendorWrap   = document.getElementById('kv-vendor-wrap');
+  const refEventWrap = document.getElementById('kv-ref-event-wrap');
+  if (vendorWrap)   vendorWrap.style.display   = (r.tipe==='keluar') ? '' : 'none';
+  if (refEventWrap) refEventWrap.style.display = (r.tipe==='masuk' && r.entitas==='gubukan') ? '' : 'none';
   // Tampilkan tombol hapus
   const delBtn = document.getElementById('kv-delete-btn');
   if (delBtn) delBtn.style.display = '';
@@ -6029,6 +6079,40 @@ function kvAcKey(e) {
   else if (e.key==='ArrowUp') { e.preventDefault(); _kvAcHover=Math.max(_kvAcHover-1,0); items.forEach((el,i)=>el.classList.toggle('ac-hover',i===_kvAcHover)); items[_kvAcHover].scrollIntoView({block:'nearest'}); }
   else if (e.key==='Enter' && _kvAcHover>=0) { e.preventDefault(); items[_kvAcHover].dispatchEvent(new MouseEvent('mousedown')); }
   else if (e.key==='Escape') kvAcClose();
+}
+
+// ── KV REF EVENT AUTOCOMPLETE ──────────────────────────────
+async function kvRefEventFilter() {
+  const inp  = document.getElementById('kv-ref-event');
+  const drop = document.getElementById('kv-ref-event-drop');
+  const q    = inp.value.trim().toLowerCase();
+  if (!q) { drop.classList.remove('open'); return; }
+  // Search dari eventsData (sudah di-load) atau fetch
+  let events = eventsData || [];
+  if (!events.length) {
+    try { events = await sbGet('gk_event','order=tanggal.desc&limit=50&select=id,no_event,customer,tanggal'); } catch(e) {}
+  }
+  const matched = events.filter(e =>
+    (e.no_event||'').includes(q) ||
+    (e.customer||'').toLowerCase().includes(q)
+  ).slice(0, 8);
+  if (!matched.length) { drop.classList.remove('open'); return; }
+  drop.innerHTML = matched.map(e => {
+    const label = `${e.no_event ? '#'+e.no_event+' · ' : ''}${e.customer} (${fmtDateShort(e.tanggal)})`;
+    return `<div class="menu-ac-item" onmousedown="kvRefEventPick('${e.id}','${escQ(label)}')">
+      📋 ${label}
+    </div>`;
+  }).join('');
+  drop.classList.add('open');
+}
+function kvRefEventPick(id, label) {
+  document.getElementById('kv-ref-event-id').value = id;
+  document.getElementById('kv-ref-event').value    = label;
+  kvRefEventClose();
+}
+function kvRefEventClose() {
+  const drop = document.getElementById('kv-ref-event-drop');
+  if (drop) drop.classList.remove('open');
 }
 
 // ── KV AUTOCOMPLETE (Kategori) ─────────────────────────────
@@ -6235,16 +6319,21 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Qty (pax)</label>
-          <input type="number" class="form-control" id="menu-qty" placeholder="0" min="1" oninput="document.getElementById('menu-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('menu-harga').value)||0))">
+          <input type="number" class="form-control" id="menu-qty" placeholder="0" min="1" oninput="menuCalcFromHarga()">
         </div>
         <div class="form-group">
           <label class="form-label">Harga / pax</label>
-          <input type="number" class="form-control" id="menu-harga" placeholder="0" min="0" oninput="document.getElementById('menu-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('menu-qty').value)||0))">
+          <input type="number" class="form-control" id="menu-harga" placeholder="0" min="0" oninput="menuCalcFromHarga()">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Total</label>
-        <div class="form-control" id="menu-total" style="color:var(--gold);font-family:var(--mono);font-weight:600">Rp 0</div>
+        <label class="form-label" style="display:flex;align-items:center;gap:6px">
+          Total
+          <span style="font-size:9px;background:var(--gold-dim);color:var(--gold);border-radius:4px;padding:1px 6px;font-weight:600">ATAU ISI INI</span>
+        </label>
+        <input type="number" class="form-control" id="menu-total" placeholder="0" min="0"
+          style="color:var(--gold);font-family:var(--mono);font-weight:600" oninput="menuCalcFromTotal()">
+        <div class="form-hint">Isi total → harga/pax otomatis terhitung</div>
       </div>
       <button class="btn btn-primary" onclick="saveMenu()">💾 Simpan Menu</button>
       <button class="btn btn-secondary" onclick="closeSheet('sheetMenu')">Batal</button>
@@ -6603,18 +6692,21 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Qty (pax)</label>
-          <input type="number" class="form-control" id="menu-edit-qty" min="1"
-            oninput="document.getElementById('menu-edit-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('menu-edit-harga').value)||0))">
+          <input type="number" class="form-control" id="menu-edit-qty" min="1" oninput="menuEditCalcFromHarga()">
         </div>
         <div class="form-group">
           <label class="form-label">Harga / pax</label>
-          <input type="number" class="form-control" id="menu-edit-harga" min="0"
-            oninput="document.getElementById('menu-edit-total').textContent=rpFull((Number(this.value)||0)*(Number(document.getElementById('menu-edit-qty').value)||0))">
+          <input type="number" class="form-control" id="menu-edit-harga" min="0" oninput="menuEditCalcFromHarga()">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Total</label>
-        <div class="form-control" id="menu-edit-total" style="color:var(--gold);font-family:var(--mono);font-weight:600">Rp 0</div>
+        <label class="form-label" style="display:flex;align-items:center;gap:6px">
+          Total
+          <span style="font-size:9px;background:var(--gold-dim);color:var(--gold);border-radius:4px;padding:1px 6px;font-weight:600">ATAU ISI INI</span>
+        </label>
+        <input type="number" class="form-control" id="menu-edit-total" placeholder="0" min="0"
+          style="color:var(--gold);font-family:var(--mono);font-weight:600" oninput="menuEditCalcFromTotal()">
+        <div class="form-hint">Isi total → harga/pax otomatis terhitung</div>
       </div>
       <button class="btn btn-primary" onclick="saveMenuEdit()">💾 Simpan Perubahan</button>
       <button class="btn btn-secondary" onclick="closeSheet('sheetMenuEdit')">Batal</button>
@@ -6966,7 +7058,31 @@ function menuAcKey(e, inputId, dropId) {
 function escQ(s)    { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── INIT AC FIELDS ─────────────────────────────────────────
+// ── MENU FORM CALC (bidirectional) ─────────────────────────
+function menuCalcFromHarga() {
+  const qty = Number(document.getElementById('menu-qty').value)||0;
+  const hrg = Number(document.getElementById('menu-harga').value)||0;
+  const el  = document.getElementById('menu-total');
+  if (el) el.value = (qty>0&&hrg>0) ? qty*hrg : '';
+}
+function menuCalcFromTotal() {
+  const qty = Number(document.getElementById('menu-qty').value)||0;
+  const tot = Number(document.getElementById('menu-total').value)||0;
+  const el  = document.getElementById('menu-harga');
+  if (el) el.value = (qty>0&&tot>0) ? Math.round(tot/qty*100)/100 : '';
+}
+function menuEditCalcFromHarga() {
+  const qty = Number(document.getElementById('menu-edit-qty').value)||0;
+  const hrg = Number(document.getElementById('menu-edit-harga').value)||0;
+  const el  = document.getElementById('menu-edit-total');
+  if (el) el.value = (qty>0&&hrg>0) ? qty*hrg : '';
+}
+function menuEditCalcFromTotal() {
+  const qty = Number(document.getElementById('menu-edit-qty').value)||0;
+  const tot = Number(document.getElementById('menu-edit-total').value)||0;
+  const el  = document.getElementById('menu-edit-harga');
+  if (el) el.value = (qty>0&&tot>0) ? Math.round(tot/qty*100)/100 : '';
+}
 function initAcFields() {
   acRegister('ev-status',        ['inquiry','booking','dp','lunas','selesai','cancel'], false, 'Status Event');
   acRegister('on-platform',      ['shopee','tokped','tiktok','lazada','lainnya'], true, 'Platform Marketplace');
