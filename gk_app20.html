@@ -5530,8 +5530,20 @@ async function loadKvDashboard() {
       sbGet('gk_mutasi','entitas=eq.rt&select=tipe,jumlah'),
       sbGet('gk_saldo_awal','select=entitas,jumlah'),
       sbGet('gk_event',`tanggal=gte.${today}&status=neq.selesai&order=tanggal.asc&limit=5&select=*`),
-      sbGet('gk_event',`status=neq.selesai&order=tanggal.asc&select=*,gk_event_bayar(jumlah)`),
+      sbGet('gk_event',`tanggal=gte.${today}&status=in.(inquiry,booking,dp,lunas)&order=tanggal.asc&limit=10&select=*`),
     ]);
+
+    // Siapkan _omzet dan _terbayar untuk renderReminders
+    if (remindData.length) {
+      const ids = remindData.map(e=>e.id);
+      const [menus, bayars] = await Promise.all([
+        sbGet('gk_event_menu',  `event_id=in.(${ids.join(',')})&select=event_id,total`),
+        sbGet('gk_event_bayar', `event_id=in.(${ids.join(',')})&select=event_id,jumlah,tahap`),
+      ]);
+      const sumMenu  = menus.reduce((m,r)=>{ m[r.event_id]=(m[r.event_id]||0)+Number(r.total||0); return m; }, {});
+      const sumBayar = bayars.reduce((m,r)=>{ m[r.event_id]=(m[r.event_id]||0)+Number(r.jumlah||0); return m; }, {});
+      remindData.forEach(ev => { ev._omzet = sumMenu[ev.id]||0; ev._terbayar = sumBayar[ev.id]||0; });
+    }
 
     const sum = (arr, tipe) => arr.filter(r=>r.tipe===tipe).reduce((s,r)=>s+Number(r.jumlah||0),0);
     const sawalRt = sawal.filter(r=>r.entitas==='rt').reduce((s,r)=>s+Number(r.jumlah||0),0);
@@ -5568,27 +5580,8 @@ async function loadKvDashboard() {
     set('kv-d-g-saldo', rpFull(gSaldo));
     set('kv-d-t-saldo', rpFull(tSaldo));
 
-    // Reminder pembayaran (sama seperti modern)
-    if (reminders) {
-      const pending = remindData.filter(ev => {
-        const sudah = (ev.gk_event_bayar||[]).reduce((s,b)=>s+Number(b.jumlah||0),0);
-        return sudah < ev.nilai_order;
-      });
-      if (!pending.length) {
-        reminders.innerHTML = '';
-      } else {
-        reminders.innerHTML = pending.slice(0,3).map(ev => {
-          const sudah = (ev.gk_event_bayar||[]).reduce((s,b)=>s+Number(b.jumlah||0),0);
-          const sisa  = (ev.nilai_order||0) - sudah;
-          const hari  = Math.ceil((new Date(ev.tanggal)-new Date(today))/(1000*60*60*24));
-          return `<div class="reminder-card" style="margin-bottom:8px">
-            <div style="font-weight:700">${ev.customer}</div>
-            <div style="font-size:11px;color:var(--ink3)">${fmtDate(ev.tanggal)}</div>
-            <div style="font-size:12px;color:var(--red);margin-top:4px">Sisa: ${rpFull(sisa)} · H${hari>=0?'-':'+'}${Math.abs(hari)}</div>
-          </div>`;
-        }).join('');
-      }
-    }
+    // Reminder pembayaran — pakai fungsi yang sudah ada
+    renderReminders(remindData);
 
     // Event mendatang
     if (evList) {
