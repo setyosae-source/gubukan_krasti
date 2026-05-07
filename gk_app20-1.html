@@ -229,6 +229,8 @@ a{color:inherit;text-decoration:none;}
 /* ── PAGE ─────────────────────────────────────────── */
 .page { display:none; padding: 16px; }
 .page.active { display:block; }
+/* Konvensional pages — dikontrol sepenuhnya via JS inline style */
+#page-gubukan, #page-kvtokba, #page-rt { display:none; padding: 16px; }
 
 /* ── SECTION TITLE ────────────────────────────────── */
 .section-title {
@@ -534,6 +536,70 @@ select.form-control { appearance: none; }
 .suggest-item:active, .suggest-item:hover { background: var(--surface); }
 .suggest-highlight { color: var(--gold); font-weight: 600; }
 
+/* ── MENU NAMA AUTOCOMPLETE INLINE ────────────────────────── */
+.menu-ac-wrap { position: relative; }
+.menu-ac-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  z-index: 200;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  display: none;
+}
+.menu-ac-dropdown.open { display: block; }
+.menu-ac-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--ink2);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.1s;
+}
+.menu-ac-item:last-child { border-bottom: none; }
+.menu-ac-item:active, .menu-ac-item.ac-hover { background: var(--surface); }
+.menu-ac-item.menu-ac-new { color: var(--gold); }
+.menu-ac-item b { color: var(--gold); font-weight: 700; }
+
+/* ── MENU NAMA AUTOCOMPLETE INLINE ────────────────────────── */
+.menu-ac-wrap { position: relative; }
+.menu-ac-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  z-index: 200;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  display: none;
+}
+.menu-ac-dropdown.open { display: block; }
+.menu-ac-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--ink2);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.1s;
+}
+.menu-ac-item:last-child { border-bottom: none; }
+.menu-ac-item:active, .menu-ac-item.ac-hover { background: var(--surface); }
+.menu-ac-item.menu-ac-new { color: var(--gold); }
+.menu-ac-item b { color: var(--gold); font-weight: 700; }
+
 /* Tema buttons */
 .theme-btn {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -790,39 +856,18 @@ select.form-control { appearance: none; }
         </div>
       </div>
 
-      <!-- Detail P&L -->
-      <div class="section-title">Detail P&L Gubukan</div>
-      <div class="card">
-        <div class="row"><span class="row-label">Omzet Event</span><span class="row-val gold" id="d-gk-omzet2">—</span></div>
-        <div class="row"><span class="row-label">HPP Bahan</span><span class="row-val red" id="d-gk-hpp">—</span></div>
-        <div class="row"><span class="row-label">Biaya Ops</span><span class="row-val red" id="d-gk-ops">—</span></div>
-        <div class="row"><span class="row-label" style="font-weight:600">Laba Gubukan</span><span class="row-val green" id="d-gk-laba2">—</span></div>
-      </div>
-
-      <div class="section-title">Detail P&L Toko Bahan</div>
-      <div class="card">
-        <div class="row"><span class="row-label">Penjualan Online</span><span class="row-val gold" id="d-tb-online">—</span></div>
-        <div class="row"><span class="row-label">Penjualan Offline</span><span class="row-val gold" id="d-tb-offline">—</span></div>
-        <div class="row"><span class="row-label">HPP Bahan (sisa)</span><span class="row-val red" id="d-tb-hpp">—</span></div>
-        <div class="row"><span class="row-label" style="font-weight:600">Laba Toko Bahan</span><span class="row-val green" id="d-tb-laba2">—</span></div>
-      </div>
-
-      <div class="section-title">Overhead & Kas</div>
-      <div class="card">
-        <div class="row"><span class="row-label">Total Pembelian Bahan</span><span class="row-val red" id="d-beli">—</span></div>
-        <div class="row"><span class="row-label">Overhead Umum</span><span class="row-val red" id="d-overhead">—</span></div>
-        <div class="row" style="margin-top:6px">
-          <span class="row-label">💰 Kas Usaha</span>
-          <span class="row-val gold" id="d-kas-usaha">—</span>
-        </div>
-        <div class="row">
-          <span class="row-label">🏠 Kas RT</span>
-          <span class="row-val gold" id="d-kas-rt">—</span>
-        </div>
-      </div>
-
       <!-- Reminder Pembayaran -->
       <div id="d-reminders"></div>
+
+      <!-- KV Mode Summary (tampil di mode konvensional) -->
+      <div id="kv-dash-gubukan" style="display:none">
+        <div class="section-title">Saldo Konvensional</div>
+        <div class="stat-grid">
+          <div class="stat-card gold"><div class="stat-label">🍳 Gubukan</div><div class="stat-val gold" id="kv-d-g-saldo" style="font-size:14px">—</div></div>
+          <div class="stat-card gold"><div class="stat-label">🛒 Toko Bahan</div><div class="stat-val gold" id="kv-d-t-saldo" style="font-size:14px">—</div></div>
+          <div class="stat-card gold" style="grid-column:span 2"><div class="stat-label">🏠 Rumah Tangga</div><div class="stat-val gold" id="kv-d-rt-saldo" style="font-size:14px">—</div></div>
+        </div>
+      </div>
 
       <!-- Event mendatang -->
       <div class="section-title">Event Mendatang</div>
@@ -1082,10 +1127,74 @@ select.form-control { appearance: none; }
       </div>
     </div>
 
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- KONVENSIONAL: PAGE GUBUKAN                              -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="kv-page" id="page-gubukan" style="display:none;padding:16px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-gubukan-masuk" style="font-size:13px">—</div></div>
+    <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-gubukan-keluar" style="font-size:13px">—</div></div>
+    <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo</div><div class="stat-val gold" id="kv-gubukan-saldo" style="font-size:13px">—</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button onclick="openKvForm('gubukan','masuk')" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer">+ Masuk</button>
+    <button onclick="openKvForm('gubukan','keluar')" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer">+ Keluar</button>
+  </div>
+  <input type="text" class="form-control" id="kv-gubukan-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('gubukan',this.value)">
+  <div id="kv-gubukan-list"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- KONVENSIONAL: PAGE TOKBA                                -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="kv-page" id="page-kvtokba" style="display:none;padding:16px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-tokba-masuk" style="font-size:13px">—</div></div>
+    <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-tokba-keluar" style="font-size:13px">—</div></div>
+    <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo</div><div class="stat-val gold" id="kv-tokba-saldo" style="font-size:13px">—</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button onclick="openKvForm('tokba','masuk')" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer">+ Masuk</button>
+    <button onclick="openKvForm('tokba','keluar')" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer">+ Keluar</button>
+  </div>
+  <input type="text" class="form-control" id="kv-tokba-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('tokba',this.value)">
+  <div id="kv-tokba-list"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- KONVENSIONAL: PAGE RT                                   -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="kv-page" id="page-rt" style="display:none;padding:16px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-rt-masuk" style="font-size:13px">—</div></div>
+    <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-rt-keluar" style="font-size:13px">—</div></div>
+    <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo+Awal</div><div class="stat-val gold" id="kv-rt-saldo" style="font-size:13px">—</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button onclick="openKvForm('rt','masuk')" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer">+ Masuk</button>
+    <button onclick="openKvForm('rt','keluar')" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer">+ Keluar</button>
+    <button onclick="openRtSaldoAwal()" style="padding:8px 12px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:700;font-size:12px;cursor:pointer">⚖️</button>
+  </div>
+  <input type="text" class="form-control" id="kv-rt-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('rt',this.value)">
+  <div id="kv-rt-saldoawal-panel" style="display:none;margin-bottom:14px">
+    <div class="section-title">⚖️ Rekonsiliasi Saldo Awal</div>
+    <div class="card">
+      <div class="form-group"><label class="form-label">Bulan</label><input type="month" class="form-control" id="rt-saldoawal-bulan"></div>
+      <div class="form-group"><label class="form-label">Saldo Awal (Rp)</label><input type="number" class="form-control" id="rt-saldoawal-jumlah" placeholder="0" min="0"></div>
+      <div class="form-group"><label class="form-label">Catatan</label><input type="text" class="form-control" id="rt-saldoawal-catatan" placeholder="Saldo awal Januari, dst"></div>
+      <button class="btn btn-primary" onclick="saveRtSaldoAwal()">💾 Simpan Saldo Awal</button>
+    </div>
+    <div class="section-title" style="margin-top:14px">Riwayat Saldo Awal</div>
+    <div id="kv-rt-saldoawal-list"><div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">Belum ada data</div></div></div>
+  </div>
+  <div id="kv-rt-list"></div>
+</div>
+
   </div><!-- /body -->
 
-  <!-- TAB BAR -->
-  <div class="tabbar">
+  <!-- TAB BAR MODERN -->
+  <div class="tabbar" id="tabbarModern">
     <button class="tab-item active" data-page="dashboard" onclick="switchTab(this)">
       <span class="ti">⊞</span><span>Dashboard</span>
     </button>
@@ -1105,6 +1214,26 @@ select.form-control { appearance: none; }
       <span class="ti">📊</span><span>Laporan</span>
     </button>
   </div>
+
+  <!-- TAB BAR KONVENSIONAL -->
+  <div class="tabbar" id="tabbarKonven" style="display:none">
+    <button class="tab-item active" data-page="dashboard" onclick="switchTabKv(this)">
+      <span class="ti">⊞</span><span>Dashboard</span>
+    </button>
+    <button class="tab-item" data-page="event" onclick="switchTabKv(this)">
+      <span class="ti">🍽️</span><span>Event</span>
+    </button>
+    <button class="tab-item" data-page="gubukan" onclick="switchTabKv(this)">
+      <span class="ti">🍳</span><span>Gubukan</span>
+    </button>
+    <button class="tab-item" data-page="kvtokba" onclick="switchTabKv(this)">
+      <span class="ti">🛒</span><span>Tokba</span>
+    </button>
+    <button class="tab-item" data-page="rt" onclick="switchTabKv(this)">
+      <span class="ti">🏠</span><span>RT</span>
+    </button>
+  </div>
+
 
   <!-- FAB -->
   <button class="fab" id="fab" onclick="fabAction()">+</button>
@@ -1277,11 +1406,19 @@ select.form-control { appearance: none; }
       </div>
       <div class="form-group">
         <label class="form-label">Harga per Satuan (Rp)</label>
-        <input type="number" class="form-control" id="beli-harga" placeholder="0" min="0" oninput="calcBeliTotal()">
+        <input type="number" class="form-control" id="beli-harga" placeholder="0" min="0"
+          oninput="calcBeliFromHarga()">
+        <div class="form-hint">Isi harga/satuan → total otomatis terhitung</div>
       </div>
       <div class="form-group">
-        <label class="form-label">Total</label>
-        <div class="form-control" id="beli-total" style="color:var(--gold);font-family:var(--mono);font-weight:600">Rp 0</div>
+        <label class="form-label" style="display:flex;align-items:center;gap:6px">
+          Total (Rp)
+          <span style="font-size:9px;background:var(--gold-dim);color:var(--gold);border-radius:4px;padding:1px 6px;font-weight:600;letter-spacing:.04em">ATAU ISI INI</span>
+        </label>
+        <input type="number" class="form-control" id="beli-total-input" placeholder="0" min="0"
+          style="color:var(--gold);font-family:var(--mono);font-weight:600"
+          oninput="calcBeliFromTotal()">
+        <div class="form-hint">Isi total → harga/satuan otomatis terhitung</div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1364,8 +1501,122 @@ select.form-control { appearance: none; }
 </div>
 
 <!-- ════════════════════════════════════════════════════════ -->
-<!-- SCRIPT                                                  -->
+<!-- MODE SELECT SCREEN                                      -->
 <!-- ════════════════════════════════════════════════════════ -->
+<div id="modeScreen" style="position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:0;display:none">
+  <div style="font-size:40px;margin-bottom:12px">🍽️</div>
+  <div style="font-size:22px;font-weight:800;color:var(--ink);margin-bottom:4px">Gubukan Krasti</div>
+  <div style="font-size:13px;color:var(--ink3);margin-bottom:36px">Pilih mode pencatatan</div>
+
+  <div style="display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px">
+    <button onclick="selectMode('modern')" style="background:var(--surface);border:2px solid var(--gold);border-radius:14px;padding:18px 20px;text-align:left;cursor:pointer;transition:all 0.2s">
+      <div style="font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px">⚡ Mode Modern</div>
+      <div style="font-size:12px;color:var(--ink3);line-height:1.5">Manajemen lengkap: stok bahan, pembelian, kas terintegrasi, laporan otomatis</div>
+    </button>
+    <button onclick="selectMode('konvensional')" style="background:var(--surface);border:2px solid var(--border2);border-radius:14px;padding:18px 20px;text-align:left;cursor:pointer;transition:all 0.2s">
+      <div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:4px">📒 Mode Konvensional</div>
+      <div style="font-size:12px;color:var(--ink3);line-height:1.5">Buku kas sederhana: Gubukan, Toko Bahan, Rumah Tangga — catat pemasukan & pengeluaran manual</div>
+    </button>
+  </div>
+  <div style="margin-top:20px;font-size:11px;color:var(--ink4)">Pilihan tersimpan otomatis, bisa diubah di ⚙️ Settings</div>
+</div>
+
+
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SHEET: KONVENSIONAL MUTASI FORM                         -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="overlay" id="sheetKvForm" onclick="overlayClose(event,'sheetKvForm')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="kvFormTitle">Tambah Catatan</span>
+      <span class="sheet-close" onclick="closeSheet('sheetKvForm')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="kv-form-entitas">
+      <input type="hidden" id="kv-form-tipe">
+      <input type="hidden" id="kv-form-id">
+      <div class="form-group">
+        <label class="form-label">Deskripsi</label>
+        <div class="menu-ac-wrap">
+          <input type="text" class="form-control" id="kv-deskripsi" placeholder="Bayar ayam, ongkir, dll"
+            autocomplete="off" oninput="kvAcFilter()" onfocus="kvAcFilter()"
+            onblur="setTimeout(()=>kvAcClose(),200)" onkeydown="kvAcKey(event)">
+          <div class="menu-ac-dropdown" id="kv-ac-drop"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kategori <span style="color:var(--ink4)">(opsional)</span></label>
+        <div class="menu-ac-wrap">
+          <input type="text" class="form-control" id="kv-kategori" placeholder="Bahan baku, Operasional, Penjualan..."
+            autocomplete="off" oninput="kvKategoriAcFilter()" onfocus="kvKategoriAcFilter()"
+            onblur="setTimeout(()=>kvKategoriAcClose(),200)">
+          <div class="menu-ac-dropdown" id="kv-kategori-drop"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty <span style="color:var(--ink4)">(opsional)</span></label>
+          <input type="number" class="form-control" id="kv-qty" placeholder="0" min="0" step="0.001" oninput="kvCalcJumlah()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Satuan <span style="color:var(--ink4)">(opsional)</span></label>
+          <div class="menu-ac-wrap">
+            <input type="text" class="form-control" id="kv-satuan" placeholder="kg, pcs, dll"
+              autocomplete="off" oninput="kvSatuanAcFilter()" onfocus="kvSatuanAcFilter()"
+              onblur="setTimeout(()=>kvSatuanAcClose(),200)">
+            <div class="menu-ac-dropdown" id="kv-satuan-drop"></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Harga Satuan (Rp) <span style="color:var(--ink4)">(opsional)</span></label>
+        <input type="number" class="form-control" id="kv-harga" placeholder="0" min="0" oninput="kvCalcJumlah()">
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="display:flex;align-items:center;gap:6px">
+          Jumlah (Rp) <span style="font-size:9px;background:var(--gold-dim);color:var(--gold);border-radius:4px;padding:1px 6px;font-weight:600">WAJIB</span>
+        </label>
+        <input type="number" class="form-control" id="kv-jumlah" placeholder="0" min="0"
+          style="color:var(--gold);font-family:var(--mono);font-weight:600" oninput="kvCalcHarga()">
+      </div>
+      <div class="form-group" id="kv-vendor-wrap" style="display:none">
+        <label class="form-label">Nama Toko / Vendor <span style="color:var(--ink4)">(opsional)</span></label>
+        <input type="text" class="form-control" id="kv-vendor" placeholder="Pasar, Alfamart, Supplier...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tanggal</label>
+        <input type="date" class="form-control" id="kv-tanggal">
+      </div>
+      <button class="btn btn-primary" onclick="saveKvMutasi()">💾 Simpan</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetKvForm')">Batal</button>
+      <button class="btn" id="kv-delete-btn" style="display:none;background:var(--red-dim);color:var(--red);border:1px solid var(--red)" onclick="deleteKvMutasi()">🗑 Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: KV TYPE PICKER -->
+<div class="overlay" id="sheetKvPicker" onclick="if(event.target===this)closeSheet('sheetKvPicker')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="kvPickerTitle">Tambah Catatan</span>
+      <span class="sheet-close" onclick="closeSheet('sheetKvPicker')">✕</span>
+    </div>
+    <div class="sheet-body" style="display:flex;flex-direction:column;gap:12px;padding-bottom:24px">
+      <button onclick="kvPickerSelect('masuk')"
+        style="padding:16px;background:var(--green-dim);border:2px solid var(--green);border-radius:12px;color:var(--green);font-size:16px;font-weight:700;cursor:pointer;font-family:var(--font)">
+        💰 Pemasukan
+      </button>
+      <button onclick="kvPickerSelect('keluar')"
+        style="padding:16px;background:var(--red-dim);border:2px solid var(--red);border-radius:12px;color:var(--red);font-size:16px;font-weight:700;cursor:pointer;font-family:var(--font)">
+        💸 Pengeluaran
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPA_URL = 'https://skltbmcrqutevmtcxqxj.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrbHRibWNycXV0ZXZtdGN4cXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzM5ODIsImV4cCI6MjA5MTI0OTk4Mn0._nogUZg5UylVyP45QTGYw69u76pNxGryj9hZORIfE_A';
@@ -1420,6 +1671,8 @@ let state = {
     kas: [],
   }
 };
+let _initDone = false;
+let _initTime = 0; // timestamp saat init selesai
 
 // ── FORMAT ─────────────────────────────────────────────────
 function localDate(d) {
@@ -1508,6 +1761,7 @@ function overlayClose(e, id) {
 
 // ── BACK BUTTON HANDLER ─────────────────────────────────────
 window.addEventListener('popstate', function() {
+  if (!_initDone) return; // abaikan popstate selama init
   _backHandling = true;
   const openSheets = Array.from(document.querySelectorAll('.overlay.open'));
   if (openSheets.length > 0) {
@@ -1523,13 +1777,17 @@ window.addEventListener('popstate', function() {
 
 // ── TAB NAVIGATION ─────────────────────────────────────────
 function switchTab(el) {
+  if (!_initDone || Date.now() - _initTime < 500) return;
   const page = el.dataset.page;
   state.currentTab = page;
   document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
-  // FAB visibility
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+  const pEl = document.getElementById('page-'+page);
+  if (pEl) { pEl.style.display = 'block'; pEl.classList.add('active'); }
   const noFab = ['laporan'];
   document.getElementById('fab').classList.toggle('hidden', noFab.includes(page));
   loadPage(page);
@@ -1913,12 +2171,16 @@ let eventsData = [];
 async function loadEvents() {
   try {
     const data = await sbGet('gk_event', 'order=tanggal.asc&select=*');
-    const [menus, bahans, opss, bayars] = await Promise.all([
+    const [menus, bahans, opss, bayars, allMenuNama] = await Promise.all([
       sbGet('gk_event_menu',  'select=event_id,total'),
       sbGet('gk_event_bahan', 'select=event_id,total'),
       sbGet('gk_biaya_ops',   'select=event_id,jumlah'),
       sbGet('gk_event_bayar', 'select=event_id,jumlah'),
+      sbGet('gk_event_menu',  'select=nama&order=nama.asc'),
     ]);
+    // Bangun master list nama menu (unik, sorted)
+    const namaSet = new Set(allMenuNama.map(r=>r.nama).filter(Boolean));
+    menuMasterList = [...namaSet].sort((a,b)=>a.localeCompare(b,'id'));
     const sumBy = (arr, idKey, valKey) => arr.reduce((m,r)=>{
       m[r[idKey]] = (m[r[idKey]]||0) + Number(r[valKey]||0); return m;
     }, {});
@@ -2391,6 +2653,7 @@ function renderStatusBtns(current) {
 // BAHAN
 // ══════════════════════════════════════════════════════════
 let bahanData = [];
+let menuMasterList = []; // master nama menu dari semua gk_event_menu
 
 function switchBahanTab(el) {
   document.querySelectorAll('[data-btab]').forEach(b=>b.classList.remove('active'));
@@ -2607,7 +2870,7 @@ function openAddBeli() {
   document.getElementById('beli-baru-section').style.display = 'none';
   document.getElementById('beli-qty').value = '';
   document.getElementById('beli-harga').value = '';
-  document.getElementById('beli-total').textContent = 'Rp 0';
+  document.getElementById('beli-total-input').value = '';
   document.getElementById('beli-tanggal').value = localDate();
   document.getElementById('beli-toko').value = '';
   acSet('beli-satuan', '');
@@ -2703,21 +2966,56 @@ function acBeliSelectBaru(nama) {
 
 function onBeliSelectBahan() {} // legacy, tidak dipakai
 
-function onBeliSatuanChange() { calcBeliTotal(); }
+function onBeliSatuanChange() { calcBeliFromHarga(); }
 
+function _getBeliQty() { return Number(document.getElementById('beli-qty').value)||0; }
+
+function calcBeliFromHarga() {
+  // Harga diisi → hitung total
+  const qty  = _getBeliQty();
+  const hrg  = Number(document.getElementById('beli-harga').value)||0;
+  const tot  = qty * hrg;
+  const inp  = document.getElementById('beli-total-input');
+  if (inp) inp.value = tot > 0 ? tot : '';
+}
+
+function calcBeliFromTotal() {
+  // Total diisi → hitung harga/satuan
+  const qty  = _getBeliQty();
+  const tot  = Number(document.getElementById('beli-total-input').value)||0;
+  const hrg  = document.getElementById('beli-harga');
+  if (hrg) hrg.value = (qty > 0 && tot > 0) ? (Math.round(tot / qty * 100) / 100) : '';
+}
+
+// Juga panggil ulang kalau qty berubah — update mana yang sedang aktif
 function calcBeliTotal() {
-  const qty = Number(document.getElementById('beli-qty').value)||0;
+  // dipanggil dari qty oninput — lihat mana yang terisi terakhir
   const hrg = Number(document.getElementById('beli-harga').value)||0;
-  document.getElementById('beli-total').textContent = rpFull(qty*hrg);
+  const tot = Number(document.getElementById('beli-total-input').value)||0;
+  if (hrg > 0) calcBeliFromHarga();
+  else if (tot > 0) calcBeliFromTotal();
 }
 
 async function saveBeli() {
   const bahanVal = document.getElementById('beli-bahan-val').value;
   const satuan   = acVal('beli-satuan');
   const qty      = Number(document.getElementById('beli-qty').value)||0;
-  const harga    = Number(document.getElementById('beli-harga').value)||0;
+  const hargaRaw = Number(document.getElementById('beli-harga').value)||0;
+  const totalRaw = Number(document.getElementById('beli-total-input').value)||0;
+
+  // Hitung harga & total final — salah satu boleh kosong
+  let harga = hargaRaw;
+  let total = totalRaw;
+  if (qty > 0 && harga > 0 && total === 0) total = qty * harga;
+  if (qty > 0 && total > 0 && harga === 0) harga = Math.round(total / qty * 100) / 100;
+  if (qty > 0 && harga > 0 && total > 0) {
+    // keduanya diisi → total menang (user tulis total)
+    harga = Math.round(total / qty * 100) / 100;
+  }
+
   if (!bahanVal)          { toast('⚠️ Pilih bahan dulu'); return; }
-  if (!satuan || !qty || !harga) { toast('⚠️ Lengkapi data'); return; }
+  if (!satuan || !qty)    { toast('⚠️ Lengkapi qty dan satuan'); return; }
+  if (!harga && !total)   { toast('⚠️ Isi harga/satuan atau total'); return; }
 
   let bahanId, namaBahan, satBesar, satKecil, konversi;
 
@@ -2761,7 +3059,7 @@ async function saveBeli() {
     qty_kecil:   Math.round(qty_kecil*1000)/1000,
     harga_beli:  harga,
     harga_kecil: Math.round(harga_kecil*100)/100,
-    total:       qty * harga,
+    total:       total || qty * harga,
     toko:        document.getElementById('beli-toko').value.trim(),
   };
   try {
@@ -2920,7 +3218,7 @@ function openEditBeli(id) {
   document.getElementById('beli-baru-section').style.display = 'none';
   document.getElementById('beli-qty').value = b.qty || '';
   document.getElementById('beli-harga').value = b.harga_beli || '';
-  document.getElementById('beli-total').textContent = rpFull((b.qty||0)*(b.harga_beli||0));
+  document.getElementById('beli-total-input').value = b.total || ((b.qty||0)*(b.harga_beli||0)) || '';
   document.getElementById('beli-tanggal').value = b.tanggal || '';
   document.getElementById('beli-toko').value = b.toko || '';
 
@@ -3502,8 +3800,8 @@ async function buildKasForm(tipe) {
           <div class="ac-wrap"><input type="hidden" id="kf-satuan-val"><button type="button" class="ac-trigger" id="kf-satuan-trigger" data-placeholder="Satuan" onclick="acModalOpen('kf-satuan')"><span class="ac-placeholder">Satuan</span></button></div>
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Harga / Satuan</label><input type="number" class="form-control" id="kf-harga" placeholder="0" oninput="kfCalcTotal()"></div>
-      <div class="form-group"><label class="form-label">Total</label><div class="form-control" id="kf-total" style="color:var(--gold);font-family:var(--mono);font-weight:600">Rp 0</div></div>
+      <div class="form-group"><label class="form-label">Harga / Satuan (Rp)</label><input type="number" class="form-control" id="kf-harga" placeholder="0" oninput="kfCalcFromHarga()"><div class="form-hint">Isi harga/satuan → total otomatis terhitung</div></div>
+      <div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:6px">Total (Rp)<span style="font-size:9px;background:var(--gold-dim);color:var(--gold);border-radius:4px;padding:1px 6px;font-weight:600">ATAU ISI INI</span></label><input type="number" class="form-control" id="kf-total" placeholder="0" min="0" style="color:var(--gold);font-family:var(--mono);font-weight:600" oninput="kfCalcFromTotal()"><div class="form-hint">Isi total → harga/satuan otomatis terhitung</div></div>
       <div class="form-group"><label class="form-label">Toko / Supplier</label><input type="text" class="form-control" id="kf-toko" placeholder="Nama toko (opsional)"></div>
       ${tglField}
       <button class="btn btn-primary" onclick="saveKasForm('beli-bahan')">💾 Simpan</button>
@@ -3612,11 +3910,26 @@ function initKasFormAC(tipe) {
   acSet('kf-platform', 'shopee');
 }
 
-function kfCalcTotal() {
+function kfCalcFromHarga() {
   const qty   = Number(document.getElementById('kf-qty')?.value)||0;
   const harga = Number(document.getElementById('kf-harga')?.value)||0;
   const el    = document.getElementById('kf-total');
-  if (el) el.textContent = rpFull(qty*harga);
+  if (el) el.value = (qty > 0 && harga > 0) ? qty * harga : '';
+}
+
+function kfCalcFromTotal() {
+  const qty = Number(document.getElementById('kf-qty')?.value)||0;
+  const tot = Number(document.getElementById('kf-total')?.value)||0;
+  const el  = document.getElementById('kf-harga');
+  if (el) el.value = (qty > 0 && tot > 0) ? Math.round(tot / qty * 100) / 100 : '';
+}
+
+function kfCalcTotal() {
+  // dipanggil dari qty oninput
+  const hrg = Number(document.getElementById('kf-harga')?.value)||0;
+  const tot = Number(document.getElementById('kf-total')?.value)||0;
+  if (hrg > 0) kfCalcFromHarga();
+  else if (tot > 0) kfCalcFromTotal();
 }
 
 function acKasEventOpen() {
@@ -3747,10 +4060,19 @@ async function saveKasForm(tipe) {
       const bahanVal = document.getElementById('kf-bahan-val').value;
       const satuan   = acVal('kf-satuan');
       const qty      = Number(document.getElementById('kf-qty').value)||0;
-      const harga    = Number(document.getElementById('kf-harga').value)||0;
+      const hargaRaw = Number(document.getElementById('kf-harga').value)||0;
+      const totalRaw = Number(document.getElementById('kf-total').value)||0;
       const toko     = document.getElementById('kf-toko').value.trim();
+
+      let harga = hargaRaw;
+      let total = totalRaw;
+      if (qty > 0 && harga > 0 && total === 0) total = qty * harga;
+      if (qty > 0 && total > 0 && harga === 0) harga = Math.round(total / qty * 100) / 100;
+      if (qty > 0 && harga > 0 && total > 0)   harga = Math.round(total / qty * 100) / 100;
+
       if (!bahanVal) { toast('⚠️ Pilih bahan'); return; }
-      if (!satuan||!qty||!harga) { toast('⚠️ Lengkapi qty, satuan, harga'); return; }
+      if (!satuan||!qty) { toast('⚠️ Lengkapi qty dan satuan'); return; }
+      if (!harga && !total) { toast('⚠️ Isi harga/satuan atau total'); return; }
       let bahanId, namaBahan, satBesar, satKecil, konversi;
       if (bahanVal === '__baru__') {
         namaBahan = document.getElementById('kf-baru-nama').value.trim();
@@ -3768,12 +4090,12 @@ async function saveKasForm(tipe) {
       const isBesar   = satuan===satBesar;
       const qtyKecil  = isBesar ? qty*konversi : qty;
       const hargaKecil= isBesar ? harga/konversi : harga;
-      const data = {bahan_id:bahanId,nama_bahan:namaBahan,tanggal:today,qty,satuan,qty_kecil:Math.round(qtyKecil*1000)/1000,harga_beli:harga,harga_kecil:Math.round(hargaKecil*100)/100,total:qty*harga,toko};
+      const data = {bahan_id:bahanId,nama_bahan:namaBahan,tanggal:today,qty,satuan,qty_kecil:Math.round(qtyKecil*1000)/1000,harga_beli:harga,harga_kecil:Math.round(hargaKecil*100)/100,total,toko};
       const res = await sbInsert('gk_pembelian', data);
       const pid = res[0]?.id||'';
       const kasU = await sbGet('gk_kas','jenis=eq.usaha&select=id').then(r=>r[0]);
       if (kasU) {
-        await sbInsert('gk_kas_mutasi',{kas_id:kasU.id,tipe:'keluar',keterangan:`Beli: ${namaBahan}${toko?' ('+toko+')':''}`,jumlah:qty*harga,tanggal:today,referensi:'pembelian:'+pid});
+        await sbInsert('gk_kas_mutasi',{kas_id:kasU.id,tipe:'keluar',keterangan:`Beli: ${namaBahan}${toko?' ('+toko+')':''}`,jumlah:total,tanggal:today,referensi:'pembelian:'+pid});
         await sbUpdate('gk_kas',kasU.id,{saldo:await hitungSaldoKas(kasU.id)});
       }
       beliData = await sbGet('gk_pembelian','order=tanggal.desc&limit=200&select=*');
@@ -3998,7 +4320,7 @@ function init() {
 
   // Warning saat back di Android melewati semua sheet & kembali ke base
   window.addEventListener('popstate', function appExitGuard(e) {
-    // Kalau masih ada sheet/modal terbuka, biarkan popstate handler sheet yang handle
+    if (!_initDone) return; // abaikan popstate selama init
     if (document.querySelector('.overlay.open') ||
         document.getElementById('acModal').classList.contains('open')) return;
     // Kalau sudah di base state (tidak ada history lagi), tanya konfirmasi
@@ -4017,8 +4339,30 @@ function init() {
   // Pull to refresh
   initPullToRefresh();
 
-  // Load dashboard
-  loadDashboard();
+  // Disable tab klik sampai init selesai
+  document.getElementById('tabbarKonven').style.pointerEvents = 'none';
+  document.getElementById('tabbarModern').style.pointerEvents = 'none';
+
+  // Defer applyMode agar DOM fully ready dan popstate selesai
+  setTimeout(() => {
+    state.currentTab = 'dashboard'; // force reset
+    if (appMode === 'konvensional') {
+      applyMode('konvensional');
+      updateModeToggleUI();
+      loadKvDashboard();
+    } else if (appMode === 'modern') {
+      applyMode('modern');
+      updateModeToggleUI();
+      loadDashboard();
+    } else {
+      showModeScreen();
+    }
+    // Re-enable tab setelah apply
+    document.getElementById('tabbarKonven').style.pointerEvents = '';
+    document.getElementById('tabbarModern').style.pointerEvents = '';
+    _initDone = true;
+    _initTime = Date.now();
+  }, 300);
 }
 
 
@@ -4056,6 +4400,7 @@ function openEditMenu(id) {
   document.getElementById('menu-edit-qty').value = m.qty || '';
   document.getElementById('menu-edit-harga').value = m.harga || '';
   document.getElementById('menu-edit-total').textContent = rpFull((m.qty||0)*(m.harga||0));
+  menuAcClose('menu-ac-drop2');
   openSheet('sheetMenuEdit');
 }
 
@@ -4069,6 +4414,7 @@ async function saveMenuEdit() {
     await sbUpdate('gk_event_menu', id, {nama, qty, harga});
     const idx = currentEventMenus.findIndex(x=>x.id===id);
     if (idx>=0) currentEventMenus[idx] = {...currentEventMenus[idx], nama, qty, harga, total: qty*harga};
+    menuAcAddToMaster(nama); // nama baru (jika berubah) masuk master
     closeSheet('sheetMenuEdit');
     renderEventDetail();
     toast('✅ Menu diperbarui');
@@ -4226,7 +4572,9 @@ function openAddMenu() {
   document.getElementById('menu-qty').value = '';
   document.getElementById('menu-harga').value = '';
   document.getElementById('menu-total').textContent = 'Rp 0';
+  menuAcClose('menu-ac-drop1');
   openSheet('sheetMenu');
+  setTimeout(()=>document.getElementById('menu-nama').focus(), 350);
 }
 
 async function saveMenu() {
@@ -4237,6 +4585,7 @@ async function saveMenu() {
   try {
     const res = await sbInsert('gk_event_menu', { event_id: currentEvent.id, nama, qty, harga });
     currentEventMenus.push(res[0]);
+    menuAcAddToMaster(nama); // tambah ke master list
     closeSheet('sheetMenu');
     renderEventDetail();
     toast('✅ Menu ditambah');
@@ -5056,8 +5405,627 @@ function loadSavedTheme() {
   document.documentElement.setAttribute('data-theme', saved);
 }
 
-init();
-loadSavedTheme();
+// ══════════════════════════════════════════════════════════
+// MODE MANAGER
+// ══════════════════════════════════════════════════════════
+let appMode = localStorage.getItem('gk_mode');
+if (appMode !== 'modern' && appMode !== 'konvensional') appMode = null;
+
+function selectMode(mode) {
+  appMode = mode;
+  localStorage.setItem('gk_mode', mode);
+  document.getElementById('modeScreen').style.display = 'none';
+  applyMode(mode);
+  updateModeToggleUI();
+  closeSheet('sheetTheme');
+  if (mode === 'modern') loadDashboard();
+  else loadKvDashboard();
+}
+
+function showModeScreen() {
+  document.getElementById('modeScreen').style.display = 'flex';
+}
+
+function applyMode(mode) {
+  const isModern = mode === 'modern';
+  document.getElementById('tabbarModern').style.display = isModern ? '' : 'none';
+  document.getElementById('tabbarKonven').style.display = isModern ? 'none' : '';
+  // Sembunyikan semua page modern
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display='none'; });
+  // Sembunyikan semua kv-page
+  document.querySelectorAll('.kv-page').forEach(p => p.style.display='none');
+  // Aktifkan dashboard
+  const dash = document.getElementById('page-dashboard');
+  dash.style.display = 'block';
+  dash.classList.add('active');
+  state.currentTab = 'dashboard';
+  // Reset tab highlight
+  if (isModern) {
+    document.querySelectorAll('#tabbarModern .tab-item').forEach(t=>t.classList.remove('active'));
+    document.querySelector('#tabbarModern [data-page="dashboard"]').classList.add('active');
+  } else {
+    document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
+    document.querySelector('#tabbarKonven [data-page="dashboard"]').classList.add('active');
+  }
+  document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+}
+
+function updateModeToggleUI() {
+  const m = document.getElementById('modeToggleModern');
+  const k = document.getElementById('modeToggleKonven');
+  if (!m || !k) return;
+  if (appMode === 'modern') {
+    m.style.borderColor = 'var(--gold)';
+    k.style.borderColor = 'var(--border2)';
+  } else {
+    m.style.borderColor = 'var(--border2)';
+    k.style.borderColor = 'var(--gold)';
+  }
+}
+
+function switchTabKv(el) {
+  const page = el.dataset.page;
+  state.currentTab = page;
+  // Tab highlight
+  document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  // Sembunyikan semua page (modern + konven)
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display='none'; });
+  document.querySelectorAll('.kv-page').forEach(p => p.style.display='none');
+  // Tampilkan page yang dipilih
+  const pEl = document.getElementById('page-'+page);
+  if (pEl) pEl.style.display = 'block';
+  document.getElementById('fab').classList.toggle('hidden', false);
+  if (page === 'dashboard') { document.getElementById('page-dashboard').style.display='block'; loadKvDashboard(); }
+  else if (page === 'event') { document.getElementById('page-event').style.display='block'; loadEvents(); if (!bahanData.length) loadBahan(); }
+  else if (page === 'gubukan') loadKvPage('gubukan');
+  else if (page === 'kvtokba') loadKvPage('tokba');
+  else if (page === 'rt') loadKvPage('rt');
+}
+
+// ══════════════════════════════════════════════════════════
+// KONVENSIONAL DATA
+// ══════════════════════════════════════════════════════════
+let kvMutasiCache = {}; // {gubukan:[], tokba:[], rt:[]}
+let kvMasterDesc  = []; // master deskripsi [{deskripsi,entitas,tipe,satuan,harga_default,kategori}]
+let kvMasterSatuan= []; // unique satuan list
+let kvMasterKategori = []; // unique kategori list
+let kvSaldoAwal   = []; // [{id,entitas,bulan,jumlah,catatan}]
+let kvCurrentEntitas = 'gubukan';
+let kvCurrentTipe    = 'masuk';
+
+async function loadKvDashboard() {
+  try {
+    const [gubM, tokM, rtM, sawal] = await Promise.all([
+      sbGet('gk_mutasi','entitas=eq.gubukan&select=tipe,jumlah'),
+      sbGet('gk_mutasi','entitas=eq.tokba&select=tipe,jumlah'),
+      sbGet('gk_mutasi','entitas=eq.rt&select=tipe,jumlah'),
+      sbGet('gk_saldo_awal','select=entitas,jumlah'),
+    ]);
+    const sum = (arr, tipe) => arr.filter(r=>r.tipe===tipe).reduce((s,r)=>s+Number(r.jumlah||0),0);
+    const sawalRt = sawal.filter(r=>r.entitas==='rt').reduce((s,r)=>s+Number(r.jumlah||0),0);
+
+    const gMasuk  = sum(gubM,'masuk'), gKeluar = sum(gubM,'keluar');
+    const tMasuk  = sum(tokM,'masuk'), tKeluar = sum(tokM,'keluar');
+    const rMasuk  = sum(rtM,'masuk'),  rKeluar = sum(rtM,'keluar');
+
+    // Update dashboard kv summary cards if exist
+    ['kv-dash-gubukan','kv-dash-tokba','kv-dash-rt'].forEach(id=>{
+      const el = document.getElementById(id);
+      if (el) el.style.display = appMode==='konvensional' ? '' : 'none';
+    });
+    set('kv-d-g-saldo', rpFull(gMasuk-gKeluar));
+    set('kv-d-t-saldo', rpFull(tMasuk-tKeluar));
+    set('kv-d-rt-saldo', rpFull(sawalRt+rMasuk-rKeluar));
+  } catch(e) { /* dashboard load gentle fail */ }
+}
+
+async function loadKvPage(entitas) {
+  kvCurrentEntitas = entitas;
+  try {
+    const data = await sbGet('gk_mutasi', `entitas=eq.${entitas}&order=tanggal.desc,created_at.desc&select=*`);
+    kvMutasiCache[entitas] = data;
+
+    const masuk  = data.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0);
+    const keluar = data.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+Number(r.jumlah||0),0);
+
+    set(`kv-${entitas==='tokba'?'tokba':entitas}-masuk`, rpFull(masuk));
+    set(`kv-${entitas==='tokba'?'tokba':entitas}-keluar`, rpFull(keluar));
+
+    let saldo = masuk - keluar;
+    if (entitas === 'rt') {
+      const sawal = await sbGet('gk_saldo_awal','entitas=eq.rt&select=jumlah');
+      const totalSawal = sawal.reduce((s,r)=>s+Number(r.jumlah||0),0);
+      saldo += totalSawal;
+      kvSaldoAwal = await sbGet('gk_saldo_awal','entitas=eq.rt&order=bulan.desc&select=*');
+      renderRtSaldoAwal();
+    }
+    set(`kv-${entitas==='tokba'?'tokba':entitas}-saldo`, rpFull(saldo));
+
+    // Load master deskripsi
+    kvMasterDesc = await sbGet('gk_master_desc','select=*&order=deskripsi.asc');
+    kvMasterSatuan   = [...new Set(kvMasterDesc.map(x=>x.satuan).filter(Boolean))].sort();
+    kvMasterKategori = [...new Set(kvMasterDesc.map(x=>x.kategori).filter(Boolean))].sort();
+
+    renderKvList(entitas, data, 'all'); // tampil semua
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+function renderKvList(entitas, data, tipe) {
+  const listId = `kv-${entitas}-list`;
+  const el = document.getElementById(listId);
+  if (!el) return;
+  if (!data.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Belum ada catatan</div></div>`;
+    return;
+  }
+
+  // State sort & search per entitas
+  if (!window._kvState) window._kvState = {};
+  if (!window._kvState[entitas]) window._kvState[entitas] = { sortCol: 'tanggal', sortDir: -1, search: '' };
+  const st = window._kvState[entitas];
+
+  // Hitung saldo running — selalu ascending by tanggal
+  let saldoAwal = 0;
+  if (entitas === 'rt') saldoAwal = (kvSaldoAwal||[]).reduce((s,r)=>s+Number(r.jumlah||0),0);
+  const sorted_asc = [...data].sort((a,b) => {
+    const tCmp = (a.tanggal||'') < (b.tanggal||'') ? -1 : (a.tanggal||'') > (b.tanggal||'') ? 1 : 0;
+    if (tCmp !== 0) return tCmp;
+    return (a.created_at||'') < (b.created_at||'') ? -1 : (a.created_at||'') > (b.created_at||'') ? 1 : 0;
+  });
+  let saldo = saldoAwal;
+  const withSaldo = sorted_asc.map(r => {
+    if (r.tipe==='masuk') saldo += Number(r.jumlah||0);
+    else saldo -= Number(r.jumlah||0);
+    return {...r, _saldo: saldo};
+  });
+
+  // Filter by search
+  const q = st.search.toLowerCase();
+  let filtered = q ? withSaldo.filter(r =>
+    (r.deskripsi||'').toLowerCase().includes(q) ||
+    (r.kategori||'').toLowerCase().includes(q) ||
+    (r.vendor||'').toLowerCase().includes(q) ||
+    (r.satuan||'').toLowerCase().includes(q) ||
+    String(r.jumlah||'').includes(q) ||
+    (r.tanggal||'').includes(q)
+  ) : withSaldo;
+
+  // Sort
+  filtered = [...filtered].sort((a,b) => {
+    let av = a[st.sortCol], bv = b[st.sortCol];
+    if (st.sortCol==='tanggal') {
+      // Primary: tanggal, Secondary: created_at
+      const tCmp = (av||'') < (bv||'') ? -1 : (av||'') > (bv||'') ? 1 : 0;
+      if (tCmp !== 0) return tCmp * st.sortDir;
+      const ca = a.created_at||'', cb = b.created_at||'';
+      return (ca < cb ? -1 : ca > cb ? 1 : 0) * st.sortDir;
+    }
+    if (['jumlah','_saldo'].includes(st.sortCol)) return (Number(av||0)-Number(bv||0)) * st.sortDir;
+    return ((av||'') < (bv||'') ? -1 : (av||'') > (bv||'') ? 1 : 0) * st.sortDir;
+  });
+
+  const saldoColor = s => Number(s) >= 0 ? 'var(--green)' : 'var(--red)';
+  const arrow = col => st.sortCol===col ? (st.sortDir===1?'▲':'▼') : '⇅';
+  const thStyle = `padding:8px 6px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;`;
+
+  el.innerHTML = `
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:340px">
+    <thead>
+      <tr style="background:var(--bg3)">
+        <th onclick="kvSort('${entitas}','tanggal')" style="${thStyle}color:var(--ink3);text-align:left">Tgl ${arrow('tanggal')}</th>
+        <th onclick="kvSort('${entitas}','deskripsi')" style="${thStyle}color:var(--ink3);text-align:left">Keterangan ${arrow('deskripsi')}</th>
+        <th onclick="kvSort('${entitas}','masuk')" style="${thStyle}color:var(--green);text-align:right">Masuk ${arrow('masuk')}</th>
+        <th onclick="kvSort('${entitas}','keluar')" style="${thStyle}color:var(--red);text-align:right">Keluar ${arrow('keluar')}</th>
+        <th onclick="kvSort('${entitas}','_saldo')" style="${thStyle}color:var(--gold);text-align:right">Saldo ${arrow('_saldo')}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${filtered.length ? filtered.map((r,i) => {
+        const masuk  = r.tipe==='masuk'  ? Number(r.jumlah||0) : 0;
+        const keluar = r.tipe==='keluar' ? Number(r.jumlah||0) : 0;
+        const bg = i%2===0 ? 'var(--bg2)' : 'var(--bg3)';
+        const detail = [r.kategori?`🏷 ${r.kategori}`:null, r.qty?`${r.qty}${r.satuan?' '+r.satuan:''}`:null, r.vendor?`🏪 ${r.vendor}`:null].filter(Boolean).join(' · ');
+        return `<tr style="background:${bg};cursor:pointer" onclick="kvOpenDetail('${r.id}','${entitas}')">
+          <td style="padding:8px 6px;color:var(--ink4);white-space:nowrap;border-bottom:1px solid var(--border);vertical-align:top">${fmtDateShort(r.tanggal)}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid var(--border);vertical-align:top;max-width:120px">
+            <div style="font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.deskripsi||'—'}</div>
+            ${detail?`<div style="font-size:10px;color:var(--ink4)">${detail}</div>`:''}
+          </td>
+          <td style="padding:8px 6px;text-align:right;color:var(--green);font-family:var(--mono);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:top">${masuk?rpShort(masuk):''}</td>
+          <td style="padding:8px 6px;text-align:right;color:var(--red);font-family:var(--mono);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:top">${keluar?rpShort(keluar):''}</td>
+          <td style="padding:8px 6px;text-align:right;color:${saldoColor(r._saldo)};font-family:var(--mono);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:top">${rpShort(r._saldo)}</td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink3)">Tidak ada hasil untuk "<b>${st.search}</b>"</td></tr>`}
+    </tbody>
+  </table>
+  </div>`;
+}
+
+function kvSort(entitas, col) {
+  if (!window._kvState) window._kvState = {};
+  if (!window._kvState[entitas]) window._kvState[entitas] = { sortCol:'tanggal', sortDir:-1, search:'' };
+  const st = window._kvState[entitas];
+  // Map masuk/keluar to jumlah for sort
+  const realCol = col==='masuk'||col==='keluar' ? 'jumlah' : col;
+  if (st.sortCol === realCol) st.sortDir *= -1;
+  else { st.sortCol = realCol; st.sortDir = col==='tanggal' ? -1 : 1; }
+  renderKvList(entitas, kvMutasiCache[entitas]||[], 'all');
+}
+
+function kvSearch(entitas, val) {
+  if (!window._kvState) window._kvState = {};
+  if (!window._kvState[entitas]) window._kvState[entitas] = { sortCol:'tanggal', sortDir:-1, search:'' };
+  // Baca dari input HTML yang ada di page, atau dari parameter
+  const inputEl = document.getElementById(`kv-${entitas}-search`);
+  window._kvState[entitas].search = val !== undefined ? val : (inputEl?.value||'');
+  renderKvList(entitas, kvMutasiCache[entitas]||[], 'all');
+}
+
+function fmtDateShort(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+}
+function rpShort(n) {
+  return 'Rp ' + Number(n||0).toLocaleString('id-ID');
+}
+
+function switchKvTab(el, entitas) {
+  const tipe = el.dataset.kvtab;
+  const pageMap = {gubukan:'gubukan',tokba:'tokba',rt:'rt'};
+  const ent = pageMap[entitas];
+
+  // Chip active
+  el.closest('div').querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+
+  if (tipe === 'saldo-awal') {
+    document.getElementById('kv-rt-saldoawal-panel').style.display = '';
+    document.getElementById('kv-rt-list').style.display = 'none';
+    const d = new Date(); 
+    document.getElementById('rt-saldoawal-bulan').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    renderRtSaldoAwal();
+    return;
+  }
+  document.getElementById(`kv-rt-saldoawal-panel`) && (document.getElementById('kv-rt-saldoawal-panel').style.display='none');
+  const listId = `kv-${ent==='tokba'?'tokba':ent}-list`;
+  const listEl = document.getElementById(listId);
+  if (listEl) listEl.style.display = '';
+
+  kvCurrentTipe = tipe;
+  const data = kvMutasiCache[ent] || [];
+  renderKvList(ent, data, tipe);
+}
+
+
+function openRtSaldoAwal() {
+  const panel = document.getElementById('kv-rt-saldoawal-panel');
+  if (panel) panel.style.display = panel.style.display==='none'?'block':'none';
+  const now = new Date();
+  const bulan = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const el = document.getElementById('rt-saldoawal-bulan');
+  if (el && !el.value) el.value = bulan;
+}
+function renderRtSaldoAwal() {
+  const el = document.getElementById('kv-rt-saldoawal-list');
+  if (!el) return;
+  if (!kvSaldoAwal.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">Belum ada data</div></div>'; return; }
+  el.innerHTML = kvSaldoAwal.map(r=>`
+    <div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:600">${r.bulan||'—'}</div>
+        <div style="font-size:11px;color:var(--ink3)">${r.catatan||''}</div>
+      </div>
+      <div style="font-weight:700;color:var(--gold)">${rpFull(r.jumlah)}</div>
+    </div>`).join('');
+}
+
+async function saveRtSaldoAwal() {
+  const bulan   = document.getElementById('rt-saldoawal-bulan').value;
+  const jumlah  = Number(document.getElementById('rt-saldoawal-jumlah').value)||0;
+  const catatan = document.getElementById('rt-saldoawal-catatan').value.trim();
+  if (!bulan || !jumlah) { toast('⚠️ Lengkapi bulan dan jumlah'); return; }
+  try {
+    // Upsert berdasarkan bulan — jika bulan sama update, jika beda insert
+    const existing = kvSaldoAwal.find(r=>r.bulan===bulan);
+    if (existing) {
+      await sbUpdate('gk_saldo_awal', existing.id, {jumlah, catatan});
+    } else {
+      await sbInsert('gk_saldo_awal', {entitas:'rt', bulan, jumlah, catatan});
+    }
+    toast('✅ Saldo awal disimpan');
+    loadKvPage('rt');
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+// ── KV FORM (Tambah Mutasi) ────────────────────────────────
+function openKvForm(entitas, tipe) {
+  kvCurrentEntitas = entitas;
+  kvCurrentTipe    = tipe;
+  const label = {gubukan:'Gubukan',tokba:'Toko Bahan',rt:'RT'}[entitas]||entitas;
+  const icon  = tipe==='masuk'?'💰':'💸';
+  document.getElementById('kvFormTitle').textContent = `${icon} ${tipe==='masuk'?'Pemasukan':'Pengeluaran'} ${label}`;
+  document.getElementById('kv-form-entitas').value = entitas;
+  document.getElementById('kv-form-tipe').value    = tipe;
+  document.getElementById('kv-form-id').value      = '';
+  // Sembunyikan tombol hapus saat tambah baru
+  const delBtn = document.getElementById('kv-delete-btn');
+  if (delBtn) delBtn.style.display = 'none';
+  document.getElementById('kv-deskripsi').value    = '';
+  document.getElementById('kv-qty').value          = '';
+  document.getElementById('kv-satuan').value       = '';
+  document.getElementById('kv-harga').value        = '';
+  document.getElementById('kv-jumlah').value       = '';
+  document.getElementById('kv-vendor').value       = '';
+  document.getElementById('kv-kategori').value     = '';
+  document.getElementById('kv-tanggal').value      = localDate();
+  // Vendor hanya untuk pengeluaran
+  const vendorWrap = document.getElementById('kv-vendor-wrap');
+  if (vendorWrap) vendorWrap.style.display = (tipe==='keluar') ? '' : 'none';
+  kvAcClose(); kvSatuanAcClose();
+  openSheet('sheetKvForm');
+  setTimeout(()=>document.getElementById('kv-deskripsi').focus(), 350);
+}
+
+function kvCalcJumlah() {
+  const qty   = Number(document.getElementById('kv-qty').value)||0;
+  const harga = Number(document.getElementById('kv-harga').value)||0;
+  if (qty > 0 && harga > 0) document.getElementById('kv-jumlah').value = qty * harga;
+}
+
+function kvCalcHarga() {
+  const qty    = Number(document.getElementById('kv-qty').value)||0;
+  const jumlah = Number(document.getElementById('kv-jumlah').value)||0;
+  if (qty > 0 && jumlah > 0) document.getElementById('kv-harga').value = Math.round(jumlah/qty*100)/100;
+}
+
+async function saveKvMutasi() {
+  const id       = document.getElementById('kv-form-id').value;
+  const entitas  = document.getElementById('kv-form-entitas').value;
+  const tipe     = document.getElementById('kv-form-tipe').value;
+  const deskripsi= document.getElementById('kv-deskripsi').value.trim();
+  const qty      = Number(document.getElementById('kv-qty').value)||null;
+  const satuan   = document.getElementById('kv-satuan').value.trim()||null;
+  const harga    = Number(document.getElementById('kv-harga').value)||null;
+  const jumlah   = Number(document.getElementById('kv-jumlah').value)||0;
+  const tanggal  = document.getElementById('kv-tanggal').value;
+  const vendor   = document.getElementById('kv-vendor').value.trim()||null;
+  const kategori = document.getElementById('kv-kategori').value.trim()||null;
+
+  if (!deskripsi) { toast('⚠️ Isi deskripsi'); return; }
+  if (!jumlah)    { toast('⚠️ Isi jumlah'); return; }
+  if (!tanggal)   { toast('⚠️ Isi tanggal'); return; }
+
+  try {
+    if (id) {
+      await sbUpdate('gk_mutasi', id, {deskripsi, qty, satuan, harga, jumlah, tanggal, vendor, kategori});
+      toast('✅ Data diupdate');
+    } else {
+      await sbInsert('gk_mutasi', {entitas, tipe, deskripsi, qty, satuan, harga, jumlah, tanggal, vendor, kategori});
+      toast('✅ Catatan disimpan');
+    }
+    await kvSaveToMaster(entitas, tipe, deskripsi, satuan, harga, kategori);
+    closeSheet('sheetKvForm');
+    loadKvPage(entitas);
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+async function deleteKvMutasi() {
+  const id      = document.getElementById('kv-form-id').value;
+  const entitas = document.getElementById('kv-form-entitas').value;
+  if (!id) return;
+  if (!confirm('Hapus catatan ini?')) return;
+  try {
+    await sbDelete('gk_mutasi', id);
+    toast('✅ Data dihapus');
+    closeSheet('sheetKvForm');
+    loadKvPage(entitas);
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+async function kvSaveToMaster(entitas, tipe, deskripsi, satuan, harga, kategori) {
+  const existing = kvMasterDesc.find(r => r.deskripsi.toLowerCase()===deskripsi.toLowerCase() && r.entitas===entitas && r.tipe===tipe);
+  try {
+    if (existing) {
+      const upd = {};
+      if (satuan && satuan !== existing.satuan) upd.satuan = satuan;
+      if (harga && harga !== existing.harga_default) upd.harga_default = harga;
+      if (kategori && kategori !== existing.kategori) upd.kategori = kategori;
+      if (Object.keys(upd).length) await sbUpdate('gk_master_desc', existing.id, upd);
+    } else {
+      await sbInsert('gk_master_desc', {entitas, tipe, deskripsi, satuan, harga_default:harga||null, kategori:kategori||null});
+    }
+    kvMasterDesc = await sbGet('gk_master_desc','select=*&order=deskripsi.asc');
+    kvMasterSatuan   = [...new Set(kvMasterDesc.map(x=>x.satuan).filter(Boolean))].sort();
+    kvMasterKategori = [...new Set(kvMasterDesc.map(x=>x.kategori).filter(Boolean))].sort();
+  } catch(e) { /* silent */ }
+}
+
+function kvOpenDetail(id, entitas) {
+  const data = kvMutasiCache[entitas]||[];
+  const r = data.find(x=>x.id===id);
+  if (!r) return;
+  kvCurrentEntitas = entitas;
+  kvCurrentTipe    = r.tipe;
+  const label = {gubukan:'Gubukan',tokba:'Toko Bahan',rt:'RT'}[entitas]||entitas;
+  const icon  = r.tipe==='masuk'?'💰':'💸';
+  document.getElementById('kvFormTitle').textContent = `✏️ Edit ${label}`;
+  document.getElementById('kv-form-entitas').value = entitas;
+  document.getElementById('kv-form-tipe').value    = r.tipe;
+  document.getElementById('kv-form-id').value      = r.id;
+  document.getElementById('kv-deskripsi').value    = r.deskripsi||'';
+  document.getElementById('kv-qty').value          = r.qty||'';
+  document.getElementById('kv-satuan').value       = r.satuan||'';
+  document.getElementById('kv-harga').value        = r.harga||'';
+  document.getElementById('kv-jumlah').value       = r.jumlah||'';
+  document.getElementById('kv-tanggal').value      = r.tanggal||localDate();
+  document.getElementById('kv-vendor').value       = r.vendor||'';
+  document.getElementById('kv-kategori').value     = r.kategori||'';
+  // Vendor hanya untuk pengeluaran
+  const vendorWrap = document.getElementById('kv-vendor-wrap');
+  if (vendorWrap) vendorWrap.style.display = (r.tipe==='keluar') ? '' : 'none';
+  // Tampilkan tombol hapus
+  const delBtn = document.getElementById('kv-delete-btn');
+  if (delBtn) delBtn.style.display = '';
+  kvAcClose(); kvSatuanAcClose();
+  openSheet('sheetKvForm');
+}
+
+// ── KV SORT STATE ──────────────────────────────────────────
+let kvSortState = {}; // {gubukan: {col:'tanggal', dir:'desc'}, ...}
+
+function kvSortBy(entitas, col) {
+  const cur = kvSortState[entitas] || {col:'tanggal', dir:'desc'};
+  const dir = cur.col === col ? (cur.dir==='asc'?'desc':'asc') : 'desc';
+  kvSortState[entitas] = {col, dir};
+  const q = document.getElementById(`kv-${entitas}-search`)?.value || '';
+  renderKvList(entitas, kvMutasiCache[entitas]||[], 'all', q);
+}
+
+function kvSearch(entitas) {
+  const q = document.getElementById(`kv-${entitas}-search`)?.value || '';
+  renderKvList(entitas, kvMutasiCache[entitas]||[], 'all', q);
+}
+let _kvAcHover = -1;
+
+function kvAcFilter() {
+  const input = document.getElementById('kv-deskripsi');
+  const drop  = document.getElementById('kv-ac-drop');
+  const q     = input.value.trim();
+  const ql    = q.toLowerCase();
+  const entitas = document.getElementById('kv-form-entitas').value;
+  const tipe    = document.getElementById('kv-form-tipe').value;
+  _kvAcHover = -1;
+
+  const matched = kvMasterDesc.filter(r =>
+    r.entitas === entitas && r.tipe === tipe &&
+    (ql ? r.deskripsi.toLowerCase().includes(ql) : true)
+  );
+
+  const isExact = matched.some(r=>r.deskripsi.toLowerCase()===ql);
+  let html = '';
+  if (q && !isExact) {
+    html += `<div class="menu-ac-item menu-ac-new" onmousedown="kvAcPick('${escQ(q)}',null,null)">✚ Tambah: <b>${escHtml(q)}</b></div>`;
+  }
+  html += matched.map(r => {
+    const hi = ql ? r.deskripsi.replace(new RegExp('('+ql.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<b>$1</b>') : r.deskripsi;
+    const hint = [r.kategori, r.satuan, r.harga_default ? rpFull(r.harga_default) : ''].filter(Boolean).join(' · ');
+    return `<div class="menu-ac-item" onmousedown="kvAcPick('${escQ(r.deskripsi)}','${escQ(r.satuan||'')}',${r.harga_default||'null'},'${escQ(r.kategori||'')}')">
+      💡 ${hi}${hint?`<span style="font-size:10px;color:var(--ink4);margin-left:auto">${hint}</span>`:''}
+    </div>`;
+  }).join('');
+
+  drop.innerHTML = html || (q ? '<div class="menu-ac-item" style="color:var(--ink4);pointer-events:none">Tidak ada — akan disimpan sebagai baru</div>' : '');
+  drop.classList.toggle('open', !!(html || q));
+}
+
+function kvAcPick(deskripsi, satuan, harga, kategori) {
+  document.getElementById('kv-deskripsi').value = deskripsi;
+  if (satuan)   document.getElementById('kv-satuan').value   = satuan;
+  if (harga)    { document.getElementById('kv-harga').value = harga; kvCalcJumlah(); }
+  if (kategori) document.getElementById('kv-kategori').value = kategori;
+  kvAcClose();
+}
+
+function kvAcClose() {
+  const drop = document.getElementById('kv-ac-drop');
+  if (drop) drop.classList.remove('open');
+}
+
+function kvAcKey(e) {
+  const drop  = document.getElementById('kv-ac-drop');
+  if (!drop || !drop.classList.contains('open')) return;
+  const items = drop.querySelectorAll('.menu-ac-item');
+  if (!items.length) return;
+  if (e.key==='ArrowDown') { e.preventDefault(); _kvAcHover=Math.min(_kvAcHover+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('ac-hover',i===_kvAcHover)); items[_kvAcHover].scrollIntoView({block:'nearest'}); }
+  else if (e.key==='ArrowUp') { e.preventDefault(); _kvAcHover=Math.max(_kvAcHover-1,0); items.forEach((el,i)=>el.classList.toggle('ac-hover',i===_kvAcHover)); items[_kvAcHover].scrollIntoView({block:'nearest'}); }
+  else if (e.key==='Enter' && _kvAcHover>=0) { e.preventDefault(); items[_kvAcHover].dispatchEvent(new MouseEvent('mousedown')); }
+  else if (e.key==='Escape') kvAcClose();
+}
+
+// ── KV AUTOCOMPLETE (Kategori) ─────────────────────────────
+function kvKategoriAcFilter() {
+  const inp  = document.getElementById('kv-kategori');
+  const drop = document.getElementById('kv-kategori-drop');
+  const q    = inp.value.trim().toLowerCase();
+  const matched = q ? kvMasterKategori.filter(k=>k.toLowerCase().includes(q)) : kvMasterKategori;
+  const isExact = kvMasterKategori.some(k=>k.toLowerCase()===q);
+  let html = '';
+  if (q && !isExact) html += `<div class="menu-ac-item menu-ac-new" onmousedown="kvKategoriPick('${escQ(inp.value.trim())}')">✚ Tambah: <b>${escHtml(inp.value.trim())}</b></div>`;
+  html += matched.map(k=>`<div class="menu-ac-item" onmousedown="kvKategoriPick('${escQ(k)}')">${k}</div>`).join('');
+  drop.innerHTML = html||'';
+  drop.classList.toggle('open', !!html);
+}
+function kvKategoriPick(v) {
+  document.getElementById('kv-kategori').value = v;
+  kvKategoriAcClose();
+}
+function kvKategoriAcClose() {
+  const drop = document.getElementById('kv-kategori-drop');
+  if (drop) drop.classList.remove('open');
+}
+
+// ── KV AUTOCOMPLETE (Satuan) ───────────────────────────────
+function kvSatuanAcFilter() {
+  const input = document.getElementById('kv-satuan');
+  const drop  = document.getElementById('kv-satuan-drop');
+  const q     = input.value.trim().toLowerCase();
+  const matched = q ? kvMasterSatuan.filter(s=>s.toLowerCase().includes(q)) : kvMasterSatuan;
+  const isExact = kvMasterSatuan.some(s=>s.toLowerCase()===q);
+  let html = '';
+  if (q && !isExact) html += `<div class="menu-ac-item menu-ac-new" onmousedown="kvSatuanPick('${escQ(input.value.trim())}')">✚ "${escHtml(input.value.trim())}"</div>`;
+  html += matched.map(s=>`<div class="menu-ac-item" onmousedown="kvSatuanPick('${escQ(s)}')">${s}</div>`).join('');
+  drop.innerHTML = html || '';
+  drop.classList.toggle('open', !!html);
+}
+
+function kvSatuanPick(val) {
+  document.getElementById('kv-satuan').value = val;
+  kvSatuanAcClose();
+}
+
+function kvSatuanAcClose() {
+  const drop = document.getElementById('kv-satuan-drop');
+  if (drop) drop.classList.remove('open');
+}
+
+// Override fabAction for konvensional mode
+const _origFabAction = fabAction;
+function fabAction() {
+  if (appMode === 'konvensional') {
+    const t = state.currentTab;
+    const entMap = {gubukan:'gubukan', kvtokba:'tokba', rt:'rt'};
+    if (t === 'event') { openAddEvent(); return; }
+    if (entMap[t]) {
+      // Tanya masuk atau keluar via quick sheet
+      openKvTypePicker(entMap[t]);
+      return;
+    }
+    if (t === 'dashboard') { openKvTypePicker('gubukan'); return; }
+  }
+  _origFabAction();
+}
+
+let _kvPickerEntitas = '';
+
+function openKvTypePicker(entitas) {
+  _kvPickerEntitas = entitas;
+  const label = {gubukan:'Gubukan',tokba:'Toko Bahan',rt:'RT'}[entitas]||entitas;
+  document.getElementById('kvPickerTitle').textContent = `+ Tambah ${label}`;
+  openSheet('sheetKvPicker');
+}
+
+function kvPickerSelect(tipe) {
+  closeSheet('sheetKvPicker');
+  openKvForm(_kvPickerEntitas, tipe);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  init();
+  loadSavedTheme();
+});
 </script>
 
 <!-- ══════════════════════════════════════════════════════════ -->
@@ -5167,7 +6135,14 @@ loadSavedTheme();
     <div class="sheet-body">
       <div class="form-group">
         <label class="form-label">Nama Menu</label>
-        <input type="text" class="form-control" id="menu-nama" placeholder="Zuppa Soup, Sate Ayam, dll">
+        <div class="menu-ac-wrap">
+          <input type="text" class="form-control" id="menu-nama" placeholder="Zuppa Soup, Sate Ayam, dll"
+            autocomplete="off" oninput="menuAcFilter('menu-nama','menu-ac-drop1')"
+            onfocus="menuAcFilter('menu-nama','menu-ac-drop1')"
+            onblur="setTimeout(()=>menuAcClose('menu-ac-drop1'),200)"
+            onkeydown="menuAcKey(event,'menu-nama','menu-ac-drop1')">
+          <div class="menu-ac-dropdown" id="menu-ac-drop1"></div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -5528,7 +6503,14 @@ loadSavedTheme();
       <input type="hidden" id="menu-edit-id">
       <div class="form-group">
         <label class="form-label">Nama Menu</label>
-        <input type="text" class="form-control" id="menu-edit-nama">
+        <div class="menu-ac-wrap">
+          <input type="text" class="form-control" id="menu-edit-nama"
+            autocomplete="off" oninput="menuAcFilter('menu-edit-nama','menu-ac-drop2')"
+            onfocus="menuAcFilter('menu-edit-nama','menu-ac-drop2')"
+            onblur="setTimeout(()=>menuAcClose('menu-ac-drop2'),200)"
+            onkeydown="menuAcKey(event,'menu-edit-nama','menu-ac-drop2')">
+          <div class="menu-ac-dropdown" id="menu-ac-drop2"></div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -5806,6 +6788,96 @@ window.addEventListener('popstate', function(e) {
   }
 });
 
+// ══════════════════════════════════════════════════════════
+// MENU NAMA AUTOCOMPLETE (INLINE DROPDOWN)
+// ══════════════════════════════════════════════════════════
+let _menuAcHoverIdx = {}; // track hover index per dropdown id
+
+function menuAcAddToMaster(nama) {
+  if (!nama) return;
+  const lower = menuMasterList.map(x=>x.toLowerCase());
+  if (!lower.includes(nama.toLowerCase())) {
+    menuMasterList.push(nama);
+    menuMasterList.sort((a,b)=>a.localeCompare(b,'id'));
+  }
+}
+
+function menuAcFilter(inputId, dropId) {
+  const input = document.getElementById(inputId);
+  const drop  = document.getElementById(dropId);
+  if (!input || !drop) return;
+  const q   = input.value.trim();
+  const ql  = q.toLowerCase();
+  _menuAcHoverIdx[dropId] = -1;
+
+  const matched = ql
+    ? menuMasterList.filter(n => n.toLowerCase().includes(ql))
+    : menuMasterList;
+
+  const isExact = menuMasterList.some(n => n.toLowerCase() === ql);
+
+  let html = '';
+  // Tombol "Tambah baru" — tampil kalau ada ketikan & belum ada persis di master
+  if (q && !isExact) {
+    html += `<div class="menu-ac-item menu-ac-new" data-val="${escQ(q)}" onmousedown="menuAcPick('${inputId}','${dropId}','${escQ(q)}')">
+      ✚ Tambah: <b>${escHtml(q)}</b>
+    </div>`;
+  }
+  // Item yang cocok
+  html += matched.map(n => {
+    const hi = ql ? n.replace(new RegExp('('+ql.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<b>$1</b>') : n;
+    return `<div class="menu-ac-item" data-val="${escQ(n)}" onmousedown="menuAcPick('${inputId}','${dropId}','${escQ(n)}')">
+      🍽 ${hi}
+    </div>`;
+  }).join('');
+
+  drop.innerHTML = html || (q ? '<div class="menu-ac-item" style="color:var(--ink4);pointer-events:none">Tidak ada — ketik untuk tambah baru</div>' : '');
+  drop.classList.toggle('open', !!(html || q));
+}
+
+function menuAcPick(inputId, dropId, val) {
+  const input = document.getElementById(inputId);
+  if (input) { input.value = val; input.focus(); }
+  menuAcClose(dropId);
+  menuAcAddToMaster(val);
+}
+
+function menuAcClose(dropId) {
+  const drop = document.getElementById(dropId);
+  if (drop) drop.classList.remove('open');
+}
+
+function menuAcKey(e, inputId, dropId) {
+  const drop  = document.getElementById(dropId);
+  if (!drop || !drop.classList.contains('open')) return;
+  const items = drop.querySelectorAll('.menu-ac-item');
+  if (!items.length) return;
+  let idx = _menuAcHoverIdx[dropId] ?? -1;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    idx = Math.min(idx + 1, items.length - 1);
+    _menuAcHoverIdx[dropId] = idx;
+    items.forEach((el,i) => el.classList.toggle('ac-hover', i===idx));
+    items[idx].scrollIntoView({ block:'nearest' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    idx = Math.max(idx - 1, 0);
+    _menuAcHoverIdx[dropId] = idx;
+    items.forEach((el,i) => el.classList.toggle('ac-hover', i===idx));
+    items[idx].scrollIntoView({ block:'nearest' });
+  } else if (e.key === 'Enter') {
+    if (idx >= 0 && items[idx]) {
+      e.preventDefault();
+      items[idx].dispatchEvent(new MouseEvent('mousedown'));
+    }
+  } else if (e.key === 'Escape') {
+    menuAcClose(dropId);
+  }
+}
+
+function escQ(s)    { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 // ── INIT AC FIELDS ─────────────────────────────────────────
 function initAcFields() {
   acRegister('ev-status',        ['inquiry','booking','dp','lunas','selesai','cancel'], false, 'Status Event');
@@ -5911,10 +6983,22 @@ initAcFields();
   <div class="sheet" onclick="e=>e.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
-      <span class="sheet-title">🎨 Pilih Tema</span>
+      <span class="sheet-title">⚙️ Pengaturan</span>
       <span class="sheet-close" onclick="closeSheet('sheetTheme')">✕</span>
     </div>
     <div class="sheet-body">
+      <!-- Mode Toggle -->
+      <div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">🔀 Mode Pencatatan</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+        <button id="modeToggleModern" onclick="selectMode('modern')" style="background:var(--surface);border:2px solid var(--gold);border-radius:10px;padding:12px 14px;text-align:left;cursor:pointer">
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">⚡ Mode Modern</div>
+          <div style="font-size:11px;color:var(--ink3)">Stok, pembelian, kas terintegrasi</div>
+        </button>
+        <button id="modeToggleKonven" onclick="selectMode('konvensional')" style="background:var(--surface);border:2px solid var(--border2);border-radius:10px;padding:12px 14px;text-align:left;cursor:pointer">
+          <div style="font-size:13px;font-weight:700;color:var(--ink)">📒 Mode Konvensional</div>
+          <div style="font-size:11px;color:var(--ink3)">Buku kas: Gubukan, Tokba, RT</div>
+        </button>
+      </div>
       <div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">🌙 Tema Gelap</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
         <button class="theme-btn" data-theme="dark"    onclick="setTheme('dark')"
