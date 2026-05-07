@@ -2383,11 +2383,12 @@ function renderEvents() {
   const renderCard = ev => {
     const isUpcoming = ev.tanggal >= today;
     const showWA = isUpcoming && ev.summary && ['inquiry','booking','dp'].includes(ev.status);
+    const noStr = ev.no_event ? `<span style="font-size:10px;color:var(--ink4);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:var(--mono);margin-right:4px">#${ev.no_event}</span>` : '';
     return `
     <div class="ev-item" onclick="openEventDetail('${ev.id}')">
       <div class="ev-top">
         <div>
-          <div class="ev-customer">${ev.customer}</div>
+          <div class="ev-customer">${noStr}${ev.customer}</div>
           <div class="ev-date">📅 ${fmtDate(ev.tanggal)}${ev.lokasi ? ' · '+ev.lokasi : ''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
@@ -2478,8 +2479,15 @@ async function saveEvent() {
   };
   if (!data.customer || !data.tanggal) { toast('⚠️ Isi customer dan tanggal'); return; }
   try {
-    if (id) await sbUpdate('gk_event', id, data);
-    else await sbInsert('gk_event', data);
+    if (id) {
+      await sbUpdate('gk_event', id, data);
+    } else {
+      // Auto-assign no_event = MAX + 1
+      const maxRes = await sbGet('gk_event', 'select=no_event&order=no_event.desc&limit=1');
+      const lastNo = parseInt(maxRes[0]?.no_event||'0')||0;
+      data.no_event = String(lastNo + 1);
+      await sbInsert('gk_event', data);
+    }
     closeSheet('sheetEvent');
     toast('✅ Event disimpan');
     await loadEvents();
@@ -2536,7 +2544,8 @@ function renderEventDetail() {
   const bayarPct   = nilaiOrder>0 ? Math.min(Math.round(terbayar/nilaiOrder*100),100) : 0;
 
   // Header
-  set('evd-customer', ev.customer);
+  const noLabel = ev.no_event ? `#${ev.no_event} · ` : '';
+  set('evd-customer', noLabel + ev.customer);
   set('evd-date', fmtDate(ev.tanggal) + (ev.lokasi ? ' · '+ev.lokasi : ''));
   document.getElementById('evd-status').className = 'badge '+ev.status;
   set('evd-status', ev.status);
