@@ -1584,7 +1584,7 @@ select.form-control { appearance: none; }
       <div class="form-group" id="kv-ref-event-wrap" style="display:none">
         <label class="form-label">Referensi Event <span style="color:var(--ink4)">(opsional)</span></label>
         <div class="menu-ac-wrap">
-          <input type="text" class="form-control" id="kv-ref-event" placeholder="Cari no. event atau nama customer..."
+          <input type="text" class="form-control" id="kv-ref-event" placeholder="Ketik lalu pilih dari dropdown ↓"
             autocomplete="off" oninput="kvRefEventFilter()" onfocus="kvRefEventFilter()"
             onblur="setTimeout(()=>kvRefEventClose(),200)">
           <input type="hidden" id="kv-ref-event-id">
@@ -6026,7 +6026,11 @@ async function saveKvMutasi() {
       await sbInsert('gk_mutasi', {entitas, tipe, deskripsi, qty, satuan, harga, jumlah, tanggal, vendor, kategori, ref_event_id: refEventId, ref_event_label: refEventLbl});
       toast('✅ Catatan disimpan');
       // Auto-create gk_event_bayar jika ada referensi event
-      if (refEventId && tipe==='masuk' && entitas==='gubukan') {
+      if (tipe==='masuk' && entitas==='gubukan' && document.getElementById('kv-ref-event').value.trim()) {
+        if (!refEventId) {
+          toast('⚠️ Pilih event dari dropdown — jangan ketik manual');
+          return;
+        }
         const tahap  = document.getElementById('kv-ref-tahap')?.value  || 'dp';
         const metode = document.getElementById('kv-ref-metode')?.value || 'transfer';
         try {
