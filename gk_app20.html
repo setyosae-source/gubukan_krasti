@@ -5580,10 +5580,16 @@ async function loadKvDashboard() {
 
   try {
     const today = localDate();
+    const p = state.period;
+    let start, end;
+    if (p.mode === 'year') { start = `${p.year}-01-01`; end = `${p.year}-12-31`; }
+    else if (p.mode === 'custom') { start = p.customStart; end = p.customEnd; }
+    else { const y=p.year,m=p.month; start=`${y}-${String(m).padStart(2,'0')}-01`; end=new Date(y,m,0).toISOString().slice(0,10); }
+
     const [gubM, tokM, rtM, sawal, events, remindData] = await Promise.all([
-      sbGet('gk_mutasi','entitas=eq.gubukan&select=tipe,jumlah'),
-      sbGet('gk_mutasi','entitas=eq.tokba&select=tipe,jumlah'),
-      sbGet('gk_mutasi','entitas=eq.rt&select=tipe,jumlah'),
+      sbGet('gk_mutasi',`entitas=eq.gubukan&tanggal=gte.${start}&tanggal=lte.${end}&select=tipe,jumlah`),
+      sbGet('gk_mutasi',`entitas=eq.tokba&tanggal=gte.${start}&tanggal=lte.${end}&select=tipe,jumlah`),
+      sbGet('gk_mutasi',`entitas=eq.rt&tanggal=gte.${start}&tanggal=lte.${end}&select=tipe,jumlah`),
       sbGet('gk_saldo_awal','select=entitas,jumlah'),
       sbGet('gk_event',`tanggal=gte.${today}&status=neq.selesai&order=tanggal.asc&limit=5&select=*`),
       sbGet('gk_event',`tanggal=gte.${today}&status=in.(inquiry,booking,dp,lunas)&order=tanggal.asc&limit=10&select=*`),
@@ -5656,9 +5662,23 @@ async function loadKvDashboard() {
 async function loadKvPage(entitas) {
   kvCurrentEntitas = entitas;
   try {
-    const y = state.period.year, m = state.period.month;
-    const start = `${y}-${String(m).padStart(2,'0')}-01`;
-    const end   = new Date(y, m, 0).toISOString().slice(0,10); // last day of month
+    const p = state.period;
+    let start, end;
+    if (p.mode === 'year') {
+      start = `${p.year}-01-01`;
+      end   = `${p.year}-12-31`;
+    } else if (p.mode === 'custom') {
+      start = p.customStart;
+      end   = p.customEnd;
+    } else if (p.mode === 'upcoming') {
+      start = localDate();
+      end   = `${p.year+1}-12-31`;
+    } else {
+      // default: month
+      const y = p.year, m = p.month;
+      start = `${y}-${String(m).padStart(2,'0')}-01`;
+      end   = new Date(y, m, 0).toISOString().slice(0,10);
+    }
     const data = await sbGet('gk_mutasi', `entitas=eq.${entitas}&tanggal=gte.${start}&tanggal=lte.${end}&order=tanggal.desc,created_at.desc&select=*`);
     kvMutasiCache[entitas] = data;
 
