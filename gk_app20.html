@@ -1817,6 +1817,14 @@ function switchTab(el) {
 }
 
 function loadPage(page) {
+  if (appMode === 'konvensional') {
+    if (page==='dashboard') loadKvDashboard();
+    else if (page==='event') { loadEvents(); if (!bahanData.length) loadBahan(); }
+    else if (page==='gubukan') loadKvPage('gubukan');
+    else if (page==='kvtokba') loadKvPage('tokba');
+    else if (page==='rt') loadKvPage('rt');
+    return;
+  }
   if (page==='dashboard') loadDashboard();
   else if (page==='event') { loadEvents(); if (!bahanData.length) loadBahan(); }
   else if (page==='bahan') loadBahan();
@@ -5648,7 +5656,10 @@ async function loadKvDashboard() {
 async function loadKvPage(entitas) {
   kvCurrentEntitas = entitas;
   try {
-    const data = await sbGet('gk_mutasi', `entitas=eq.${entitas}&order=tanggal.desc,created_at.desc&select=*`);
+    const y = state.period.year, m = state.period.month;
+    const start = `${y}-${String(m).padStart(2,'0')}-01`;
+    const end   = new Date(y, m, 0).toISOString().slice(0,10); // last day of month
+    const data = await sbGet('gk_mutasi', `entitas=eq.${entitas}&tanggal=gte.${start}&tanggal=lte.${end}&order=tanggal.desc,created_at.desc&select=*`);
     kvMutasiCache[entitas] = data;
 
     const masuk  = data.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0);
