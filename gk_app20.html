@@ -5512,37 +5512,101 @@ let kvCurrentEntitas = 'gubukan';
 let kvCurrentTipe    = 'masuk';
 
 async function loadKvDashboard() {
-  // Sembunyikan section modern, tampilkan section konvensional
-  const modernSections = ['d-total-laba','d-reminders'];
-  const modernGrids = document.querySelectorAll('#page-dashboard .stat-grid, #page-dashboard .card');
-  modernGrids.forEach(el => {
-    // Sembunyikan semua card/grid modern kecuali kv section
-    if (!el.closest('#kv-dash-gubukan')) el.style.display = 'none';
-  });
-  const kvSection = document.getElementById('kv-dash-gubukan');
-  if (kvSection) kvSection.style.display = '';
-
-  // Sembunyikan Event Mendatang
-  const evTitle = document.querySelector('#page-dashboard .section-title');
-  const evList  = document.getElementById('d-events-upcoming');
-  if (evTitle) evTitle.style.display = 'none';
-  if (evList)  evList.style.display  = 'none';
+  // Restore semua elemen modern dulu (sama seperti loadDashboard)
+  document.querySelectorAll('#page-dashboard .stat-grid, #page-dashboard .card').forEach(el => el.style.display = '');
+  document.querySelectorAll('#page-dashboard .section-title').forEach(el => el.style.display = '');
+  const reminders  = document.getElementById('d-reminders');
+  const evList     = document.getElementById('d-events-upcoming');
+  const kvSection  = document.getElementById('kv-dash-gubukan');
+  if (reminders) reminders.style.display = '';
+  if (evList)    evList.style.display    = '';
+  if (kvSection) kvSection.style.display = 'none'; // hide kv saldo section (pakai card utama)
 
   try {
-    const [gubM, tokM, rtM, sawal] = await Promise.all([
+    const today = localDate();
+    const [gubM, tokM, rtM, sawal, events, remindData] = await Promise.all([
       sbGet('gk_mutasi','entitas=eq.gubukan&select=tipe,jumlah'),
       sbGet('gk_mutasi','entitas=eq.tokba&select=tipe,jumlah'),
       sbGet('gk_mutasi','entitas=eq.rt&select=tipe,jumlah'),
       sbGet('gk_saldo_awal','select=entitas,jumlah'),
+      sbGet('gk_event',`tanggal=gte.${today}&status=neq.selesai&order=tanggal.asc&limit=5&select=*`),
+      sbGet('gk_event',`status=neq.selesai&order=tanggal.asc&select=*,gk_event_bayar(jumlah)`),
     ]);
+
     const sum = (arr, tipe) => arr.filter(r=>r.tipe===tipe).reduce((s,r)=>s+Number(r.jumlah||0),0);
     const sawalRt = sawal.filter(r=>r.entitas==='rt').reduce((s,r)=>s+Number(r.jumlah||0),0);
-    const gSaldo = sum(gubM,'masuk') - sum(gubM,'keluar');
-    const tSaldo = sum(tokM,'masuk') - sum(tokM,'keluar');
-    const rSaldo = sawalRt + sum(rtM,'masuk') - sum(rtM,'keluar');
-    set('kv-d-g-saldo',  rpFull(gSaldo));
-    set('kv-d-t-saldo',  rpFull(tSaldo));
-    set('kv-d-rt-saldo', rpFull(rSaldo));
+
+    const gMasuk  = sum(gubM,'masuk'), gKeluar = sum(gubM,'keluar');
+    const tMasuk  = sum(tokM,'masuk'), tKeluar = sum(tokM,'keluar');
+    const rMasuk  = sum(rtM,'masuk'),  rKeluar = sum(rtM,'keluar');
+    const gSaldo  = gMasuk - gKeluar;
+    const tSaldo  = tMasuk - tKeluar;
+    const rSaldo  = sawalRt + rMasuk - rKeluar;
+    const totalSaldo = gSaldo + tSaldo + rSaldo;
+
+    // Total (pakai saldo gabungan sebagai "laba bersih")
+    set('d-total-laba', rpFull(totalSaldo));
+    set('d-total-omzet', rpFull(gMasuk + tMasuk));
+    const margin = (gMasuk + tMasuk) > 0 ? Math.round(totalSaldo / (gMasuk + tMasuk) * 100) : 0;
+    set('d-margin', margin + '%');
+    const pct = Math.max(0, Math.min(100, margin));
+    const bar = document.getElementById('d-laba-bar');
+    if (bar) bar.style.width = pct + '%';
+
+    // Stat card Gubukan & Tokba
+    set('d-gk-laba', rpFull(gSaldo));
+    set('d-gk-omzet', 'Masuk ' + rpFull(gMasuk));
+    set('d-tb-laba', rpFull(tSaldo));
+    set('d-tb-omzet', 'Masuk ' + rpFull(tMasuk));
+
+    // Tampilkan RT di kv-dash-gubukan section (reuse)
+    if (kvSection) {
+      kvSection.style.display = '';
+      set('kv-d-rt-saldo', rpFull(rSaldo));
+      // Ubah label RT card jadi full width
+    }
+    set('kv-d-g-saldo', rpFull(gSaldo));
+    set('kv-d-t-saldo', rpFull(tSaldo));
+
+    // Reminder pembayaran (sama seperti modern)
+    if (reminders) {
+      const pending = remindData.filter(ev => {
+        const sudah = (ev.gk_event_bayar||[]).reduce((s,b)=>s+Number(b.jumlah||0),0);
+        return sudah < ev.nilai_order;
+      });
+      if (!pending.length) {
+        reminders.innerHTML = '';
+      } else {
+        reminders.innerHTML = pending.slice(0,3).map(ev => {
+          const sudah = (ev.gk_event_bayar||[]).reduce((s,b)=>s+Number(b.jumlah||0),0);
+          const sisa  = (ev.nilai_order||0) - sudah;
+          const hari  = Math.ceil((new Date(ev.tanggal)-new Date(today))/(1000*60*60*24));
+          return `<div class="reminder-card" style="margin-bottom:8px">
+            <div style="font-weight:700">${ev.customer}</div>
+            <div style="font-size:11px;color:var(--ink3)">${fmtDate(ev.tanggal)}</div>
+            <div style="font-size:12px;color:var(--red);margin-top:4px">Sisa: ${rpFull(sisa)} · H${hari>=0?'-':'+'}${Math.abs(hari)}</div>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    // Event mendatang
+    if (evList) {
+      if (!events.length) {
+        evList.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-text">Belum ada event mendatang</div></div>`;
+      } else {
+        evList.innerHTML = events.map(ev => `
+          <div class="ev-item" onclick="openEventDetail('${ev.id}')">
+            <div class="ev-top">
+              <div>
+                <div class="ev-customer">${ev.customer}</div>
+                <div class="ev-date">📅 ${fmtDate(ev.tanggal)} ${ev.lokasi?'· '+ev.lokasi:''}</div>
+              </div>
+              <span class="badge ${ev.status}">${ev.status}</span>
+            </div>
+          </div>`).join('');
+      }
+    }
   } catch(e) { /* silent */ }
 }
 
