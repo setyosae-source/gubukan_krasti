@@ -1590,6 +1590,18 @@ select.form-control { appearance: none; }
           <input type="hidden" id="kv-ref-event-id">
           <div class="menu-ac-dropdown" id="kv-ref-event-drop"></div>
         </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <select class="form-control" id="kv-ref-tahap" style="font-size:13px">
+            <option value="dp">DP</option>
+            <option value="pelunasan">Pelunasan</option>
+            <option value="full">Full Payment</option>
+          </select>
+          <select class="form-control" id="kv-ref-metode" style="font-size:13px">
+            <option value="transfer">Transfer</option>
+            <option value="tunai">Tunai</option>
+            <option value="qris">QRIS</option>
+          </select>
+        </div>
         <div class="form-hint">Otomatis update status bayar di event terkait</div>
       </div>
       <div class="form-group" id="kv-vendor-wrap" style="display:none">
@@ -4452,7 +4464,7 @@ async function saveMenuEdit() {
   if (qty>0 && harga>0 && total>0)   harga = Math.round(total/qty*100)/100;
   if (!nama||!qty) { toast('⚠️ Lengkapi nama dan qty'); return; }
   try {
-    await sbUpdate('gk_event_menu', id, {nama, qty, harga, total: total||qty*harga});
+    await sbUpdate('gk_event_menu', id, {nama, qty, harga});
     const idx = currentEventMenus.findIndex(x=>x.id===id);
     if (idx>=0) currentEventMenus[idx] = {...currentEventMenus[idx], nama, qty, harga, total: total||qty*harga};
     menuAcAddToMaster(nama);
@@ -4630,8 +4642,8 @@ async function saveMenu() {
   if (!nama || !qty) { toast('⚠️ Lengkapi nama dan qty'); return; }
   if (!harga && !total) { toast('⚠️ Isi harga/pax atau total'); return; }
   try {
-    const res = await sbInsert('gk_event_menu', { event_id: currentEvent.id, nama, qty, harga, total: total||qty*harga });
-    currentEventMenus.push(res[0]);
+    const res = await sbInsert('gk_event_menu', { event_id: currentEvent.id, nama, qty, harga });
+    currentEventMenus.push({...res[0], total: total||qty*harga});
     menuAcAddToMaster(nama);
     closeSheet('sheetMenu');
     renderEventDetail();
@@ -5881,6 +5893,10 @@ function openKvForm(entitas, tipe) {
   if (refEventWrap) refEventWrap.style.display = (tipe==='masuk' && entitas==='gubukan') ? '' : 'none';
   document.getElementById('kv-ref-event').value    = '';
   document.getElementById('kv-ref-event-id').value = '';
+  const tahapEl  = document.getElementById('kv-ref-tahap');
+  const metodeEl = document.getElementById('kv-ref-metode');
+  if (tahapEl)  tahapEl.value  = 'dp';
+  if (metodeEl) metodeEl.value = 'transfer';
   kvAcClose(); kvSatuanAcClose(); kvKategoriAcClose();
   openSheet('sheetKvForm');
   setTimeout(()=>{ const el=document.getElementById('kv-deskripsi'); if(el) el.focus(); }, 350);
@@ -5926,17 +5942,19 @@ async function saveKvMutasi() {
       toast('✅ Catatan disimpan');
       // Auto-create gk_event_bayar jika ada referensi event
       if (refEventId && tipe==='masuk' && entitas==='gubukan') {
+        const tahap  = document.getElementById('kv-ref-tahap')?.value  || 'dp';
+        const metode = document.getElementById('kv-ref-metode')?.value || 'transfer';
         try {
           await sbInsert('gk_event_bayar', {
             event_id: refEventId,
-            tahap: 'dp',
+            tahap,
             jumlah,
-            metode: 'transfer',
+            metode,
             tanggal,
             catatan: `Via Gubukan: ${deskripsi}`
           });
-          toast('✅ Catatan disimpan & bayar event terupdate');
-        } catch(e2) { /* silent - jangan block save utama */ }
+          toast('✅ Tersimpan & bayar event terupdate');
+        } catch(e2) { toast('⚠️ Catatan tersimpan tapi bayar event gagal: ' + e2.message); }
       }
     }
     await kvSaveToMaster(entitas, tipe, deskripsi, satuan, harga, kategori);
