@@ -1904,6 +1904,17 @@ function initPullToRefresh() {
 // DASHBOARD
 // ══════════════════════════════════════════════════════════
 async function loadDashboard() {
+  // Restore semua section modern, sembunyikan kv section
+  document.querySelectorAll('#page-dashboard .stat-grid, #page-dashboard .card').forEach(el => {
+    if (!el.closest('#kv-dash-gubukan')) el.style.display = '';
+  });
+  const kvSection = document.getElementById('kv-dash-gubukan');
+  if (kvSection) kvSection.style.display = 'none';
+  const evTitle = document.querySelector('#page-dashboard .section-title');
+  const evList  = document.getElementById('d-events-upcoming');
+  if (evTitle) evTitle.style.display = '';
+  if (evList)  evList.style.display  = '';
+
   const s = periodStart(), e = periodEnd();
   const y = state.period.year, m = state.period.month;
   const bulanStr = `${y}-${String(m).padStart(2,'0')}`;
@@ -5482,7 +5493,7 @@ function switchTabKv(el) {
   const body = document.getElementById('mainBody');
   if (body) body.scrollTop = 0;
   document.getElementById('fab').classList.toggle('hidden', false);
-  if (page === 'dashboard') loadDashboard();
+  if (page === 'dashboard') loadKvDashboard();
   else if (page === 'event') { loadEvents(); if (!bahanData.length) loadBahan(); }
   else if (page === 'gubukan') loadKvPage('gubukan');
   else if (page === 'kvtokba') loadKvPage('tokba');
@@ -5501,6 +5512,22 @@ let kvCurrentEntitas = 'gubukan';
 let kvCurrentTipe    = 'masuk';
 
 async function loadKvDashboard() {
+  // Sembunyikan section modern, tampilkan section konvensional
+  const modernSections = ['d-total-laba','d-reminders'];
+  const modernGrids = document.querySelectorAll('#page-dashboard .stat-grid, #page-dashboard .card');
+  modernGrids.forEach(el => {
+    // Sembunyikan semua card/grid modern kecuali kv section
+    if (!el.closest('#kv-dash-gubukan')) el.style.display = 'none';
+  });
+  const kvSection = document.getElementById('kv-dash-gubukan');
+  if (kvSection) kvSection.style.display = '';
+
+  // Sembunyikan Event Mendatang
+  const evTitle = document.querySelector('#page-dashboard .section-title');
+  const evList  = document.getElementById('d-events-upcoming');
+  if (evTitle) evTitle.style.display = 'none';
+  if (evList)  evList.style.display  = 'none';
+
   try {
     const [gubM, tokM, rtM, sawal] = await Promise.all([
       sbGet('gk_mutasi','entitas=eq.gubukan&select=tipe,jumlah'),
@@ -5510,20 +5537,13 @@ async function loadKvDashboard() {
     ]);
     const sum = (arr, tipe) => arr.filter(r=>r.tipe===tipe).reduce((s,r)=>s+Number(r.jumlah||0),0);
     const sawalRt = sawal.filter(r=>r.entitas==='rt').reduce((s,r)=>s+Number(r.jumlah||0),0);
-
-    const gMasuk  = sum(gubM,'masuk'), gKeluar = sum(gubM,'keluar');
-    const tMasuk  = sum(tokM,'masuk'), tKeluar = sum(tokM,'keluar');
-    const rMasuk  = sum(rtM,'masuk'),  rKeluar = sum(rtM,'keluar');
-
-    // Update dashboard kv summary cards if exist
-    ['kv-dash-gubukan','kv-dash-tokba','kv-dash-rt'].forEach(id=>{
-      const el = document.getElementById(id);
-      if (el) el.style.display = appMode==='konvensional' ? '' : 'none';
-    });
-    set('kv-d-g-saldo', rpFull(gMasuk-gKeluar));
-    set('kv-d-t-saldo', rpFull(tMasuk-tKeluar));
-    set('kv-d-rt-saldo', rpFull(sawalRt+rMasuk-rKeluar));
-  } catch(e) { /* dashboard load gentle fail */ }
+    const gSaldo = sum(gubM,'masuk') - sum(gubM,'keluar');
+    const tSaldo = sum(tokM,'masuk') - sum(tokM,'keluar');
+    const rSaldo = sawalRt + sum(rtM,'masuk') - sum(rtM,'keluar');
+    set('kv-d-g-saldo',  rpFull(gSaldo));
+    set('kv-d-t-saldo',  rpFull(tSaldo));
+    set('kv-d-rt-saldo', rpFull(rSaldo));
+  } catch(e) { /* silent */ }
 }
 
 async function loadKvPage(entitas) {
