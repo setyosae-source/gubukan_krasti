@@ -3700,52 +3700,20 @@ function openPeriod() {
 
   let html = '';
 
-  const isMonth  = !p.mode || p.mode==='month';
-  const isYear   = p.mode==='year';
   const isCustom = p.mode==='custom';
+  const defStart = p.customStart || new Date(curY,now.getMonth(),1).toISOString().slice(0,10);
+  const defEnd   = p.customEnd   || localDate();
 
   html += `
-  <div id="pd-mode-btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px">
-    <button onclick="pdSetMode('month')" style="padding:10px;border-radius:10px;border:2px solid ${isMonth?'var(--gold)':'var(--border2)'};background:${isMonth?'var(--gold-dim)':'var(--bg3)'};color:${isMonth?'var(--gold)':'var(--ink3)'};font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font)">
-      📅 Bulan
-    </button>
-    <button onclick="pdSetMode('year')" style="padding:10px;border-radius:10px;border:2px solid ${isYear?'var(--gold)':'var(--border2)'};background:${isYear?'var(--gold-dim)':'var(--bg3)'};color:${isYear?'var(--gold)':'var(--ink3)'};font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font)">
-      📆 Tahun
-    </button>
-    <button onclick="pdSetMode('custom')" style="padding:10px;border-radius:10px;border:2px solid ${isCustom?'var(--gold)':'var(--border2)'};background:${isCustom?'var(--gold-dim)':'var(--bg3)'};color:${isCustom?'var(--gold)':'var(--ink3)'};font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font)">
-      🗓 Range
-    </button>
+  <div class="form-group">
+    <label class="form-label">Dari</label>
+    <input type="date" id="custom-start" class="form-control" style="font-size:14px;padding:11px" value="${defStart}">
   </div>
-  <div id="pd-input-area">`;
-
-  if (isMonth) {
-    const months = [];
-    for (let i=-3; i<24; i++) {
-      const d = new Date(curY, now.getMonth()-i, 1);
-      months.push({ y: d.getFullYear(), m: d.getMonth()+1, label: d.toLocaleDateString('id-ID',{month:'long',year:'numeric'}) });
-    }
-    html += `<select class="form-control" style="font-size:15px;padding:12px" onchange="pdBulanChange(this)">
-      ${months.map(x=>`<option value="${x.y}-${x.m}" ${p.year===x.y&&p.month===x.m?'selected':''}>${x.label}</option>`).join('')}
-    </select>`;
-  } else if (isYear) {
-    html += `<select class="form-control" style="font-size:15px;padding:12px" onchange="pdTahunChange(this)">
-      ${[curY,curY-1,curY-2,curY-3].map(y=>`<option value="${y}" ${p.year===y?'selected':''}>${y}</option>`).join('')}
-    </select>`;
-  } else {
-    html += `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-      <span style="font-size:12px;color:var(--ink3);width:36px">Dari</span>
-      <input type="date" id="custom-start" class="form-control" style="flex:1;font-size:13px;padding:10px"
-        value="${p.customStart||new Date(curY,now.getMonth(),1).toISOString().slice(0,10)}">
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-      <span style="font-size:12px;color:var(--ink3);width:36px">S/d</span>
-      <input type="date" id="custom-end" class="form-control" style="flex:1;font-size:13px;padding:10px"
-        value="${p.customEnd||localDate()}">
-    </div>
-    <button class="btn btn-primary" onclick="setPeriodCustom()">✅ Terapkan</button>`;
-  }
-  html += '</div>';
+  <div class="form-group">
+    <label class="form-label">S/d</label>
+    <input type="date" id="custom-end" class="form-control" style="font-size:14px;padding:11px" value="${defEnd}">
+  </div>
+  <button class="btn btn-primary" onclick="setPeriodCustom()">✅ Terapkan</button>`;
   el.innerHTML = html;
   openSheet('sheetPeriod');
 }
@@ -3772,13 +3740,15 @@ function pdSetMode(mode) {
       const d = new Date(curY, now.getMonth()-i, 1);
       months.push({ y: d.getFullYear(), m: d.getMonth()+1, label: d.toLocaleDateString('id-ID',{month:'long',year:'numeric'}) });
     }
-    area.innerHTML = `<select class="form-control" style="font-size:15px;padding:12px" onchange="pdBulanChange(this)">
+    area.innerHTML = `<select class="form-control" style="font-size:15px;padding:12px;margin-bottom:12px" id="pd-bulan-sel">
       ${months.map(x=>`<option value="${x.y}-${x.m}" ${(!p.mode||p.mode==='month')&&p.year===x.y&&p.month===x.m?'selected':''}>${x.label}</option>`).join('')}
-    </select>`;
+    </select>
+    <button class="btn btn-primary" onclick="pdBulanApply()">✅ Terapkan</button>`;
   } else if (mode === 'year') {
-    area.innerHTML = `<select class="form-control" style="font-size:15px;padding:12px" onchange="pdTahunChange(this)">
+    area.innerHTML = `<select class="form-control" style="font-size:15px;padding:12px;margin-bottom:12px" id="pd-tahun-sel">
       ${[curY,curY-1,curY-2,curY-3].map(y=>`<option value="${y}" ${p.mode==='year'&&p.year===y?'selected':''}>${y}</option>`).join('')}
-    </select>`;
+    </select>
+    <button class="btn btn-primary" onclick="pdTahunApply()">✅ Terapkan</button>`;
   } else {
     area.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -3793,6 +3763,16 @@ function pdSetMode(mode) {
     </div>
     <button class="btn btn-primary" onclick="setPeriodCustom()">✅ Terapkan</button>`;
   }
+}
+
+function pdBulanApply() {
+  const sel = document.getElementById('pd-bulan-sel');
+  if (sel) pdBulanChange(sel);
+}
+
+function pdTahunApply() {
+  const sel = document.getElementById('pd-tahun-sel');
+  if (sel) pdTahunChange(sel);
 }
 
 function pdBulanChange(sel) {
