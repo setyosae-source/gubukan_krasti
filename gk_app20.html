@@ -3700,20 +3700,28 @@ function openPeriod() {
 
   let html = '';
 
-  const isCustom = p.mode==='custom';
-  const defStart = p.customStart || new Date(curY,now.getMonth(),1).toISOString().slice(0,10);
-  const defEnd   = p.customEnd   || localDate();
+  // Buat list bulan dari 24 bulan lalu s.d 12 bulan ke depan
+  const months = [];
+  for (let i = -12; i <= 24; i++) {
+    const d = new Date(curY, now.getMonth() - i, 1);
+    const y = d.getFullYear(), m = d.getMonth() + 1;
+    const lastDay = new Date(y, m, 0).getDate();
+    months.push({
+      y, m,
+      label: d.toLocaleDateString('id-ID', {month:'long', year:'numeric'}),
+      start: `${y}-${String(m).padStart(2,'0')}-01`,
+      end:   `${y}-${String(m).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`
+    });
+  }
+
+  const curStart = p.customStart || `${p.year}-${String(p.month).padStart(2,'0')}-01`;
+  const selIdx = months.findIndex(x => x.start === curStart);
 
   html += `
-  <div class="form-group">
-    <label class="form-label">Dari</label>
-    <input type="date" id="custom-start" class="form-control" style="font-size:14px;padding:11px" value="${defStart}">
-  </div>
-  <div class="form-group">
-    <label class="form-label">S/d</label>
-    <input type="date" id="custom-end" class="form-control" style="font-size:14px;padding:11px" value="${defEnd}">
-  </div>
-  <button class="btn btn-primary" onclick="setPeriodCustom()">✅ Terapkan</button>`;
+  <select class="form-control" id="pd-month-sel" style="font-size:15px;padding:13px;margin-bottom:16px">
+    ${months.map((x,i) => `<option value="${x.start}|${x.end}" ${i===selIdx?'selected':''}>${x.label}</option>`).join('')}
+  </select>
+  <button class="btn btn-primary" style="padding:13px" onclick="pdMonthApply()">✅ Terapkan</button>`;
   el.innerHTML = html;
   openSheet('sheetPeriod');
 }
@@ -3763,6 +3771,19 @@ function pdSetMode(mode) {
     </div>
     <button class="btn btn-primary" onclick="setPeriodCustom()">✅ Terapkan</button>`;
   }
+}
+
+function pdMonthApply() {
+  const sel = document.getElementById('pd-month-sel');
+  if (!sel) return;
+  const [start, end] = sel.value.split('|');
+  const d = new Date(start);
+  const y = d.getFullYear(), m = d.getMonth()+1;
+  state.period = {mode:'custom', year:y, month:m, customStart:start, customEnd:end};
+  document.getElementById('periodLabel').textContent =
+    d.toLocaleDateString('id-ID',{month:'short',year:'numeric'});
+  closeSheet('sheetPeriod');
+  loadPage(state.currentTab);
 }
 
 function pdBulanApply() {
