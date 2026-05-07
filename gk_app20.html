@@ -1248,8 +1248,8 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 
 <!-- Period Picker -->
-<div class="overlay period-sheet" id="sheetPeriod" onclick="closeSheet('sheetPeriod')">
-  <div class="sheet" onclick="e=>e.stopPropagation()">
+<div class="overlay period-sheet" id="sheetPeriod" onclick="overlayClose(event,'sheetPeriod')">
+  <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <span class="sheet-title">Pilih Periode</span>
@@ -3698,63 +3698,116 @@ function openPeriod() {
   const curY = now.getFullYear();
   const p = state.period;
 
-  // ── Section: Mendatang ──────────────────────
-  const upcomingOpts = [
-    { label: 'Mendatang (1 bulan)', months: 1 },
-    { label: 'Mendatang (3 bulan)', months: 3 },
-    { label: 'Mendatang (6 bulan)', months: 6 },
-  ];
-  let html = '<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Mendatang</div>';
-  upcomingOpts.forEach(o => {
-    const active = p.mode==='upcoming' && p.months===o.months ? 'active' : '';
-    html += `<button class="btn-period ${active}" onclick="setPeriodUpcoming(${o.months})">${o.label}</button>`;
-  });
+  let html = '';
 
-  // ── Section: Bulan ke depan ─────────────────
-  html += '<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px">Bulan ke Depan</div>';
-  for (let i=1; i<=6; i++) {
-    const d = new Date(curY, now.getMonth()+i, 1);
-    const y = d.getFullYear(), m = d.getMonth()+1;
-    const label = d.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-    const activeM = (!p.mode || p.mode==='month') && p.year===y && p.month===m ? 'active' : '';
-    html += `<button class="btn-period ${activeM}" onclick="setPeriod(${y},${m})">📅 ${label}</button>`;
-  }
+  const isMonth  = !p.mode || p.mode==='month';
+  const isYear   = p.mode==='year';
+  const isCustom = p.mode==='custom';
 
-  // ── Section: Tahun ──────────────────────────
-  html += '<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px">Tahun</div>';
-  for (let y = curY; y >= curY-2; y--) {
-    const activeY = (p.mode==='year' && p.year===y) ? 'active' : '';
-    html += `<button class="btn-period ${activeY}" onclick="setPeriodYear(${y})">${y}</button>`;
-  }
+  html += `
+  <div id="pd-mode-btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px">
+    <button onclick="pdSetMode('month')" style="padding:10px;border-radius:10px;border:2px solid ${isMonth?'var(--gold)':'var(--border2)'};background:${isMonth?'var(--gold-dim)':'var(--bg3)'};color:${isMonth?'var(--gold)':'var(--ink3)'};font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font)">
+      📅 Bulan
+    </button>
+    <button onclick="pdSetMode('year')" style="padding:10px;border-radius:10px;border:2px solid ${isYear?'var(--gold)':'var(--border2)'};background:${isYear?'var(--gold-dim)':'var(--bg3)'};color:${isYear?'var(--gold)':'var(--ink3)'};font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font)">
+      📆 Tahun
+    </button>
+    <button onclick="pdSetMode('custom')" style="padding:10px;border-radius:10px;border:2px solid ${isCustom?'var(--gold)':'var(--border2)'};background:${isCustom?'var(--gold-dim)':'var(--bg3)'};color:${isCustom?'var(--gold)':'var(--ink3)'};font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font)">
+      🗓 Range
+    </button>
+  </div>
+  <div id="pd-input-area">`;
 
-  // ── Section: Bulan (historis) ───────────────
-  html += '<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px">Per Bulan</div>';
-  for (let i=0; i<24; i++) {
-    const d = new Date(curY, now.getMonth()-i, 1);
-    const y = d.getFullYear(), m = d.getMonth()+1;
-    const label = d.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-    const activeM = (!p.mode || p.mode==='month') && p.year===y && p.month===m ? 'active' : '';
-    html += `<button class="btn-period ${activeM}" onclick="setPeriod(${y},${m})">${label}</button>`;
-  }
-
-  // ── Section: Custom Range ────────────────────
-  html += `<div style="font-size:10px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px">Custom Range</div>
-  <div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:11px;color:var(--ink3);width:40px">Dari</span>
-      <input type="date" id="custom-start" class="form-control" style="flex:1;font-size:12px;padding:7px 10px"
-        value="${p.mode==='custom'?p.customStart:new Date(curY,now.getMonth(),1).toISOString().slice(0,10)}">
+  if (isMonth) {
+    const months = [];
+    for (let i=-3; i<24; i++) {
+      const d = new Date(curY, now.getMonth()-i, 1);
+      months.push({ y: d.getFullYear(), m: d.getMonth()+1, label: d.toLocaleDateString('id-ID',{month:'long',year:'numeric'}) });
+    }
+    html += `<select class="form-control" style="font-size:15px;padding:12px" onchange="pdBulanChange(this)">
+      ${months.map(x=>`<option value="${x.y}-${x.m}" ${p.year===x.y&&p.month===x.m?'selected':''}>${x.label}</option>`).join('')}
+    </select>`;
+  } else if (isYear) {
+    html += `<select class="form-control" style="font-size:15px;padding:12px" onchange="pdTahunChange(this)">
+      ${[curY,curY-1,curY-2,curY-3].map(y=>`<option value="${y}" ${p.year===y?'selected':''}>${y}</option>`).join('')}
+    </select>`;
+  } else {
+    html += `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:12px;color:var(--ink3);width:36px">Dari</span>
+      <input type="date" id="custom-start" class="form-control" style="flex:1;font-size:13px;padding:10px"
+        value="${p.customStart||new Date(curY,now.getMonth(),1).toISOString().slice(0,10)}">
     </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:11px;color:var(--ink3);width:40px">S/d</span>
-      <input type="date" id="custom-end" class="form-control" style="flex:1;font-size:12px;padding:7px 10px"
-        value="${p.mode==='custom'?p.customEnd:localDate()}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="font-size:12px;color:var(--ink3);width:36px">S/d</span>
+      <input type="date" id="custom-end" class="form-control" style="flex:1;font-size:13px;padding:10px"
+        value="${p.customEnd||localDate()}">
     </div>
-    <button class="btn btn-primary" style="padding:9px" onclick="setPeriodCustom()">✅ Terapkan</button>
-  </div>`;
-
+    <button class="btn btn-primary" onclick="setPeriodCustom()">✅ Terapkan</button>`;
+  }
+  html += '</div>';
   el.innerHTML = html;
   openSheet('sheetPeriod');
+}
+
+function pdSetMode(mode) {
+  const now = new Date();
+  const curY = now.getFullYear();
+  const p = state.period;
+
+  // Update tombol aktif
+  document.querySelectorAll('#pd-mode-btns button').forEach((btn,i) => {
+    const modes = ['month','year','custom'];
+    const active = modes[i] === mode;
+    btn.style.borderColor = active ? 'var(--gold)' : 'var(--border2)';
+    btn.style.background  = active ? 'var(--gold-dim)' : 'var(--bg3)';
+    btn.style.color       = active ? 'var(--gold)' : 'var(--ink3)';
+  });
+
+  // Swap input area
+  const area = document.getElementById('pd-input-area');
+  if (mode === 'month') {
+    const months = [];
+    for (let i=-3; i<24; i++) {
+      const d = new Date(curY, now.getMonth()-i, 1);
+      months.push({ y: d.getFullYear(), m: d.getMonth()+1, label: d.toLocaleDateString('id-ID',{month:'long',year:'numeric'}) });
+    }
+    area.innerHTML = `<select class="form-control" style="font-size:15px;padding:12px" onchange="pdBulanChange(this)">
+      ${months.map(x=>`<option value="${x.y}-${x.m}" ${(!p.mode||p.mode==='month')&&p.year===x.y&&p.month===x.m?'selected':''}>${x.label}</option>`).join('')}
+    </select>`;
+  } else if (mode === 'year') {
+    area.innerHTML = `<select class="form-control" style="font-size:15px;padding:12px" onchange="pdTahunChange(this)">
+      ${[curY,curY-1,curY-2,curY-3].map(y=>`<option value="${y}" ${p.mode==='year'&&p.year===y?'selected':''}>${y}</option>`).join('')}
+    </select>`;
+  } else {
+    area.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:12px;color:var(--ink3);width:36px">Dari</span>
+      <input type="date" id="custom-start" class="form-control" style="flex:1;font-size:13px;padding:10px"
+        value="${p.customStart||new Date(curY,now.getMonth(),1).toISOString().slice(0,10)}">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="font-size:12px;color:var(--ink3);width:36px">S/d</span>
+      <input type="date" id="custom-end" class="form-control" style="flex:1;font-size:13px;padding:10px"
+        value="${p.customEnd||localDate()}">
+    </div>
+    <button class="btn btn-primary" onclick="setPeriodCustom()">✅ Terapkan</button>`;
+  }
+}
+
+function pdBulanChange(sel) {
+  const [y, m] = sel.value.split('-').map(Number);
+  state.period = {mode:'month', year:y, month:m};
+  document.getElementById('periodLabel').textContent =
+    new Date(y,m-1,1).toLocaleDateString('id-ID',{month:'short',year:'numeric'});
+  loadPage(state.currentTab);
+}
+
+function pdTahunChange(sel) {
+  const y = Number(sel.value);
+  state.period = {mode:'year', year:y, month:1};
+  document.getElementById('periodLabel').textContent = String(y);
+  loadPage(state.currentTab);
 }
 
 function setPeriodUpcoming(months) {
