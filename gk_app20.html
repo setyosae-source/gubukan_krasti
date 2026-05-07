@@ -1176,6 +1176,18 @@ select.form-control { appearance: none; }
     <button onclick="setTimeout(()=>openKvForm('rt','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
     <button onclick="openRtSaldoAwal()" style="padding:8px 12px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:700;font-size:12px;cursor:pointer">⚖️</button>
   </div>
+  <!-- Grafik Pengeluaran by Kategori -->
+  <div id="kv-rt-chart" style="margin-bottom:12px;display:none">
+    <button onclick="toggleKvChart()" id="kv-rt-chart-toggle"
+      style="width:100%;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+      <span>📊 Pengeluaran by Kategori</span>
+      <span id="kv-rt-chart-arrow">▼</span>
+    </button>
+    <div id="kv-rt-chart-body" style="display:none;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;border-top:none">
+      <div id="kv-rt-chart-bars"></div>
+    </div>
+  </div>
+
   <input type="text" class="form-control" id="kv-rt-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('rt',this.value)">
   <div id="kv-rt-saldoawal-panel" style="display:none;margin-bottom:14px">
     <div class="section-title">⚖️ Rekonsiliasi Saldo Awal</div>
@@ -5759,7 +5771,8 @@ async function loadKvPage(entitas) {
     kvMasterSatuan   = [...new Set(kvMasterDesc.map(x=>x.satuan).filter(Boolean))].sort();
     kvMasterKategori = [...new Set(kvMasterDesc.map(x=>x.kategori).filter(Boolean))].sort();
 
-    renderKvList(entitas, data, 'all'); // tampil semua
+    renderKvList(entitas, data, 'all');
+    if (entitas === 'rt') renderKvChart('rt', data); // tampil semua
   } catch(e) { toast('❌ '+e.message); }
 }
 
@@ -6128,6 +6141,58 @@ function kvOpenDetail(id, entitas) {
   if (delBtn) delBtn.style.display = '';
   kvAcClose(); kvSatuanAcClose();
   openSheet('sheetKvForm');
+}
+
+function toggleKvChart() {
+  const body  = document.getElementById('kv-rt-chart-body');
+  const arrow = document.getElementById('kv-rt-chart-arrow');
+  const btn   = document.getElementById('kv-rt-chart-toggle');
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display  = open ? 'block' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+  btn.style.borderRadius = open ? '8px 8px 0 0' : '8px';
+}
+
+function renderKvChart(entitas, data) {
+  const chartWrap = document.getElementById(`kv-${entitas}-chart`);
+  const chartBars = document.getElementById(`kv-${entitas}-chart-bars`);
+  if (!chartWrap || !chartBars) return;
+
+  // Hanya tampilkan untuk pengeluaran
+  const keluar = data.filter(r => r.tipe === 'keluar');
+  if (!keluar.length) { chartWrap.style.display = 'none'; return; }
+
+  // Group by kategori
+  const grouped = {};
+  let totalKeluar = 0;
+  keluar.forEach(r => {
+    const kat = r.kategori || '(Tanpa Kategori)';
+    grouped[kat] = (grouped[kat] || 0) + Number(r.jumlah || 0);
+    totalKeluar += Number(r.jumlah || 0);
+  });
+
+  // Sort by nilai desc
+  const sorted = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
+
+  const colors = ['#f0c060','#4ecb8d','#60a0f0','#f06080','#a78bfa','#fb923c','#34d399','#f472b6'];
+
+  chartBars.innerHTML = sorted.map(([kat, val], i) => {
+    const pct = totalKeluar > 0 ? Math.round(val / totalKeluar * 100) : 0;
+    const color = colors[i % colors.length];
+    const isNoKat = kat === '(Tanpa Kategori)';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:600;color:${isNoKat?'var(--ink4)':'var(--ink)'}">${kat}</span>
+        <span style="font-size:11px;color:var(--ink3);font-family:var(--mono)">${rpFull(val)} <span style="color:${color};font-weight:700">${pct}%</span></span>
+      </div>
+      <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width 0.4s ease"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  chartWrap.style.display = '';
 }
 
 // ── KV SORT STATE ──────────────────────────────────────────
