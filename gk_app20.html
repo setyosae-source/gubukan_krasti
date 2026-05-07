@@ -131,7 +131,7 @@
 /* ── RESET ────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;-webkit-font-smoothing:antialiased;}
-button{font-family:var(--font);cursor:pointer;border:none;outline:none;}
+button{font-family:var(--font);cursor:pointer;border:none;outline:none;touch-action:manipulation;}
 input,select,textarea{font-family:var(--font);outline:none;}
 a{color:inherit;text-decoration:none;}
 
@@ -1138,8 +1138,8 @@ select.form-control { appearance: none; }
     <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo</div><div class="stat-val gold" id="kv-gubukan-saldo" style="font-size:13px">—</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:8px">
-    <button onclick="openKvForm('gubukan','masuk')" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer">+ Masuk</button>
-    <button onclick="openKvForm('gubukan','keluar')" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer">+ Keluar</button>
+    <button onclick="setTimeout(()=>openKvForm('gubukan','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
+    <button onclick="setTimeout(()=>openKvForm('gubukan','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
   </div>
   <input type="text" class="form-control" id="kv-gubukan-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('gubukan',this.value)">
   <div id="kv-gubukan-list"></div>
@@ -1155,8 +1155,8 @@ select.form-control { appearance: none; }
     <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo</div><div class="stat-val gold" id="kv-tokba-saldo" style="font-size:13px">—</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:8px">
-    <button onclick="openKvForm('tokba','masuk')" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer">+ Masuk</button>
-    <button onclick="openKvForm('tokba','keluar')" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer">+ Keluar</button>
+    <button onclick="setTimeout(()=>openKvForm('tokba','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
+    <button onclick="setTimeout(()=>openKvForm('tokba','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
   </div>
   <input type="text" class="form-control" id="kv-tokba-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('tokba',this.value)">
   <div id="kv-tokba-list"></div>
@@ -1172,8 +1172,8 @@ select.form-control { appearance: none; }
     <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo+Awal</div><div class="stat-val gold" id="kv-rt-saldo" style="font-size:13px">—</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:8px">
-    <button onclick="openKvForm('rt','masuk')" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer">+ Masuk</button>
-    <button onclick="openKvForm('rt','keluar')" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer">+ Keluar</button>
+    <button onclick="setTimeout(()=>openKvForm('rt','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
+    <button onclick="setTimeout(()=>openKvForm('rt','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
     <button onclick="openRtSaldoAwal()" style="padding:8px 12px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:700;font-size:12px;cursor:pointer">⚖️</button>
   </div>
   <input type="text" class="form-control" id="kv-rt-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('rt',this.value)">
@@ -6025,7 +6025,9 @@ function openKvTypePicker(entitas) {
 
 function kvPickerSelect(tipe) {
   closeSheet('sheetKvPicker');
-  openKvForm(_kvPickerEntitas, tipe);
+  const entMap = {gubukan:'gubukan', kvtokba:'tokba', rt:'rt'};
+  const entitas = entMap[state.currentTab] || _kvPickerEntitas;
+  setTimeout(() => openKvForm(entitas, tipe), 50);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
