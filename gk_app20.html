@@ -5468,6 +5468,8 @@ function switchTabKv(el) {
   state.currentTab = page;
   document.querySelectorAll('#tabbarKonven .tab-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
+  // Close semua sheet/overlay yang terbuka
+  document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
   // Force semua page & kv-page hidden
   document.querySelectorAll('.page, .kv-page').forEach(p => {
     p.classList.remove('active');
@@ -5476,7 +5478,7 @@ function switchTabKv(el) {
   // Tampilkan target
   const pEl = document.getElementById('page-'+page);
   if (pEl) { pEl.style.display = 'block'; pEl.classList.add('active'); }
-  // Scroll ke atas agar page mulai dari posisi 0
+  // Scroll ke atas
   const body = document.getElementById('mainBody');
   if (body) body.scrollTop = 0;
   document.getElementById('fab').classList.toggle('hidden', false);
