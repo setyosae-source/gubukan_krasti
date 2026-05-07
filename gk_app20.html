@@ -5572,13 +5572,7 @@ async function loadKvDashboard() {
     set('d-tb-omzet', 'Masuk ' + rpFull(tMasuk));
 
     // Tampilkan RT di kv-dash-gubukan section (reuse)
-    if (kvSection) {
-      kvSection.style.display = '';
-      set('kv-d-rt-saldo', rpFull(rSaldo));
-      // Ubah label RT card jadi full width
-    }
-    set('kv-d-g-saldo', rpFull(gSaldo));
-    set('kv-d-t-saldo', rpFull(tSaldo));
+    if (kvSection) kvSection.style.display = 'none';
 
     // Reminder pembayaran — pakai fungsi yang sudah ada
     renderReminders(remindData);
