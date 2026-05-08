@@ -2094,29 +2094,27 @@ function renderDashboard(row, kas, upcoming) {
 
 async function loadSimpanan6Bulan() {
   try {
-    const now = new Date();
-    const months = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({
-        y: d.getFullYear(), m: d.getMonth() + 1,
-        start: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`,
-        end: new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().slice(0,10),
-        label: d.toLocaleDateString('id-ID',{month:'short',year:'2-digit'})
-      });
+    const now   = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth()+1, 1); // awal bulan depan
+    const end   = new Date(now.getFullYear(), now.getMonth()+7, 0); // akhir 6 bulan ke depan
+
+    const startStr = start.toISOString().slice(0,10);
+    const endStr   = end.toISOString().slice(0,10);
+
+    // Ambil event mendatang 6 bulan ke depan yang belum selesai
+    const events = await sbGet('gk_event', `tanggal=gte.${startStr}&tanggal=lte.${endStr}&status=neq.cancelled&select=id`);
+
+    let total = 0;
+    if (events.length) {
+      const ids = events.map(e=>e.id).join(',');
+      const bayar = await sbGet('gk_event_bayar', `event_id=in.(${ids})&select=jumlah`);
+      total = bayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
     }
-    // Fetch semua mutasi 6 bulan
-    const [mutasiGub, mutasiTok, mutasiRt, sawalRt] = await Promise.all([
-      sbGet('gk_mutasi', `entitas=eq.gubukan&tanggal=gte.${months[0].start}&tanggal=lte.${months[5].end}&select=tipe,jumlah,tanggal`),
-      sbGet('gk_mutasi', `entitas=eq.tokba&tanggal=gte.${months[0].start}&tanggal=lte.${months[5].end}&select=tipe,jumlah,tanggal`),
-      sbGet('gk_mutasi', `entitas=eq.rt&tanggal=gte.${months[0].start}&tanggal=lte.${months[5].end}&select=tipe,jumlah,tanggal`),
-      sbGet('gk_saldo_awal', 'select=jumlah'),
-    ]);
-    const sumMutasi = (arr) => arr.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0) - arr.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+Number(r.jumlah||0),0);
-    const totalSawal = sawalRt.reduce((s,r)=>s+Number(r.jumlah||0),0);
-    const simpanan = sumMutasi(mutasiGub) + sumMutasi(mutasiTok) + sumMutasi(mutasiRt) + totalSawal;
-    set('d-simpanan', rpFull(simpanan));
-    set('d-simpanan-range', `${months[0].label} – ${months[5].label}`);
+
+    set('d-simpanan', rpFull(total));
+    const startLabel = start.toLocaleDateString('id-ID',{month:'short',year:'2-digit'});
+    const endLabel   = end.toLocaleDateString('id-ID',{month:'short',year:'2-digit'});
+    set('d-simpanan-range', `${startLabel} – ${endLabel} · ${events.length} event`);
   } catch(e) { /* silent */ }
 }
 
