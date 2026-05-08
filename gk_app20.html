@@ -1315,6 +1315,22 @@ select.form-control { appearance: none; }
         <label class="form-label">Catatan</label>
         <textarea class="form-control" id="ev-catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
       </div>
+      <div class="form-group">
+        <label class="form-label">Diskon <span style="color:var(--ink4)">(opsional)</span></label>
+        <div class="form-row">
+          <div>
+            <input type="number" class="form-control" id="ev-diskon-persen" placeholder="%" min="0" max="100" step="0.1"
+              oninput="calcDiskon('persen')" style="font-size:14px">
+            <div class="form-hint">Persen (%)</div>
+          </div>
+          <div>
+            <input type="number" class="form-control" id="ev-diskon-nominal" placeholder="Rp" min="0"
+              oninput="calcDiskon('nominal')" style="font-size:14px;color:var(--gold)">
+            <div class="form-hint">Nominal (Rp)</div>
+          </div>
+        </div>
+        <div class="form-hint" style="margin-top:4px">Isi salah satu → yang lain otomatis (berdasarkan total menu)</div>
+      </div>
       <input type="hidden" id="ev-id">
       <button class="btn btn-primary" onclick="saveEvent()">💾 Simpan Event</button>
       <button class="btn btn-secondary" onclick="closeSheet('sheetEvent')">Batal</button>
@@ -1811,6 +1827,21 @@ window.addEventListener('popstate', function() {
   }
   _backHandling = false;
 });
+
+function calcDiskon(from) {
+  // Ambil total menu dari currentEventMenus kalau edit, atau 0 kalau tambah baru
+  const totalMenu = (currentEventMenus||[]).reduce((s,m)=>s+Number(m.total||0),0);
+  const pEl = document.getElementById('ev-diskon-persen');
+  const nEl = document.getElementById('ev-diskon-nominal');
+  if (!pEl || !nEl) return;
+  if (from === 'persen') {
+    const pct = Number(pEl.value)||0;
+    if (totalMenu > 0) nEl.value = Math.round(totalMenu * pct / 100);
+  } else {
+    const nom = Number(nEl.value)||0;
+    if (totalMenu > 0) pEl.value = Math.round(nom / totalMenu * 100 * 10) / 10;
+  }
+}
 
 // ── TAB NAVIGATION ─────────────────────────────────────────
 function switchTab(el) {
@@ -2492,12 +2523,13 @@ function openAddEvent() {
   document.getElementById('ev-lokasi').value = '';
   document.getElementById('ev-kontak').value = '';
   document.getElementById('ev-catatan').value = '';
+  document.getElementById('ev-diskon-persen').value  = '';
+  document.getElementById('ev-diskon-nominal').value = '';
   document.getElementById('sheetEventTitle').textContent = 'Tambah Event';
   openSheet('sheetEvent');
 }
 
 function openEditEvent(id) {
-  // Bisa dipanggil dari list (dengan id) atau dari detail sheet (tanpa id)
   const ev = id ? eventsData.find(x => x.id === id) : currentEvent;
   if (!ev) return;
   document.getElementById('ev-id').value = ev.id;
@@ -2507,6 +2539,8 @@ function openEditEvent(id) {
   document.getElementById('ev-lokasi').value = ev.lokasi || '';
   document.getElementById('ev-kontak').value = ev.kontak || '';
   document.getElementById('ev-catatan').value = ev.catatan || '';
+  document.getElementById('ev-diskon-persen').value  = ev.diskon_persen  || '';
+  document.getElementById('ev-diskon-nominal').value = ev.diskon_nominal || '';
   document.getElementById('sheetEventTitle').textContent = 'Edit Event';
   closeSheet('sheetEventDetail');
   openSheet('sheetEvent');
@@ -2521,6 +2555,8 @@ async function saveEvent() {
     lokasi:   document.getElementById('ev-lokasi').value.trim(),
     kontak:   document.getElementById('ev-kontak').value.trim(),
     catatan:  document.getElementById('ev-catatan').value.trim(),
+    diskon_persen:  Number(document.getElementById('ev-diskon-persen').value)||0,
+    diskon_nominal: Number(document.getElementById('ev-diskon-nominal').value)||0,
   };
   if (!data.customer || !data.tanggal) { toast('⚠️ Isi customer dan tanggal'); return; }
   try {
@@ -2574,7 +2610,7 @@ async function openEventDetail(id) {
 
 function renderEventDetail() {
   const ev = currentEvent;
-  const nilaiOrder = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
+  const nilaiOrder = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0) - Number(currentEvent.diskon_nominal||0);
   const hpp        = currentEventBahan.reduce((s,b)=>s+Number(b.total||0),0);
   const ops        = currentEventOps.reduce((s,o)=>s+Number(o.jumlah||0),0);
   const hppOps     = hpp + ops;
@@ -4952,9 +4988,12 @@ async function saveBayar() {
 
 function openInvoice() {
   const ev = currentEvent;
-  const omzet = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
-  const terbayar = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
-  const sisa = omzet - terbayar;
+  const subtotal  = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
+  const diskonNom = Number(ev.diskon_nominal)||0;
+  const diskonPct = Number(ev.diskon_persen)||0;
+  const omzet     = subtotal - diskonNom;
+  const terbayar  = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
+  const sisa      = omzet - terbayar;
   const invNo = 'INV/GK/' + (ev.tanggal||'').replace(/-/g,'').slice(2) + '/' + ev.id.slice(-4).toUpperCase();
   const el = document.getElementById('invoice-body');
   el.innerHTML = `
@@ -4972,6 +5011,9 @@ function openInvoice() {
         <span style="font-size:13px;font-weight:600;font-family:var(--mono)">${rpFull(m.total)}</span>
       </div>`).join('')}
     <div style="border-top:2px solid var(--border2);margin:12px 0;padding-top:12px">
+      ${diskonNom>0?`
+      <div class="row"><span class="row-label">Subtotal</span><span style="font-family:var(--mono)">${rpFull(subtotal)}</span></div>
+      <div class="row"><span class="row-label" style="color:var(--green)">Diskon${diskonPct>0?' ('+diskonPct+'%)':''}</span><span style="color:var(--green);font-family:var(--mono)">- ${rpFull(diskonNom)}</span></div>`:''}
       <div class="row"><span style="font-size:14px;font-weight:700">TOTAL</span><span style="font-size:16px;font-weight:700;color:var(--gold);font-family:var(--mono)">${rpFull(omzet)}</span></div>
       <div class="row"><span class="row-label">Terbayar</span><span style="font-size:13px;color:var(--green);font-family:var(--mono)">${rpFull(terbayar)}</span></div>
       ${sisa>0?`<div class="row"><span class="row-label" style="color:var(--red)">Sisa Tagihan</span><span style="font-size:14px;font-weight:700;color:var(--red);font-family:var(--mono)">${rpFull(sisa)}</span></div>`:'<div style="text-align:center;padding:10px;color:var(--green);font-weight:600">LUNAS</div>'}
@@ -5684,7 +5726,7 @@ async function loadKvDashboard() {
     const gSaldo  = gMasuk - gKeluar;
     const tSaldo  = tMasuk - tKeluar;
     const rSaldo  = sawalRt + rMasuk - rKeluar;
-    const totalSaldo = gSaldo + tSaldo + rSaldo;
+    const totalSaldo = gSaldo + tSaldo; // RT tidak ikut total laba
 
     // Total (pakai saldo gabungan sebagai "laba bersih")
     set('d-total-laba', rpFull(totalSaldo));
