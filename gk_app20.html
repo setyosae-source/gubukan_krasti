@@ -2615,6 +2615,9 @@ function renderEventDetail() {
   const dnEl = document.getElementById('evd-diskon-nominal');
   if (dpEl) dpEl.value = ev.diskon_persen  || '';
   if (dnEl) dnEl.value = ev.diskon_nominal || '';
+
+  // Header
+  const noLabel = ev.no_event ? `#${ev.no_event} · ` : '';
   set('evd-customer', noLabel + ev.customer);
   set('evd-date', fmtDate(ev.tanggal) + (ev.lokasi ? ' · '+ev.lokasi : ''));
   document.getElementById('evd-status').className = 'badge '+ev.status;
