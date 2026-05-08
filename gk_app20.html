@@ -829,9 +829,9 @@ select.form-control { appearance: none; }
     <div class="page active" id="page-dashboard">
       <div class="section-title">Ringkasan Bulan Ini</div>
 
-      <!-- Laba Total -->
-      <div class="card" style="border-color:rgba(240,192,96,0.3);background:linear-gradient(135deg,var(--bg2),rgba(240,192,96,0.04))">
-        <div class="card-title">Total Laba Bersih</div>
+      <!-- Total Laba Bersih (Gubukan + Tokba) -->
+      <div class="card" style="border-color:rgba(240,192,96,0.3);background:linear-gradient(135deg,var(--bg2),rgba(240,192,96,0.04));margin-bottom:8px">
+        <div class="card-title">Total Laba Bersih <span style="font-size:9px;color:var(--ink4)">(Gubukan + Tokba)</span></div>
         <div class="card-val gold" id="d-total-laba">—</div>
         <div class="prog-wrap" style="margin-top:10px">
           <div class="prog-bar gold" id="d-laba-bar" style="width:0%"></div>
@@ -842,18 +842,36 @@ select.form-control { appearance: none; }
         </div>
       </div>
 
-      <!-- Stat 2 kolom -->
-      <div class="stat-grid">
-        <div class="stat-card green">
-          <div class="stat-label">Gubukan</div>
-          <div class="stat-val green" id="d-gk-laba">—</div>
-          <div class="stat-sub" id="d-gk-omzet">Omzet —</div>
+      <!-- Total Saldo (Gubukan + Tokba + RT) -->
+      <div class="card" style="border-color:rgba(96,160,240,0.3);background:linear-gradient(135deg,var(--bg2),rgba(96,160,240,0.04));margin-bottom:8px">
+        <div class="card-title">Total Saldo <span style="font-size:9px;color:var(--ink4)">(Gubukan + Tokba + RT)</span></div>
+        <div class="card-val" style="color:var(--blue)" id="d-total-saldo">—</div>
+      </div>
+
+      <!-- Stat 3 kolom: Gubukan, Tokba, RT -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="stat-card green" style="padding:10px">
+          <div class="stat-label" style="font-size:9px">🍳 Gubukan</div>
+          <div class="stat-val green" style="font-size:13px" id="d-gk-laba">—</div>
+          <div class="stat-sub" style="font-size:9px" id="d-gk-omzet">—</div>
         </div>
-        <div class="stat-card gold">
-          <div class="stat-label">Toko Bahan</div>
-          <div class="stat-val gold" id="d-tb-laba">—</div>
-          <div class="stat-sub" id="d-tb-omzet">Omzet —</div>
+        <div class="stat-card gold" style="padding:10px">
+          <div class="stat-label" style="font-size:9px">🛒 Tokba</div>
+          <div class="stat-val gold" style="font-size:13px" id="d-tb-laba">—</div>
+          <div class="stat-sub" style="font-size:9px" id="d-tb-omzet">—</div>
         </div>
+        <div class="stat-card" style="padding:10px;border-color:rgba(96,160,240,0.3)">
+          <div class="stat-label" style="font-size:9px">🏠 RT</div>
+          <div class="stat-val" style="font-size:13px;color:var(--blue)" id="d-rt-saldo">—</div>
+          <div class="stat-sub" style="font-size:9px">Saldo</div>
+        </div>
+      </div>
+
+      <!-- Uang Simpanan 6 Bulan -->
+      <div class="card" style="border-color:rgba(78,203,141,0.3);background:linear-gradient(135deg,var(--bg2),rgba(78,203,141,0.04));margin-bottom:8px">
+        <div class="card-title">🏦 Uang Simpanan <span style="font-size:9px;color:var(--ink4)">(Akumulasi 6 Bulan)</span></div>
+        <div class="card-val green" id="d-simpanan">—</div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:4px" id="d-simpanan-range">—</div>
       </div>
 
       <!-- Reminder Pembayaran -->
@@ -861,18 +879,11 @@ select.form-control { appearance: none; }
 
       <!-- KV Mode Summary (tampil di mode konvensional) -->
       <div id="kv-dash-gubukan" style="display:none">
-        <div class="section-title">Saldo Konvensional</div>
         <div class="stat-grid">
           <div class="stat-card gold"><div class="stat-label">🍳 Gubukan</div><div class="stat-val gold" id="kv-d-g-saldo" style="font-size:14px">—</div></div>
           <div class="stat-card gold"><div class="stat-label">🛒 Toko Bahan</div><div class="stat-val gold" id="kv-d-t-saldo" style="font-size:14px">—</div></div>
           <div class="stat-card gold" style="grid-column:span 2"><div class="stat-label">🏠 Rumah Tangga</div><div class="stat-val gold" id="kv-d-rt-saldo" style="font-size:14px">—</div></div>
         </div>
-      </div>
-
-      <!-- Event mendatang -->
-      <div class="section-title">Event Mendatang</div>
-      <div id="d-events-upcoming">
-        <div class="empty"><div class="empty-icon">📅</div><div class="empty-text">Belum ada event</div></div>
       </div>
     </div>
 
@@ -1840,8 +1851,7 @@ async function saveDiskon() {
 }
 
 // ── TAB NAVIGATION ─────────────────────────────────────────
-function switchTab(el) {
-  if (!_initDone || Date.now() - _initTime < 500) return;
+window.switchTab = function switchTab(el) {
   const page = el.dataset.page;
   state.currentTab = page;
   document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
@@ -2069,23 +2079,45 @@ function renderDashboard(row, kas, upcoming) {
   set('d-kas-usaha', rpFull(kasUsaha?.saldo||0));
   set('d-kas-rt',    rpFull(kasRt?.saldo||0));
 
-  // Event mendatang
-  const el = document.getElementById('d-events-upcoming');
-  if (!upcoming.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-text">Belum ada event mendatang</div></div>`;
-    return;
-  }
-  el.innerHTML = upcoming.map(ev => `
-    <div class="ev-item" onclick="openEventDetail('${ev.id}')">
-      <div class="ev-top">
-        <div>
-          <div class="ev-customer">${ev.customer}</div>
-          <div class="ev-date">📅 ${fmtDate(ev.tanggal)} ${ev.lokasi ? '· '+ev.lokasi : ''}</div>
-        </div>
-        <span class="badge ${ev.status}">${ev.status}</span>
-      </div>
-      ${ev.catatan?`<div style="font-size:11px;color:#7c4a00;margin-top:6px;background:#fff3cd;border-left:3px solid #f0a500;padding:4px 8px;border-radius:0 6px 6px 0;font-style:italic">📝 ${ev.catatan}</div>`:''}
-    </div>`).join('');
+  // Total Saldo (Gubukan + Tokba + RT)
+  const rtSaldo = kasRt?.saldo || 0;
+  const totalSaldo = gkLaba + tbLaba + rtSaldo;
+  set('d-total-saldo', rpFull(totalSaldo));
+  set('d-rt-saldo', rpFull(rtSaldo));
+
+  // Uang Simpanan 6 bulan ke belakang
+  loadSimpanan6Bulan();
+
+  // Event mendatang — dihapus dari dashboard
+  renderReminders(upcoming);
+}
+
+async function loadSimpanan6Bulan() {
+  try {
+    const now = new Date();
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        y: d.getFullYear(), m: d.getMonth() + 1,
+        start: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`,
+        end: new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().slice(0,10),
+        label: d.toLocaleDateString('id-ID',{month:'short',year:'2-digit'})
+      });
+    }
+    // Fetch semua mutasi 6 bulan
+    const [mutasiGub, mutasiTok, mutasiRt, sawalRt] = await Promise.all([
+      sbGet('gk_mutasi', `entitas=eq.gubukan&tanggal=gte.${months[0].start}&tanggal=lte.${months[5].end}&select=tipe,jumlah,tanggal`),
+      sbGet('gk_mutasi', `entitas=eq.tokba&tanggal=gte.${months[0].start}&tanggal=lte.${months[5].end}&select=tipe,jumlah,tanggal`),
+      sbGet('gk_mutasi', `entitas=eq.rt&tanggal=gte.${months[0].start}&tanggal=lte.${months[5].end}&select=tipe,jumlah,tanggal`),
+      sbGet('gk_saldo_awal', 'select=jumlah'),
+    ]);
+    const sumMutasi = (arr) => arr.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0) - arr.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+Number(r.jumlah||0),0);
+    const totalSawal = sawalRt.reduce((s,r)=>s+Number(r.jumlah||0),0);
+    const simpanan = sumMutasi(mutasiGub) + sumMutasi(mutasiTok) + sumMutasi(mutasiRt) + totalSawal;
+    set('d-simpanan', rpFull(simpanan));
+    set('d-simpanan-range', `${months[0].label} – ${months[5].label}`);
+  } catch(e) { /* silent */ }
 }
 
 function set(id, val) {
@@ -5733,14 +5765,15 @@ async function loadKvDashboard() {
     const bar = document.getElementById('d-laba-bar');
     if (bar) bar.style.width = pct + '%';
 
-    // Stat card Gubukan & Tokba
+    // Stat card semua entitas
     set('d-gk-laba', rpFull(gSaldo));
     set('d-gk-omzet', 'Masuk ' + rpFull(gMasuk));
     set('d-tb-laba', rpFull(tSaldo));
     set('d-tb-omzet', 'Masuk ' + rpFull(tMasuk));
-
-    // Tampilkan RT di kv-dash-gubukan section (reuse)
+    set('d-rt-saldo', rpFull(rSaldo));
+    set('d-total-saldo', rpFull(gSaldo + tSaldo + rSaldo));
     if (kvSection) kvSection.style.display = 'none';
+    loadSimpanan6Bulan();
 
     // Reminder pembayaran — pakai fungsi yang sudah ada
     renderReminders(remindData);
@@ -6437,7 +6470,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="badge inquiry" id="evd-status">—</span>
-        <button onclick="setTimeout(()=>openEditEvent(),50)" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600">✏️ Edit</button>
+        <button onclick="setTimeout(()=>openEditEvent(currentEvent?.id),50)" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600">✏️ Edit</button>
         <span class="sheet-close" onclick="closeSheet('sheetEventDetail')">✕</span>
       </div>
     </div>
