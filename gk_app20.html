@@ -1315,22 +1315,6 @@ select.form-control { appearance: none; }
         <label class="form-label">Catatan</label>
         <textarea class="form-control" id="ev-catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
       </div>
-      <div class="form-group">
-        <label class="form-label">Diskon <span style="color:var(--ink4)">(opsional)</span></label>
-        <div class="form-row">
-          <div>
-            <input type="number" class="form-control" id="ev-diskon-persen" placeholder="%" min="0" max="100" step="0.1"
-              oninput="calcDiskon('persen')" style="font-size:14px">
-            <div class="form-hint">Persen (%)</div>
-          </div>
-          <div>
-            <input type="number" class="form-control" id="ev-diskon-nominal" placeholder="Rp" min="0"
-              oninput="calcDiskon('nominal')" style="font-size:14px;color:var(--gold)">
-            <div class="form-hint">Nominal (Rp)</div>
-          </div>
-        </div>
-        <div class="form-hint" style="margin-top:4px">Isi salah satu → yang lain otomatis (berdasarkan total menu)</div>
-      </div>
       <input type="hidden" id="ev-id">
       <button class="btn btn-primary" onclick="saveEvent()">💾 Simpan Event</button>
       <button class="btn btn-secondary" onclick="closeSheet('sheetEvent')">Batal</button>
@@ -1829,10 +1813,9 @@ window.addEventListener('popstate', function() {
 });
 
 function calcDiskon(from) {
-  // Ambil total menu dari currentEventMenus kalau edit, atau 0 kalau tambah baru
   const totalMenu = (currentEventMenus||[]).reduce((s,m)=>s+Number(m.total||0),0);
-  const pEl = document.getElementById('ev-diskon-persen');
-  const nEl = document.getElementById('ev-diskon-nominal');
+  const pEl = document.getElementById('evd-diskon-persen');
+  const nEl = document.getElementById('evd-diskon-nominal');
   if (!pEl || !nEl) return;
   if (from === 'persen') {
     const pct = Number(pEl.value)||0;
@@ -1841,6 +1824,19 @@ function calcDiskon(from) {
     const nom = Number(nEl.value)||0;
     if (totalMenu > 0) pEl.value = Math.round(nom / totalMenu * 100 * 10) / 10;
   }
+}
+
+async function saveDiskon() {
+  const persen  = Number(document.getElementById('evd-diskon-persen').value)||0;
+  const nominal = Number(document.getElementById('evd-diskon-nominal').value)||0;
+  if (!currentEvent) return;
+  try {
+    await sbUpdate('gk_event', currentEvent.id, {diskon_persen: persen, diskon_nominal: nominal});
+    currentEvent.diskon_persen  = persen;
+    currentEvent.diskon_nominal = nominal;
+    toast('✅ Diskon disimpan');
+    renderEventDetail();
+  } catch(e) { toast('❌ ' + e.message); }
 }
 
 // ── TAB NAVIGATION ─────────────────────────────────────────
@@ -2523,8 +2519,6 @@ function openAddEvent() {
   document.getElementById('ev-lokasi').value = '';
   document.getElementById('ev-kontak').value = '';
   document.getElementById('ev-catatan').value = '';
-  document.getElementById('ev-diskon-persen').value  = '';
-  document.getElementById('ev-diskon-nominal').value = '';
   document.getElementById('sheetEventTitle').textContent = 'Tambah Event';
   openSheet('sheetEvent');
 }
@@ -2539,8 +2533,6 @@ function openEditEvent(id) {
   document.getElementById('ev-lokasi').value = ev.lokasi || '';
   document.getElementById('ev-kontak').value = ev.kontak || '';
   document.getElementById('ev-catatan').value = ev.catatan || '';
-  document.getElementById('ev-diskon-persen').value  = ev.diskon_persen  || '';
-  document.getElementById('ev-diskon-nominal').value = ev.diskon_nominal || '';
   document.getElementById('sheetEventTitle').textContent = 'Edit Event';
   closeSheet('sheetEventDetail');
   openSheet('sheetEvent');
@@ -2555,8 +2547,6 @@ async function saveEvent() {
     lokasi:   document.getElementById('ev-lokasi').value.trim(),
     kontak:   document.getElementById('ev-kontak').value.trim(),
     catatan:  document.getElementById('ev-catatan').value.trim(),
-    diskon_persen:  Number(document.getElementById('ev-diskon-persen').value)||0,
-    diskon_nominal: Number(document.getElementById('ev-diskon-nominal').value)||0,
   };
   if (!data.customer || !data.tanggal) { toast('⚠️ Isi customer dan tanggal'); return; }
   try {
@@ -2620,8 +2610,11 @@ function renderEventDetail() {
   const margin     = nilaiOrder>0 ? Math.round(laba/nilaiOrder*100) : 0;
   const bayarPct   = nilaiOrder>0 ? Math.min(Math.round(terbayar/nilaiOrder*100),100) : 0;
 
-  // Header
-  const noLabel = ev.no_event ? `#${ev.no_event} · ` : '';
+  // Populate diskon
+  const dpEl = document.getElementById('evd-diskon-persen');
+  const dnEl = document.getElementById('evd-diskon-nominal');
+  if (dpEl) dpEl.value = ev.diskon_persen  || '';
+  if (dnEl) dnEl.value = ev.diskon_nominal || '';
   set('evd-customer', noLabel + ev.customer);
   set('evd-date', fmtDate(ev.tanggal) + (ev.lokasi ? ' · '+ev.lokasi : ''));
   document.getElementById('evd-status').className = 'badge '+ev.status;
@@ -6441,7 +6434,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="badge inquiry" id="evd-status">—</span>
-        <button onclick="openEditEvent()" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600">✏️ Edit</button>
+        <button onclick="setTimeout(()=>openEditEvent(),50)" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600">✏️ Edit</button>
         <span class="sheet-close" onclick="closeSheet('sheetEventDetail')">✕</span>
       </div>
     </div>
@@ -6495,7 +6488,25 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="section-title" style="margin:0">Menu</div>
         <button onclick="openAddMenu()" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Tambah</button>
       </div>
-      <div id="evd-menus" style="margin-bottom:14px"></div>
+      <div id="evd-menus" style="margin-bottom:8px"></div>
+
+      <!-- Diskon -->
+      <div id="evd-diskon-section" style="margin-bottom:14px;padding:10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Diskon <span style="color:var(--ink4);font-weight:400;text-transform:none">(opsional)</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="flex:1">
+            <input type="number" id="evd-diskon-persen" placeholder="%" min="0" max="100" step="0.1"
+              class="form-control" style="font-size:13px;padding:8px" oninput="calcDiskon('persen')">
+            <div class="form-hint">%</div>
+          </div>
+          <div style="flex:2">
+            <input type="number" id="evd-diskon-nominal" placeholder="Nominal Rp" min="0"
+              class="form-control" style="font-size:13px;padding:8px;color:var(--gold)" oninput="calcDiskon('nominal')">
+            <div class="form-hint">Nominal (Rp)</div>
+          </div>
+          <button onclick="saveDiskon()" style="padding:8px 12px;background:var(--gold);color:#111;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap">💾 Simpan</button>
+        </div>
+      </div>
 
       <!-- HPP Bahan -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
