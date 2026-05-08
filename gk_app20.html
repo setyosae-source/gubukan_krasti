@@ -2096,15 +2096,16 @@ async function loadSimpanan6Bulan() {
   try {
     const now   = new Date();
     const start = new Date(now.getFullYear(), now.getMonth()+1, 1); // awal bulan depan
-    const end   = new Date(now.getFullYear(), now.getMonth()+7, 0); // akhir 6 bulan ke depan
+    const end   = new Date(now.getFullYear(), now.getMonth()+7, 0); // akhir bulan ke-6 dari sekarang
 
     const startStr = start.toISOString().slice(0,10);
     const endStr   = end.toISOString().slice(0,10);
 
     // Ambil event mendatang 6 bulan ke depan yang belum selesai
-    const events = await sbGet('gk_event', `tanggal=gte.${startStr}&tanggal=lte.${endStr}&status=neq.cancelled&select=id`);
+    const events = await sbGet('gk_event', `tanggal=gte.${startStr}&tanggal=lte.${endStr}&status=in.(inquiry,booking,dp,lunas)&select=id,customer,status`);
 
-    let total = 0;
+    console.log('Simpanan range:', startStr, '-', endStr);
+    console.log('Events:', events.map(e=>e.customer+'('+e.status+')')); 
     if (events.length) {
       const ids = events.map(e=>e.id).join(',');
       const bayar = await sbGet('gk_event_bayar', `event_id=in.(${ids})&select=jumlah`);
