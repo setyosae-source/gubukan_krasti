@@ -2575,8 +2575,14 @@ function openEditEvent(id) {
   document.getElementById('ev-kontak').value = ev.kontak || '';
   document.getElementById('ev-catatan').value = ev.catatan || '';
   document.getElementById('sheetEventTitle').textContent = 'Edit Event';
-  closeSheet('sheetEventDetail');
-  openSheet('sheetEvent');
+  // Close detail dulu, baru buka form edit setelah history.back() selesai
+  const detailEl = document.getElementById('sheetEventDetail');
+  if (detailEl?.classList.contains('open')) {
+    detailEl.classList.remove('open');
+    setTimeout(()=>openSheet('sheetEvent'), 100);
+  } else {
+    openSheet('sheetEvent');
+  }
 }
 
 async function saveEvent() {
