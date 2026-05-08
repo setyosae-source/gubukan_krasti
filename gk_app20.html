@@ -1185,6 +1185,7 @@ select.form-control { appearance: none; }
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <button onclick="setTimeout(()=>openKvForm('rt','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
     <button onclick="setTimeout(()=>openKvForm('rt','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
+    <button onclick="setTimeout(()=>openRtTransfer(),50)" style="padding:8px 12px;background:var(--blue-dim,rgba(96,160,240,0.15));border:1px solid var(--blue,#60a0f0);border-radius:8px;color:var(--blue,#60a0f0);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">↔️</button>
     <button onclick="openRtSaldoAwal()" style="padding:8px 12px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:700;font-size:12px;cursor:pointer">⚖️</button>
   </div>
   <!-- Grafik Pengeluaran by Kategori -->
@@ -1661,6 +1662,41 @@ select.form-control { appearance: none; }
         style="padding:16px;background:var(--red-dim);border:2px solid var(--red);border-radius:12px;color:var(--red);font-size:16px;font-weight:700;cursor:pointer;font-family:var(--font)">
         💸 Pengeluaran
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: RT TRANSFER -->
+<div class="overlay" id="sheetRtTransfer" onclick="overlayClose(event,'sheetRtTransfer')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">↔️ Transfer ke RT</span>
+      <span class="sheet-close" onclick="closeSheet('sheetRtTransfer')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Ambil dari</label>
+        <select class="form-control" id="rt-transfer-from" style="font-size:14px">
+          <option value="gubukan">🍳 Gubukan</option>
+          <option value="tokba">🛒 Toko Bahan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jumlah (Rp)</label>
+        <input type="number" class="form-control" id="rt-transfer-jumlah" placeholder="0" min="0"
+          style="color:var(--gold);font-family:var(--mono);font-weight:600;font-size:16px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan <span style="color:var(--ink4)">(opsional)</span></label>
+        <input type="text" class="form-control" id="rt-transfer-ket" placeholder="Untuk kebutuhan RT, dll">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tanggal</label>
+        <input type="date" class="form-control" id="rt-transfer-tgl">
+      </div>
+      <button class="btn btn-primary" onclick="prosesRtTransfer()">↔️ Proses Transfer</button>
+      <button class="btn btn-secondary" onclick="closeSheet('sheetRtTransfer')">Batal</button>
     </div>
   </div>
 </div>
@@ -6010,6 +6046,50 @@ function switchKvTab(el, entitas) {
   renderKvList(ent, data, tipe);
 }
 
+
+function openRtTransfer() {
+  document.getElementById('rt-transfer-from').value   = 'gubukan';
+  document.getElementById('rt-transfer-jumlah').value = '';
+  document.getElementById('rt-transfer-ket').value    = '';
+  document.getElementById('rt-transfer-tgl').value    = localDate();
+  openSheet('sheetRtTransfer');
+}
+
+async function prosesRtTransfer() {
+  const from   = document.getElementById('rt-transfer-from').value;
+  const jumlah = Number(document.getElementById('rt-transfer-jumlah').value)||0;
+  const ket    = document.getElementById('rt-transfer-ket').value.trim();
+  const tgl    = document.getElementById('rt-transfer-tgl').value;
+  const label  = from === 'gubukan' ? 'Gubukan' : 'Toko Bahan';
+
+  if (!jumlah) { toast('⚠️ Isi jumlah'); return; }
+  if (!tgl)    { toast('⚠️ Isi tanggal'); return; }
+
+  const catatan = ket || `Transfer ke RT dari ${label}`;
+
+  try {
+    // Mutasi keluar dari sumber
+    await sbInsert('gk_mutasi', {
+      entitas: from, tipe: 'keluar',
+      deskripsi: catatan,
+      jumlah, tanggal: tgl,
+      kategori: 'Transfer ke RT'
+    });
+    // Mutasi masuk ke RT
+    await sbInsert('gk_mutasi', {
+      entitas: 'rt', tipe: 'masuk',
+      deskripsi: catatan,
+      jumlah, tanggal: tgl,
+      kategori: `Transfer dari ${label}`
+    });
+    toast(`✅ Transfer Rp ${jumlah.toLocaleString('id-ID')} dari ${label} ke RT`);
+    closeSheet('sheetRtTransfer');
+    // Reload kedua page yang terdampak
+    if (kvMutasiCache[from]) delete kvMutasiCache[from];
+    if (kvMutasiCache['rt']) delete kvMutasiCache['rt'];
+    loadKvPage('rt');
+  } catch(e) { toast('❌ ' + e.message); }
+}
 
 function openRtSaldoAwal() {
   const panel = document.getElementById('kv-rt-saldoawal-panel');
