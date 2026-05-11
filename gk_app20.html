@@ -6372,10 +6372,6 @@ function kvSortBy(entitas, col) {
   renderKvList(entitas, kvMutasiCache[entitas]||[], 'all', q);
 }
 
-function kvSearch(entitas) {
-  const q = document.getElementById(`kv-${entitas}-search`)?.value || '';
-  renderKvList(entitas, kvMutasiCache[entitas]||[], 'all', q);
-}
 let _kvAcHover = -1;
 
 function kvAcFilter() {
