@@ -1152,6 +1152,16 @@ select.form-control { appearance: none; }
     <button onclick="setTimeout(()=>openKvForm('gubukan','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
     <button onclick="setTimeout(()=>openKvForm('gubukan','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
   </div>
+  <div id="kv-gubukan-chart" style="margin-bottom:12px;display:none">
+    <button onclick="toggleKvChart('gubukan')" id="kv-gubukan-chart-toggle"
+      style="width:100%;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+      <span>📊 Pengeluaran by Kategori</span>
+      <span id="kv-gubukan-chart-arrow">▼</span>
+    </button>
+    <div id="kv-gubukan-chart-body" style="display:none;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;border-top:none">
+      <div id="kv-gubukan-chart-bars"></div>
+    </div>
+  </div>
   <input type="text" class="form-control" id="kv-gubukan-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('gubukan',this.value)">
   <div id="kv-gubukan-list"></div>
 </div>
@@ -1168,6 +1178,16 @@ select.form-control { appearance: none; }
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <button onclick="setTimeout(()=>openKvForm('tokba','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
     <button onclick="setTimeout(()=>openKvForm('tokba','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
+  </div>
+  <div id="kv-tokba-chart" style="margin-bottom:12px;display:none">
+    <button onclick="toggleKvChart('tokba')" id="kv-tokba-chart-toggle"
+      style="width:100%;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+      <span>📊 Pengeluaran by Kategori</span>
+      <span id="kv-tokba-chart-arrow">▼</span>
+    </button>
+    <div id="kv-tokba-chart-body" style="display:none;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;border-top:none">
+      <div id="kv-tokba-chart-bars"></div>
+    </div>
   </div>
   <input type="text" class="form-control" id="kv-tokba-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('tokba',this.value)">
   <div id="kv-tokba-list"></div>
@@ -1190,7 +1210,7 @@ select.form-control { appearance: none; }
   </div>
   <!-- Grafik Pengeluaran by Kategori -->
   <div id="kv-rt-chart" style="margin-bottom:12px;display:none">
-    <button onclick="toggleKvChart()" id="kv-rt-chart-toggle"
+    <button onclick="toggleKvChart('rt')" id="kv-rt-chart-toggle"
       style="width:100%;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
       <span>📊 Pengeluaran by Kategori</span>
       <span id="kv-rt-chart-arrow">▼</span>
@@ -5894,7 +5914,7 @@ async function loadKvPage(entitas) {
     kvMasterKategori = [...new Set(kvMasterDesc.map(x=>x.kategori).filter(Boolean))].sort();
 
     renderKvList(entitas, data, 'all');
-    if (entitas === 'rt') renderKvChart('rt', data); // tampil semua
+    renderKvChart(entitas, data); // tampil semua
   } catch(e) { toast('❌ '+e.message); }
 }
 
@@ -6309,14 +6329,15 @@ function kvOpenDetail(id, entitas) {
   openSheet('sheetKvForm');
 }
 
-function toggleKvChart() {
-  const body  = document.getElementById('kv-rt-chart-body');
-  const arrow = document.getElementById('kv-rt-chart-arrow');
-  const btn   = document.getElementById('kv-rt-chart-toggle');
+function toggleKvChart(entitas) {
+  entitas = entitas || 'rt';
+  const body  = document.getElementById(`kv-${entitas}-chart-body`);
+  const arrow = document.getElementById(`kv-${entitas}-chart-arrow`);
+  const btn   = document.getElementById(`kv-${entitas}-chart-toggle`);
   if (!body) return;
   const open = body.style.display === 'none';
-  body.style.display  = open ? 'block' : 'none';
-  arrow.textContent   = open ? '▲' : '▼';
+  body.style.display     = open ? 'block' : 'none';
+  arrow.textContent      = open ? '▲' : '▼';
   btn.style.borderRadius = open ? '8px 8px 0 0' : '8px';
 }
 
@@ -6325,11 +6346,9 @@ function renderKvChart(entitas, data) {
   const chartBars = document.getElementById(`kv-${entitas}-chart-bars`);
   if (!chartWrap || !chartBars) return;
 
-  // Hanya tampilkan untuk pengeluaran
   const keluar = data.filter(r => r.tipe === 'keluar');
   if (!keluar.length) { chartWrap.style.display = 'none'; return; }
 
-  // Group by kategori
   const grouped = {};
   let totalKeluar = 0;
   keluar.forEach(r => {
@@ -6338,9 +6357,7 @@ function renderKvChart(entitas, data) {
     totalKeluar += Number(r.jumlah || 0);
   });
 
-  // Sort by nilai desc
   const sorted = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
-
   const colors = ['#f0c060','#4ecb8d','#60a0f0','#f06080','#a78bfa','#fb923c','#34d399','#f472b6'];
 
   chartBars.innerHTML = sorted.map(([kat, val], i) => {
