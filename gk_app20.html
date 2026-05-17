@@ -1348,21 +1348,6 @@ select.form-control { appearance: none; }
         <textarea class="form-control" id="ev-catatan" rows="2" placeholder="Catatan tambahan..."></textarea>
       </div>
       <input type="hidden" id="ev-id">
-      <div class="form-group">
-        <label class="form-label">📷 Foto / Dokumentasi Event</label>
-        <div id="ev-foto-wrap">
-          <div id="ev-foto-preview" style="display:none;margin-bottom:8px;position:relative;border-radius:10px;overflow:hidden;max-height:180px">
-            <img id="ev-foto-img" src="" style="width:100%;object-fit:cover;border-radius:10px;display:block">
-            <button onclick="clearFoto('ev')" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
-          </div>
-          <label id="ev-foto-btn" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg3);border:1.5px dashed var(--border2);border-radius:10px;cursor:pointer;color:var(--ink2);font-size:13px">
-            <span style="font-size:20px">📷</span>
-            <span id="ev-foto-label">Pilih foto atau ambil kamera</span>
-            <input type="file" accept="image/*" style="display:none" onchange="onFotoChange(event,'ev')" capture="environment">
-          </label>
-        </div>
-        <input type="hidden" id="ev-foto-data">
-      </div>
       <button class="btn btn-primary" onclick="saveEvent()">💾 Simpan Event</button>
       <button class="btn btn-secondary" onclick="closeSheet('sheetEvent')">Batal</button>
     </div>
@@ -1488,21 +1473,6 @@ select.form-control { appearance: none; }
           <label class="form-label">Toko</label>
           <input type="text" class="form-control" id="beli-toko" placeholder="Nama toko">
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">📷 Foto Struk / Bukti</label>
-        <div id="beli-foto-wrap">
-          <div id="beli-foto-preview" style="display:none;margin-bottom:8px;position:relative;border-radius:10px;overflow:hidden;max-height:180px">
-            <img id="beli-foto-img" src="" style="width:100%;object-fit:cover;border-radius:10px;display:block">
-            <button onclick="clearFoto('beli')" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
-          </div>
-          <label id="beli-foto-btn" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg3);border:1.5px dashed var(--border2);border-radius:10px;cursor:pointer;color:var(--ink2);font-size:13px">
-            <span style="font-size:20px">📷</span>
-            <span id="beli-foto-label">Pilih foto atau ambil kamera</span>
-            <input type="file" accept="image/*" style="display:none" onchange="onFotoChange(event,'beli')" capture="environment">
-          </label>
-        </div>
-        <input type="hidden" id="beli-foto-data">
       </div>
       <button class="btn btn-primary" onclick="saveBeli()">💾 Simpan Pembelian</button>
       <button class="btn btn-secondary" onclick="closeSheet('sheetBeli')">Batal</button>
@@ -1807,89 +1777,6 @@ let state = {
 };
 let _initDone = false;
 let _initTime = 0; // timestamp saat init selesai
-
-// ── FOTO / STRUK UTILITIES ─────────────────────────────────
-/**
- * Kompres gambar ke base64 max ~800px, quality 0.72
- * Hasilnya disimpan ke hidden input dan ditampilkan preview
- */
-function compressImage(file, maxPx=800, quality=0.72) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        let w = img.width, h = img.height;
-        if (w > h && w > maxPx) { h = Math.round(h * maxPx / w); w = maxPx; }
-        else if (h > maxPx)     { w = Math.round(w * maxPx / h); h = maxPx; }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-async function onFotoChange(event, prefix) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (file.size > 10 * 1024 * 1024) { toast('⚠️ File terlalu besar (max 10MB)'); return; }
-  toast('⏳ Memproses foto...');
-  try {
-    const b64 = await compressImage(file);
-    document.getElementById(prefix + '-foto-data').value = b64;
-    const img = document.getElementById(prefix + '-foto-img');
-    img.src = b64;
-    document.getElementById(prefix + '-foto-preview').style.display = 'block';
-    document.getElementById(prefix + '-foto-label').textContent = '✅ ' + file.name;
-    toast('✅ Foto siap');
-  } catch(e) { toast('❌ Gagal proses foto'); }
-}
-
-function clearFoto(prefix) {
-  document.getElementById(prefix + '-foto-data').value = '';
-  document.getElementById(prefix + '-foto-img').src = '';
-  document.getElementById(prefix + '-foto-preview').style.display = 'none';
-  document.getElementById(prefix + '-foto-label').textContent = 'Pilih foto atau ambil kamera';
-  // Reset file input
-  const wrap = document.getElementById(prefix + '-foto-btn');
-  if (wrap) {
-    const inp = wrap.querySelector('input[type=file]');
-    if (inp) inp.value = '';
-  }
-}
-
-function setFotoPreview(prefix, dataUrl) {
-  if (!dataUrl) { clearFoto(prefix); return; }
-  document.getElementById(prefix + '-foto-data').value = dataUrl;
-  document.getElementById(prefix + '-foto-img').src = dataUrl;
-  document.getElementById(prefix + '-foto-preview').style.display = 'block';
-  document.getElementById(prefix + '-foto-label').textContent = '✅ Foto tersimpan';
-}
-
-function fotoThumb(dataUrl, size=40) {
-  if (!dataUrl) return '';
-  return `<img src="${dataUrl}" onclick="showFotoModal(this.src)" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:6px;cursor:pointer;border:1.5px solid var(--border2);flex-shrink:0" title="Lihat foto">`;
-}
-
-function showFotoModal(src) {
-  let modal = document.getElementById('_fotoModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = '_fotoModal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
-    modal.onclick = () => modal.style.display = 'none';
-    modal.innerHTML = '<img id="_fotoModalImg" style="max-width:100%;max-height:90dvh;border-radius:10px;object-fit:contain">';
-    document.body.appendChild(modal);
-  }
-  document.getElementById('_fotoModalImg').src = src;
-  modal.style.display = 'flex';
-}
 
 // ── FORMAT ─────────────────────────────────────────────────
 function localDate(d) {
@@ -2669,12 +2556,11 @@ function renderEvents() {
     return `
     <div class="ev-item" onclick="openEventDetail('${ev.id}')">
       <div class="ev-top">
-        <div style="flex:1;min-width:0">
+        <div>
           <div class="ev-customer">${noStr}${ev.customer}</div>
           <div class="ev-date">📅 ${fmtDate(ev.tanggal)}${ev.lokasi ? ' · '+ev.lokasi : ''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
-          ${ev.foto_url ? fotoThumb(ev.foto_url, 32) : ''}
           <span class="badge ${ev.status}">${ev.status}</span>
           ${showWA ? `<button onclick="event.stopPropagation();kirimWAEvent('${ev.id}')" style="background:#25D366;border:none;border-radius:6px;color:#fff;font-size:11px;padding:3px 7px">📱</button>` : ''}
           <button onclick="event.stopPropagation();openEditEvent('${ev.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:3px 7px">✏️</button>
@@ -2730,7 +2616,6 @@ function openAddEvent() {
   document.getElementById('ev-lokasi').value = '';
   document.getElementById('ev-kontak').value = '';
   document.getElementById('ev-catatan').value = '';
-  clearFoto('ev');
   document.getElementById('sheetEventTitle').textContent = 'Tambah Event';
   openSheet('sheetEvent');
 }
@@ -2745,7 +2630,6 @@ function openEditEvent(id) {
   document.getElementById('ev-lokasi').value = ev.lokasi || '';
   document.getElementById('ev-kontak').value = ev.kontak || '';
   document.getElementById('ev-catatan').value = ev.catatan || '';
-  setFotoPreview('ev', ev.foto_url || '');
   document.getElementById('sheetEventTitle').textContent = 'Edit Event';
   // Close detail dulu, baru buka form edit setelah history.back() selesai
   const detailEl = document.getElementById('sheetEventDetail');
@@ -2759,7 +2643,6 @@ function openEditEvent(id) {
 
 async function saveEvent() {
   const id = document.getElementById('ev-id').value;
-  const evFotoData = document.getElementById('ev-foto-data')?.value || '';
   const data = {
     customer: document.getElementById('ev-customer').value.trim(),
     tanggal:  document.getElementById('ev-tanggal').value,
@@ -2767,7 +2650,6 @@ async function saveEvent() {
     lokasi:   document.getElementById('ev-lokasi').value.trim(),
     kontak:   document.getElementById('ev-kontak').value.trim(),
     catatan:  document.getElementById('ev-catatan').value.trim(),
-    ...(evFotoData ? {foto_url: evFotoData} : {}),
   };
   if (!data.customer || !data.tanggal) { toast('⚠️ Isi customer dan tanggal'); return; }
   try {
@@ -2776,7 +2658,6 @@ async function saveEvent() {
     } else {
       await sbInsert('gk_event', data);
     }
-    clearFoto('ev');
     closeSheet('sheetEvent');
     toast('✅ Event disimpan');
     await loadEvents();
@@ -3095,7 +2976,6 @@ function renderBeli(list) {
           <th style="padding:8px 8px;text-align:left;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Bahan</th>
           <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Qty</th>
           <th style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Total</th>
-          <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">📷</th>
           <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border)">Aksi</th>
         </tr>
       </thead>
@@ -3112,7 +2992,6 @@ function renderBeli(list) {
               <div style="font-size:10px;color:var(--ink4)">${rpFull(b.harga_beli)}/${b.satuan}</div>
             </td>
             <td style="padding:9px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--red);white-space:nowrap">${rpFull(b.total)}</td>
-            <td style="padding:7px 4px;text-align:center">${b.foto_url?fotoThumb(b.foto_url,28):''}</td>
             <td style="padding:7px 4px;text-align:center;white-space:nowrap">
               <button onclick="openEditBeli('${b.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--blue);font-size:10px;padding:2px 5px">✏️</button>
               <button onclick="deleteBeli('${b.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:5px;color:var(--red);font-size:10px;padding:2px 5px">🗑️</button>
@@ -3368,7 +3247,6 @@ async function saveBeli() {
     harga_kecil = harga;
   }
 
-  const beliFotoData = document.getElementById('beli-foto-data')?.value || '';
   const data = {
     bahan_id:    bahanId,
     nama_bahan:  namaBahan,
@@ -3379,13 +3257,11 @@ async function saveBeli() {
     harga_kecil: Math.round(harga_kecil*100)/100,
     total:       total || qty * harga,
     toko:        document.getElementById('beli-toko').value.trim(),
-    ...(beliFotoData ? {foto_url: beliFotoData} : {}),
   };
   try {
     if (beliEditId) {
       await sbUpdate('gk_pembelian', beliEditId, data);
       beliEditId = '';
-      clearFoto('beli');
       toast('✅ Pembelian diperbarui');
     } else {
       const resBeli = await sbInsert('gk_pembelian', data);
@@ -3409,7 +3285,6 @@ async function saveBeli() {
       } catch(e2) { console.warn('Gagal catat kas:', e2.message); }
       toast(bahanVal === '__baru__' ? '✅ Bahan baru + pembelian disimpan' : '✅ Pembelian dicatat');
     }
-    clearFoto('beli');
     closeSheet('sheetBeli');
     await loadBahan();
   } catch(e) { toast('❌ ' + e.message); }
@@ -3542,7 +3417,6 @@ function openEditBeli(id) {
   document.getElementById('beli-total-input').value = b.total || ((b.qty||0)*(b.harga_beli||0)) || '';
   document.getElementById('beli-tanggal').value = b.tanggal || '';
   document.getElementById('beli-toko').value = b.toko || '';
-  setFotoPreview('beli', b.foto_url || '');
 
   openSheet('sheetBeli');
 }
@@ -5504,7 +5378,6 @@ function renderBukuBesar(jenis) {
           ${th('masuk','Debit')}
           ${th('keluar','Kredit')}
           ${th('saldo','Saldo')}
-          <th style="padding:8px 6px;font-size:10px;font-weight:700;color:var(--ink4);border-bottom:2px solid var(--border);text-align:center">📷</th>
           <th style="padding:8px 6px;font-size:10px;font-weight:700;color:var(--ink4);border-bottom:2px solid var(--border);text-align:center">Aksi</th>
         </tr>
       </thead>
@@ -5522,7 +5395,6 @@ function renderBukuBesar(jenis) {
             <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--green);font-weight:600;white-space:nowrap">${masuk>0?rpFull(masuk):'—'}</td>
             <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--red);font-weight:600;white-space:nowrap">${keluar>0?rpFull(keluar):'—'}</td>
             <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--gold);font-weight:700;white-space:nowrap">${rpFull(saldo)}</td>
-            <td style="padding:6px 4px;text-align:center">${r.foto_url?fotoThumb(r.foto_url,28):''}</td>
             <td style="padding:6px 4px;text-align:center;white-space:nowrap">
               ${mutasiId?`<button onclick="openEditMutasiJenis('${mutasiId}','${jenis}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--blue);font-size:10px;padding:2px 5px">✏️</button>
               <button onclick="deleteMutasiJenis('${mutasiId}','${jenis}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:5px;color:var(--red);font-size:10px;padding:2px 5px">🗑️</button>`:'—'}
@@ -5552,16 +5424,14 @@ function renderKasMutasi(list) {
     const isIn  = m.tipe==='masuk'||m.tipe==='transfer_masuk';
     const color = isIn ? 'var(--green)' : 'var(--red)';
     const sign  = isIn ? '+' : '-';
-    const thumbHtml = m.foto_url ? fotoThumb(m.foto_url, 36) : '';
     return `<div class="card" style="margin-bottom:8px;padding:11px 14px;cursor:pointer"
         onclick="openEditMutasi('${m.id}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div style="flex:1;min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
           <div style="font-size:13px;font-weight:500">${m.keterangan||m.tipe}</div>
           <div style="font-size:11px;color:var(--ink3)">${fmtDate(m.tanggal)} · <span style="text-transform:capitalize">${m.tipe.replace('_',' ')}</span></div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-          ${thumbHtml}
+        <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:13px;font-weight:700;color:${color};font-family:var(--mono)">${sign}${rpFull(m.jumlah)}</span>
           <span style="color:var(--ink3);font-size:12px">✏️</span>
         </div>
@@ -5579,7 +5449,6 @@ function openAddMutasiRT() {
   document.getElementById('mutasi-jumlah').value = '';
   document.getElementById('mutasi-tanggal').value = localDate();
   document.getElementById('mutasi-catatan').value = '';
-  clearFoto('mutasi');
   document.querySelector('#sheetMutasi .sheet-title').textContent = 'Tambah Kas RT';
   openSheet('sheetMutasi');
 }
@@ -5597,7 +5466,6 @@ function openEditMutasi(id) {
     document.getElementById('mutasi-jumlah').value = m.jumlah||'';
     document.getElementById('mutasi-tanggal').value = m.tanggal||'';
     document.getElementById('mutasi-catatan').value = m.referensi||'';
-    setFotoPreview('mutasi', m.foto_url||'');
     document.querySelector('#sheetMutasi .sheet-title').textContent = 'Edit Kas RT';
   });
 }
@@ -5609,7 +5477,6 @@ async function saveMutasi() {
   const jumlah  = Number(document.getElementById('mutasi-jumlah').value)||0;
   const tanggal = document.getElementById('mutasi-tanggal').value;
   const catatan = document.getElementById('mutasi-catatan').value.trim();
-  const fotoData = document.getElementById('mutasi-foto-data')?.value || '';
   if (!ket||!jumlah) { toast('⚠️ Isi keterangan dan jumlah'); return; }
 
   // Tentukan kas yang dipakai: dari _editMutasiJenis kalau edit, default RT kalau add
@@ -5619,14 +5486,10 @@ async function saveMutasi() {
 
   try {
     if (id) {
-      const upd = {tipe, keterangan:ket, jumlah, tanggal, referensi:catatan};
-      if (fotoData) upd.foto_url = fotoData;
-      await sbUpdate('gk_kas_mutasi', id, upd);
+      await sbUpdate('gk_kas_mutasi', id, {tipe, keterangan:ket, jumlah, tanggal, referensi:catatan});
       toast('✅ Mutasi diperbarui');
     } else {
-      const ins = {kas_id:kasObj.id, tipe, keterangan:ket, jumlah, tanggal, referensi:catatan};
-      if (fotoData) ins.foto_url = fotoData;
-      await sbInsert('gk_kas_mutasi', ins);
+      await sbInsert('gk_kas_mutasi', {kas_id:kasObj.id, tipe, keterangan:ket, jumlah, tanggal, referensi:catatan});
       toast('✅ Mutasi dicatat');
     }
     await sbUpdate('gk_kas', kasObj.id, {saldo: await hitungSaldoKas(kasObj.id)});
@@ -5667,7 +5530,6 @@ function openEditMutasiJenis(id, jenis) {
     document.getElementById('mutasi-jumlah').value  = m.jumlah||'';
     document.getElementById('mutasi-tanggal').value = m.tanggal||'';
     document.getElementById('mutasi-catatan').value = m.referensi||'';
-    setFotoPreview('mutasi', m.foto_url||'');
   });
 }
 
@@ -7682,21 +7544,6 @@ initAcFields();
       <div class="form-group">
         <label class="form-label">Catatan</label>
         <input type="text" class="form-control" id="mutasi-catatan" placeholder="Opsional">
-      </div>
-      <div class="form-group">
-        <label class="form-label">📷 Foto Struk / Bukti</label>
-        <div id="mutasi-foto-wrap" style="position:relative">
-          <div id="mutasi-foto-preview" style="display:none;margin-bottom:8px;position:relative;border-radius:10px;overflow:hidden;max-height:180px">
-            <img id="mutasi-foto-img" src="" style="width:100%;object-fit:cover;border-radius:10px;display:block">
-            <button onclick="clearFoto('mutasi')" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
-          </div>
-          <label id="mutasi-foto-btn" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg3);border:1.5px dashed var(--border2);border-radius:10px;cursor:pointer;color:var(--ink2);font-size:13px">
-            <span style="font-size:20px">📷</span>
-            <span id="mutasi-foto-label">Pilih foto atau ambil kamera</span>
-            <input type="file" accept="image/*" style="display:none" onchange="onFotoChange(event,'mutasi')" capture="environment">
-          </label>
-        </div>
-        <input type="hidden" id="mutasi-foto-data">
       </div>
       <button class="btn btn-primary" onclick="saveMutasi()">💾 Simpan</button>
       <button class="btn btn-danger" id="mutasi-delete-btn" onclick="deleteMutasi()">🗑️ Hapus</button>
