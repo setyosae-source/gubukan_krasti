@@ -867,13 +867,6 @@ select.form-control { appearance: none; }
         </div>
       </div>
 
-      <!-- Uang Simpanan 6 Bulan -->
-      <div class="card" style="border-color:rgba(78,203,141,0.3);background:linear-gradient(135deg,var(--bg2),rgba(78,203,141,0.04));margin-bottom:8px">
-        <div class="card-title">🏦 Uang Simpanan <span style="font-size:9px;color:var(--ink4)">(Akumulasi 6 Bulan)</span></div>
-        <div class="card-val green" id="d-simpanan">—</div>
-        <div style="font-size:10px;color:var(--ink3);margin-top:4px" id="d-simpanan-range">—</div>
-      </div>
-
       <!-- Reminder Pembayaran -->
       <div id="d-reminders"></div>
 
@@ -4638,8 +4631,9 @@ async function changeEventStatus(status) {
     const updateData = { status };
     // Assign no_event saat status jadi selesai (hanya kalau belum punya nomor)
     if (status === 'selesai' && !currentEvent.no_event) {
-      const maxRes = await sbGet('gk_event', 'select=no_event&order=no_event.desc&limit=1');
-      const lastNo = parseInt(maxRes[0]?.no_event||'0')||0;
+      // Pakai RPC untuk MAX integer yang benar
+      const maxRes = await sbGet('gk_event', 'select=no_event&not.no_event.is.null&order=no_event.desc&limit=100');
+      const lastNo = maxRes.reduce((max, r) => Math.max(max, parseInt(r.no_event||'0')||0), 0);
       updateData.no_event = String(lastNo + 1);
       currentEvent.no_event = updateData.no_event;
     }
