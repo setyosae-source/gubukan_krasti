@@ -1144,13 +1144,26 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <div class="kv-page" id="page-gubukan" style="display:none;padding:16px">
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo Awal</div><div class="stat-val" id="kv-gubukan-saldoawal" style="font-size:11px;color:var(--ink3)">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-gubukan-masuk" style="font-size:13px">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-gubukan-keluar" style="font-size:13px">—</div></div>
-    <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo</div><div class="stat-val gold" id="kv-gubukan-saldo" style="font-size:13px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px">
+  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+    <div class="stat-card gold" style="flex:1;padding:8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-gubukan-saldo" style="font-size:13px">—</div></div>
+    <div class="stat-card" style="padding:8px;margin:0;border-color:rgba(96,160,240,0.3)"><div class="stat-label" style="font-size:9px">Balance</div><div class="stat-val" id="kv-gubukan-balance" style="font-size:11px;color:var(--blue)">—</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px;margin-top:8px">
     <button onclick="setTimeout(()=>openKvForm('gubukan','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
     <button onclick="setTimeout(()=>openKvForm('gubukan','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
+  </div>
+  <div id="kv-gubukan-chart" style="margin-bottom:8px;display:none">
+    <button onclick="toggleKvChart('gubukan')" id="kv-gubukan-chart-toggle"
+      style="width:100%;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between">
+      <span>📊 Pengeluaran by Kategori</span><span id="kv-gubukan-chart-arrow">▼</span>
+    </button>
+    <div id="kv-gubukan-chart-body" style="display:none;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;border-top:none">
+      <div id="kv-gubukan-chart-bars"></div>
+    </div>
   </div>
   <input type="text" class="form-control" id="kv-gubukan-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('gubukan',this.value)">
   <div id="kv-gubukan-list"></div>
@@ -1161,13 +1174,26 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <div class="kv-page" id="page-kvtokba" style="display:none;padding:16px">
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo Awal</div><div class="stat-val" id="kv-tokba-saldoawal" style="font-size:11px;color:var(--ink3)">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-tokba-masuk" style="font-size:13px">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-tokba-keluar" style="font-size:13px">—</div></div>
-    <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo</div><div class="stat-val gold" id="kv-tokba-saldo" style="font-size:13px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px">
+  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+    <div class="stat-card gold" style="flex:1;padding:8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-tokba-saldo" style="font-size:13px">—</div></div>
+    <div class="stat-card" style="padding:8px;margin:0;border-color:rgba(96,160,240,0.3)"><div class="stat-label" style="font-size:9px">Balance</div><div class="stat-val" id="kv-tokba-balance" style="font-size:11px;color:var(--blue)">—</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px;margin-top:8px">
     <button onclick="setTimeout(()=>openKvForm('tokba','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
     <button onclick="setTimeout(()=>openKvForm('tokba','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
+  </div>
+  <div id="kv-tokba-chart" style="margin-bottom:8px;display:none">
+    <button onclick="toggleKvChart('tokba')" id="kv-tokba-chart-toggle"
+      style="width:100%;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between">
+      <span>📊 Pengeluaran by Kategori</span><span id="kv-tokba-chart-arrow">▼</span>
+    </button>
+    <div id="kv-tokba-chart-body" style="display:none;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;border-top:none">
+      <div id="kv-tokba-chart-bars"></div>
+    </div>
   </div>
   <input type="text" class="form-control" id="kv-tokba-search" placeholder="🔍 Cari keterangan..." style="font-size:13px;margin-bottom:8px" oninput="kvSearch('tokba',this.value)">
   <div id="kv-tokba-list"></div>
@@ -1178,11 +1204,15 @@ select.form-control { appearance: none; }
 <!-- ════════════════════════════════════════════════════════ -->
 <div class="kv-page" id="page-rt" style="display:none;padding:16px">
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo Awal</div><div class="stat-val" id="kv-rt-saldoawal-stat" style="font-size:11px;color:var(--ink3)">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-rt-masuk" style="font-size:13px">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-rt-keluar" style="font-size:13px">—</div></div>
-    <div class="stat-card gold" style="padding:9px"><div class="stat-label" style="font-size:9px">Saldo+Awal</div><div class="stat-val gold" id="kv-rt-saldo" style="font-size:13px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px">
+  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+    <div class="stat-card gold" style="flex:1;padding:8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-rt-saldo" style="font-size:13px">—</div></div>
+    <div class="stat-card" style="padding:8px;margin:0;border-color:rgba(96,160,240,0.3)"><div class="stat-label" style="font-size:9px">Balance</div><div class="stat-val" id="kv-rt-balance" style="font-size:11px;color:var(--blue)">—</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px;margin-top:8px">
     <button onclick="setTimeout(()=>openKvForm('rt','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
     <button onclick="setTimeout(()=>openKvForm('rt','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
     <button onclick="setTimeout(()=>openRtTransfer(),50)" style="padding:8px 12px;background:var(--blue-dim,rgba(96,160,240,0.15));border:1px solid var(--blue,#60a0f0);border-radius:8px;color:var(--blue,#60a0f0);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">↔️</button>
@@ -1190,7 +1220,7 @@ select.form-control { appearance: none; }
   </div>
   <!-- Grafik Pengeluaran by Kategori -->
   <div id="kv-rt-chart" style="margin-bottom:12px;display:none">
-    <button onclick="toggleKvChart()" id="kv-rt-chart-toggle"
+    <button onclick="toggleKvChart('rt')" id="kv-rt-chart-toggle"
       style="width:100%;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
       <span>📊 Pengeluaran by Kategori</span>
       <span id="kv-rt-chart-arrow">▼</span>
@@ -5853,40 +5883,60 @@ async function loadKvPage(entitas) {
   kvCurrentEntitas = entitas;
   try {
     const p = state.period;
-    let start, end;
+    let start, end, prevEnd;
     if (p.mode === 'year') {
       start = `${p.year}-01-01`;
       end   = `${p.year}-12-31`;
+      prevEnd = `${p.year-1}-12-31`;
     } else if (p.mode === 'custom') {
       start = p.customStart;
       end   = p.customEnd;
-    } else if (p.mode === 'upcoming') {
-      start = localDate();
-      end   = `${p.year+1}-12-31`;
+      // prev end = day before start
+      const d = new Date(start); d.setDate(d.getDate()-1);
+      prevEnd = d.toISOString().slice(0,10);
     } else {
       // default: month
       const y = p.year, m = p.month;
       start = `${y}-${String(m).padStart(2,'0')}-01`;
-      const ld_=new Date(y,m,0).getDate(); end=`${y}-${String(m).padStart(2,'0')}-${String(ld_).padStart(2,'0')}`;
+      const ld_ = new Date(y,m,0).getDate();
+      end = `${y}-${String(m).padStart(2,'0')}-${String(ld_).padStart(2,'0')}`;
+      // prev month
+      const pm = m===1 ? 12 : m-1;
+      const py = m===1 ? y-1 : y;
+      const pld = new Date(py,pm,0).getDate();
+      prevEnd = `${py}-${String(pm).padStart(2,'0')}-${String(pld).padStart(2,'0')}`;
     }
+
+    // Fetch data bulan ini
     const data = await sbGet('gk_mutasi', `entitas=eq.${entitas}&tanggal=gte.${start}&tanggal=lte.${end}&order=tanggal.desc,created_at.desc&select=*`);
     kvMutasiCache[entitas] = data;
 
     const masuk  = data.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0);
     const keluar = data.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+Number(r.jumlah||0),0);
+    const balance = masuk - keluar;
 
-    set(`kv-${entitas==='tokba'?'tokba':entitas}-masuk`, rpFull(masuk));
-    set(`kv-${entitas==='tokba'?'tokba':entitas}-keluar`, rpFull(keluar));
+    // Saldo awal = saldo akhir bulan sebelumnya
+    const prevData = await sbGet('gk_mutasi', `entitas=eq.${entitas}&tanggal=lte.${prevEnd}&select=tipe,jumlah`);
+    let saldoAwal = prevData.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0)
+                  - prevData.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+Number(r.jumlah||0),0);
 
-    let saldo = masuk - keluar;
+    // RT: tambah saldo_awal manual
     if (entitas === 'rt') {
       const sawal = await sbGet('gk_saldo_awal','entitas=eq.rt&select=jumlah');
       const totalSawal = sawal.reduce((s,r)=>s+Number(r.jumlah||0),0);
-      saldo += totalSawal;
+      saldoAwal += totalSawal;
       kvSaldoAwal = await sbGet('gk_saldo_awal','entitas=eq.rt&order=bulan.desc&select=*');
       renderRtSaldoAwal();
+      set('kv-rt-saldoawal-stat', rpFull(saldoAwal));
+    } else {
+      set(`kv-${entitas==='tokba'?'tokba':entitas}-saldoawal`, rpFull(saldoAwal));
     }
-    set(`kv-${entitas==='tokba'?'tokba':entitas}-saldo`, rpFull(saldo));
+
+    const saldoAkhir = saldoAwal + balance;
+    set(`kv-${entitas==='tokba'?'tokba':entitas}-masuk`,   rpFull(masuk));
+    set(`kv-${entitas==='tokba'?'tokba':entitas}-keluar`,  rpFull(keluar));
+    set(`kv-${entitas==='tokba'?'tokba':entitas}-saldo`,   rpFull(saldoAkhir));
+    set(`kv-${entitas==='tokba'?'tokba':entitas}-balance`, rpFull(balance));
 
     // Load master deskripsi
     kvMasterDesc = await sbGet('gk_master_desc','select=*&order=deskripsi.asc');
@@ -5894,7 +5944,7 @@ async function loadKvPage(entitas) {
     kvMasterKategori = [...new Set(kvMasterDesc.map(x=>x.kategori).filter(Boolean))].sort();
 
     renderKvList(entitas, data, 'all');
-    if (entitas === 'rt') renderKvChart('rt', data); // tampil semua
+    renderKvChart(entitas, data);
   } catch(e) { toast('❌ '+e.message); }
 }
 
@@ -6309,14 +6359,15 @@ function kvOpenDetail(id, entitas) {
   openSheet('sheetKvForm');
 }
 
-function toggleKvChart() {
-  const body  = document.getElementById('kv-rt-chart-body');
-  const arrow = document.getElementById('kv-rt-chart-arrow');
-  const btn   = document.getElementById('kv-rt-chart-toggle');
+function toggleKvChart(entitas) {
+  entitas = entitas || 'rt';
+  const body  = document.getElementById(`kv-${entitas}-chart-body`);
+  const arrow = document.getElementById(`kv-${entitas}-chart-arrow`);
+  const btn   = document.getElementById(`kv-${entitas}-chart-toggle`);
   if (!body) return;
   const open = body.style.display === 'none';
-  body.style.display  = open ? 'block' : 'none';
-  arrow.textContent   = open ? '▲' : '▼';
+  body.style.display     = open ? 'block' : 'none';
+  arrow.textContent      = open ? '▲' : '▼';
   btn.style.borderRadius = open ? '8px 8px 0 0' : '8px';
 }
 
