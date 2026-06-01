@@ -842,28 +842,28 @@ select.form-control { appearance: none; }
         </div>
       </div>
 
-      <!-- Total Saldo (Gubukan + Tokba + RT) -->
+      <!-- Total Saldo Akhir (Gubukan + Tokba + RT) -->
       <div class="card" style="border-color:rgba(96,160,240,0.3);background:linear-gradient(135deg,var(--bg2),rgba(96,160,240,0.04));margin-bottom:8px">
-        <div class="card-title">Total Saldo <span style="font-size:9px;color:var(--ink4)">(Gubukan + Tokba + RT)</span></div>
+        <div class="card-title">Total Saldo Akhir <span style="font-size:9px;color:var(--ink4)">(Total Jumlah Uang)</span></div>
         <div class="card-val" style="color:var(--blue)" id="d-total-saldo">—</div>
       </div>
 
-      <!-- Stat 3 kolom: Gubukan, Tokba, RT -->
+      <!-- Saldo Akhir 3 kolom: Gubukan, Tokba, RT -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
         <div class="stat-card green" style="padding:10px">
           <div class="stat-label" style="font-size:9px">🍳 Gubukan</div>
-          <div class="stat-val green" style="font-size:13px" id="d-gk-laba">—</div>
-          <div class="stat-sub" style="font-size:9px" id="d-gk-omzet">—</div>
+          <div class="stat-val green" style="font-size:13px" id="d-gk-saldo-akhir">—</div>
+          <div class="stat-sub" style="font-size:9px">Saldo Akhir</div>
         </div>
         <div class="stat-card gold" style="padding:10px">
           <div class="stat-label" style="font-size:9px">🛒 Tokba</div>
-          <div class="stat-val gold" style="font-size:13px" id="d-tb-laba">—</div>
-          <div class="stat-sub" style="font-size:9px" id="d-tb-omzet">—</div>
+          <div class="stat-val gold" style="font-size:13px" id="d-tb-saldo-akhir">—</div>
+          <div class="stat-sub" style="font-size:9px">Saldo Akhir</div>
         </div>
         <div class="stat-card" style="padding:10px;border-color:rgba(96,160,240,0.3)">
           <div class="stat-label" style="font-size:9px">🏠 RT</div>
-          <div class="stat-val" style="font-size:13px;color:var(--blue)" id="d-rt-saldo">—</div>
-          <div class="stat-sub" style="font-size:9px">Saldo</div>
+          <div class="stat-val" style="font-size:13px;color:var(--blue)" id="d-rt-saldo-akhir">—</div>
+          <div class="stat-sub" style="font-size:9px">Saldo Akhir</div>
         </div>
       </div>
 
@@ -2094,6 +2094,27 @@ async function loadDashboard() {
 
     renderDashboard(row, kas, upcoming);
     renderReminders(upcoming);
+
+    // Saldo Akhir Kumulatif (semua data sampai sekarang)
+    const [allGub, allTok, allRt, sawalRt] = await Promise.all([
+      sbGet('gk_mutasi', 'entitas=eq.gubukan&select=tipe,jumlah'),
+      sbGet('gk_mutasi', 'entitas=eq.tokba&select=tipe,jumlah'),
+      sbGet('gk_mutasi', 'entitas=eq.rt&select=tipe,jumlah'),
+      sbGet('gk_saldo_awal', 'entitas=eq.rt&select=jumlah'),
+    ]);
+    const sumAll = arr => arr.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0)
+                         - arr.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+Number(r.jumlah||0),0);
+    const gkSaldoAkhir = sumAll(allGub);
+    const tbSaldoAkhir = sumAll(allTok);
+    const rtSawal      = sawalRt.reduce((s,r)=>s+Number(r.jumlah||0),0);
+    const rtSaldoAkhir = sumAll(allRt) + rtSawal;
+
+    set('d-total-saldo',    rpFull(gkSaldoAkhir + tbSaldoAkhir + rtSaldoAkhir));
+    set('d-gk-saldo-akhir', rpFull(gkSaldoAkhir));
+    set('d-tb-saldo-akhir', rpFull(tbSaldoAkhir));
+    set('d-rt-saldo-akhir', rpFull(rtSaldoAkhir));
+    loadSimpanan6Bulan();
+
   } catch(err) {
     toast('❌ ' + err.message);
   }
@@ -2138,24 +2159,6 @@ function renderDashboard(row, kas, upcoming) {
   // Laba bar (target max 50jt)
   const pct = Math.min(Math.max(totalLaba/50000000*100, 0), 100);
   document.getElementById('d-laba-bar').style.width = pct + '%';
-
-  // Kas
-  const kasUsaha = kas.find(k=>k.jenis==='usaha');
-  const kasRt    = kas.find(k=>k.jenis==='rt');
-  set('d-kas-usaha', rpFull(kasUsaha?.saldo||0));
-  set('d-kas-rt',    rpFull(kasRt?.saldo||0));
-
-  // Total Saldo (Gubukan + Tokba + RT)
-  const rtSaldo = kasRt?.saldo || 0;
-  const totalSaldo = gkLaba + tbLaba + rtSaldo;
-  set('d-total-saldo', rpFull(totalSaldo));
-  set('d-rt-saldo', rpFull(rtSaldo));
-
-  // Uang Simpanan 6 bulan ke belakang
-  loadSimpanan6Bulan();
-
-  // Event mendatang — dihapus dari dashboard
-  renderReminders(upcoming);
 }
 
 async function loadSimpanan6Bulan() {
@@ -5846,13 +5849,24 @@ async function loadKvDashboard() {
     const bar = document.getElementById('d-laba-bar');
     if (bar) bar.style.width = pct + '%';
 
-    // Stat card semua entitas
-    set('d-gk-laba', rpFull(gSaldo));
-    set('d-gk-omzet', 'Masuk ' + rpFull(gMasuk));
-    set('d-tb-laba', rpFull(tSaldo));
-    set('d-tb-omzet', 'Masuk ' + rpFull(tMasuk));
-    set('d-rt-saldo', rpFull(rSaldo));
-    set('d-total-saldo', rpFull(gSaldo + tSaldo + rSaldo));
+    // Saldo akhir kumulatif semua waktu
+    const [allGub, allTok, allRtAll, sawalRtAll] = await Promise.all([
+      sbGet('gk_mutasi', 'entitas=eq.gubukan&select=tipe,jumlah'),
+      sbGet('gk_mutasi', 'entitas=eq.tokba&select=tipe,jumlah'),
+      sbGet('gk_mutasi', 'entitas=eq.rt&select=tipe,jumlah'),
+      sbGet('gk_saldo_awal', 'entitas=eq.rt&select=jumlah'),
+    ]);
+    const sumAll2 = arr => arr.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0)
+                          - arr.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+Number(r.jumlah||0),0);
+    const gkSaldoAkhir2 = sumAll2(allGub);
+    const tbSaldoAkhir2 = sumAll2(allTok);
+    const rtSawal2      = sawalRtAll.reduce((s,r)=>s+Number(r.jumlah||0),0);
+    const rtSaldoAkhir2 = sumAll2(allRtAll) + rtSawal2;
+
+    set('d-total-saldo',    rpFull(gkSaldoAkhir2 + tbSaldoAkhir2 + rtSaldoAkhir2));
+    set('d-gk-saldo-akhir', rpFull(gkSaldoAkhir2));
+    set('d-tb-saldo-akhir', rpFull(tbSaldoAkhir2));
+    set('d-rt-saldo-akhir', rpFull(rtSaldoAkhir2));
     if (kvSection) kvSection.style.display = 'none';
     loadSimpanan6Bulan();
 
