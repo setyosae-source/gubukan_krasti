@@ -2549,6 +2549,11 @@ function renderEvents() {
   const today = localDate();
   const q     = (document.getElementById('ev-search')?.value||'').toLowerCase().trim();
 
+  if (!eventsData.length && !q) {
+    document.getElementById('ev-list').innerHTML = `<div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">Tidak ada event</div></div>`;
+    return;
+  }
+
   let all = f==='all' ? eventsData : eventsData.filter(e=>e.status===f);
 
   // Filter search — semua kolom
@@ -2558,10 +2563,9 @@ function renderEvents() {
       (e.lokasi||'').toLowerCase().includes(q) ||
       (e.catatan||'').toLowerCase().includes(q) ||
       (e.kontak||'').toLowerCase().includes(q) ||
-      (e.no_event||'').includes(q) ||
+      (e.no_event||'').toString().includes(q) ||
       (e.tanggal||'').includes(q) ||
-      (e.status||'').toLowerCase().includes(q) ||
-      (e.summary||'').toLowerCase().includes(q)
+      (e.status||'').toLowerCase().includes(q)
     );
   }
 
