@@ -2360,16 +2360,24 @@ let eventsData = [];
 async function loadEvents() {
   try {
     const data = await sbGet('gk_event', 'order=tanggal.asc&select=*');
-    const [menus, bahans, opss, bayars, allMenuNama] = await Promise.all([
+    const [menus, bahans, opss, bayars, allMenuNama, menuNames] = await Promise.all([
       sbGet('gk_event_menu',  'select=event_id,total'),
       sbGet('gk_event_bahan', 'select=event_id,total'),
       sbGet('gk_biaya_ops',   'select=event_id,jumlah'),
       sbGet('gk_event_bayar', 'select=event_id,jumlah'),
       sbGet('gk_event_menu',  'select=nama&order=nama.asc'),
+      sbGet('gk_event_menu',  'select=event_id,nama'),
     ]);
     // Bangun master list nama menu (unik, sorted)
     const namaSet = new Set(allMenuNama.map(r=>r.nama).filter(Boolean));
     menuMasterList = [...namaSet].sort((a,b)=>a.localeCompare(b,'id'));
+
+    // Map nama menu per event untuk search
+    const menuNamaMap = {};
+    menuNames.forEach(r => {
+      if (!menuNamaMap[r.event_id]) menuNamaMap[r.event_id] = [];
+      if (r.nama) menuNamaMap[r.event_id].push(r.nama.toLowerCase());
+    });
     const sumBy = (arr, idKey, valKey) => arr.reduce((m,r)=>{
       m[r[idKey]] = (m[r[idKey]]||0) + Number(r[valKey]||0); return m;
     }, {});
@@ -2386,7 +2394,7 @@ async function loadEvents() {
       const terbayar = bayarMap[ev.id]||0;
       const sisa     = omzet - terbayar;
       const margin   = omzet>0 ? Math.round(laba/omzet*100) : 0;
-      return { ...ev, _omzet: omzet, _terbayar: terbayar, summary: { omzet, hppOps, laba, terbayar, sisa, margin } };
+      return { ...ev, _omzet: omzet, _terbayar: terbayar, _menus: menuNamaMap[ev.id]||[], summary: { omzet, hppOps, laba, terbayar, sisa, margin } };
     });
 
     // Upcoming (tanggal >= today) asc terdekat dulu, lalu past desc terbaru dulu
@@ -2565,7 +2573,8 @@ function renderEvents() {
       (e.kontak||'').toLowerCase().includes(q) ||
       (e.no_event||'').toString().includes(q) ||
       (e.tanggal||'').includes(q) ||
-      (e.status||'').toLowerCase().includes(q)
+      (e.status||'').toLowerCase().includes(q) ||
+      (e._menus||[]).some(m => m.includes(q))
     );
   }
 
