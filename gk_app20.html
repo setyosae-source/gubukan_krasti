@@ -884,6 +884,9 @@ select.form-control { appearance: none; }
     <!-- PAGE: EVENT                                 -->
     <!-- ═══════════════════════════════════════════ -->
     <div class="page" id="page-event">
+      <!-- Search bar -->
+      <input type="text" class="form-control" id="ev-search" placeholder="🔍 Cari customer, lokasi, menu, catatan..."
+        style="font-size:13px;margin-bottom:8px" oninput="renderEvents()">
       <!-- View toggle + Filter -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;flex:1" id="ev-filter-chips">
@@ -2542,12 +2545,29 @@ function renderCalEventList(dateStr, events) {
 }
 
 function renderEvents() {
-  const f    = state.eventFilter;
+  const f     = state.eventFilter;
   const today = localDate();
-  const all  = f==='all' ? eventsData : eventsData.filter(e=>e.status===f);
+  const q     = (document.getElementById('ev-search')?.value||'').toLowerCase().trim();
+
+  let all = f==='all' ? eventsData : eventsData.filter(e=>e.status===f);
+
+  // Filter search — semua kolom
+  if (q) {
+    all = all.filter(e =>
+      (e.customer||'').toLowerCase().includes(q) ||
+      (e.lokasi||'').toLowerCase().includes(q) ||
+      (e.catatan||'').toLowerCase().includes(q) ||
+      (e.kontak||'').toLowerCase().includes(q) ||
+      (e.no_event||'').includes(q) ||
+      (e.tanggal||'').includes(q) ||
+      (e.status||'').toLowerCase().includes(q) ||
+      (e.summary||'').toLowerCase().includes(q)
+    );
+  }
+
   const el   = document.getElementById('ev-list');
   if (!all.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">Tidak ada event</div></div>`;
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">${q ? 'Tidak ditemukan' : 'Tidak ada event'}</div></div>`;
     return;
   }
 
