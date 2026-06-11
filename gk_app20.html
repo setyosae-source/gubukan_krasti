@@ -2888,6 +2888,7 @@ function renderStatusBtns(current) {
 // BAHAN
 // ══════════════════════════════════════════════════════════
 let bahanData = [];
+let mutasiGubukanData = []; // kas keluar gubukan — sumber utama tarik bahan HPP
 let menuMasterList = []; // master nama menu dari semua gk_event_menu
 
 function switchBahanTab(el) {
@@ -2900,12 +2901,14 @@ function switchBahanTab(el) {
 
 async function loadBahan() {
   try {
-    const [bahan, beli] = await Promise.all([
+    const [bahan, beli, mutasi] = await Promise.all([
       sbGet('gk_bahan', 'order=nama.asc&limit=10000&select=*'),
-      sbGet('gk_pembelian', 'order=tanggal.desc&limit=10000&select=*,gk_bahan(nama)')
+      sbGet('gk_pembelian', 'order=tanggal.desc&limit=10000&select=*,gk_bahan(nama)'),
+      sbGet('gk_mutasi', 'entitas=eq.gubukan&tipe=eq.keluar&order=tanggal.desc&limit=10000&select=deskripsi,jumlah,qty,satuan,harga,tanggal,kategori')
     ]);
-    bahanData = bahan;
-    beliData  = beli;
+    bahanData         = bahan;
+    beliData          = beli;
+    mutasiGubukanData = mutasi;
     renderBahan(bahan);
     renderBeli(beli);
     if (typeof updateSatuanAc === 'function') updateSatuanAc();
@@ -4945,59 +4948,54 @@ function acEvbRender(query) {
   const q    = (query||'').toLowerCase().trim();
   const list = document.getElementById('acModal-list');
 
-  // Items dari gk_bahan (terdaftar)
-  const items = bahanData.filter(b => !q || b.nama.toLowerCase().includes(q));
-
-  // Fallback: nama dari beliData yang belum ada di gk_bahan
-  const bahanNamaSet = new Set(bahanData.map(b => b.nama.toLowerCase()));
-  const beliNamaMap  = {};
-  (beliData || []).forEach(x => {
-    const nm = (x.nama_bahan || (x.gk_bahan && x.gk_bahan.nama) || '').trim();
+  // Sumber utama: mutasi pengeluaran Gubukan — deduplikasi by deskripsi
+  const namaMap = {};
+  (mutasiGubukanData || []).forEach(x => {
+    const nm = (x.deskripsi || '').trim();
     if (!nm) return;
-    if (bahanNamaSet.has(nm.toLowerCase())) return;
     if (q && !nm.toLowerCase().includes(q)) return;
-    if (!beliNamaMap[nm.toLowerCase()]) {
-      beliNamaMap[nm.toLowerCase()] = { nama: nm, harga: x.harga_kecil || x.harga_beli || 0, satuan: x.satuan || '' };
+    const key = nm.toLowerCase();
+    if (!namaMap[key]) {
+      namaMap[key] = {
+        nama   : nm,
+        harga  : x.harga || (x.qty && x.jumlah ? Math.round(x.jumlah / x.qty) : 0) || x.jumlah || 0,
+        satuan : x.satuan || '',
+        qty    : x.qty || 0
+      };
     }
   });
-  const beliExtra = Object.values(beliNamaMap);
+  const items = Object.values(namaMap).sort((a,b) => a.nama.localeCompare(b.nama));
 
   function hi(s) {
     if (!q) return s;
     return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<b>$1</b>');
   }
+
   let html = '';
-  if (q && !bahanData.some(b => b.nama.toLowerCase() === q) && !beliExtra.some(b => b.nama.toLowerCase() === q)) {
+  // Opsi input manual jika query tidak ada di list
+  if (q && !items.some(b => b.nama.toLowerCase() === q)) {
     html += `<div class="acm-item new-item" onclick="acEvbSelectManual('${query.replace(/'/g,"\\'")}')"> Input manual: "${query}"</div>`;
   }
   html += `<div class="acm-item new-item" style="background:var(--bg3);color:var(--ink2)" onclick="acEvbSelectManual('')"> ✏️ Input manual...</div>`;
 
-  html += items.map(b => {
-    const { harga, satuan } = getHargaBahan(b.id);
-    const hargaLabel = harga > 0 ? rpFull(harga)+'/'+satuan : '<span style="color:var(--ink4)">belum ada harga</span>';
-    return `<div class="acm-item" onclick="acEvbSelectExisting('${b.id}')">
-      <div>
-        <div style="font-size:14px">${hi(b.nama)}</div>
-        <div style="font-size:11px;color:var(--ink3)">${satuan||b.satuan_kecil} · ${hargaLabel}</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Tambah bahan dari riwayat pembelian yg belum terdaftar
-  if (beliExtra.length) {
-    html += `<div style="font-size:11px;color:var(--ink3);padding:8px 12px 4px;border-top:1px solid var(--border)">📦 Dari riwayat pembelian (belum terdaftar di master)</div>`;
-    html += beliExtra.map(b => {
-      const hargaLabel = b.harga > 0 ? rpFull(b.harga)+(b.satuan?'/'+b.satuan:'') : '<span style="color:var(--ink4)">belum ada harga</span>';
+  if (items.length) {
+    html += items.map(b => {
+      const hargaLabel = b.harga > 0
+        ? rpFull(b.harga) + (b.satuan ? '/'+b.satuan : '')
+        : '<span style="color:var(--ink4)">belum ada harga</span>';
       return `<div class="acm-item" onclick="acEvbSelectManual('${b.nama.replace(/'/g,"\\'")}', ${b.harga}, '${b.satuan.replace(/'/g,"\\'")}')">
         <div>
-          <div style="font-size:14px">${hi(b.nama)} <span style="font-size:10px;color:var(--orange);margin-left:4px">📦 pembelian</span></div>
-          <div style="font-size:11px;color:var(--ink3)">${b.satuan} · ${hargaLabel}</div>
+          <div style="font-size:14px">${hi(b.nama)}</div>
+          <div style="font-size:11px;color:var(--ink3)">${b.satuan||'-'} · ${hargaLabel}</div>
         </div>
       </div>`;
     }).join('');
+  } else if (!q) {
+    html += '<div class="acm-empty">Belum ada data pengeluaran Gubukan</div>';
+  } else {
+    html += '<div class="acm-empty">Tidak ditemukan</div>';
   }
 
-  if (!html) html = '<div class="acm-empty">Belum ada bahan</div>';
   list.innerHTML = html;
 }
 
