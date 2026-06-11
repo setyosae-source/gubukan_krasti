@@ -2901,8 +2901,8 @@ function switchBahanTab(el) {
 async function loadBahan() {
   try {
     const [bahan, beli] = await Promise.all([
-      sbGet('gk_bahan', 'order=nama.asc&select=*'),
-      sbGet('gk_pembelian', 'order=tanggal.desc&limit=200&select=*,gk_bahan(nama)')
+      sbGet('gk_bahan', 'order=nama.asc&limit=10000&select=*'),
+      sbGet('gk_pembelian', 'order=tanggal.desc&limit=10000&select=*,gk_bahan(nama)')
     ]);
     bahanData = bahan;
     beliData  = beli;
@@ -4944,16 +4944,34 @@ function getHargaBahan(bahanId) {
 function acEvbRender(query) {
   const q    = (query||'').toLowerCase().trim();
   const list = document.getElementById('acModal-list');
+
+  // Items dari gk_bahan (terdaftar)
   const items = bahanData.filter(b => !q || b.nama.toLowerCase().includes(q));
+
+  // Fallback: nama dari beliData yang belum ada di gk_bahan
+  const bahanNamaSet = new Set(bahanData.map(b => b.nama.toLowerCase()));
+  const beliNamaMap  = {};
+  (beliData || []).forEach(x => {
+    const nm = (x.nama_bahan || (x.gk_bahan && x.gk_bahan.nama) || '').trim();
+    if (!nm) return;
+    if (bahanNamaSet.has(nm.toLowerCase())) return;
+    if (q && !nm.toLowerCase().includes(q)) return;
+    if (!beliNamaMap[nm.toLowerCase()]) {
+      beliNamaMap[nm.toLowerCase()] = { nama: nm, harga: x.harga_kecil || x.harga_beli || 0, satuan: x.satuan || '' };
+    }
+  });
+  const beliExtra = Object.values(beliNamaMap);
+
   function hi(s) {
     if (!q) return s;
     return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<b>$1</b>');
   }
   let html = '';
-  if (q && !bahanData.some(b => b.nama.toLowerCase() === q)) {
+  if (q && !bahanData.some(b => b.nama.toLowerCase() === q) && !beliExtra.some(b => b.nama.toLowerCase() === q)) {
     html += `<div class="acm-item new-item" onclick="acEvbSelectManual('${query.replace(/'/g,"\\'")}')"> Input manual: "${query}"</div>`;
   }
   html += `<div class="acm-item new-item" style="background:var(--bg3);color:var(--ink2)" onclick="acEvbSelectManual('')"> ✏️ Input manual...</div>`;
+
   html += items.map(b => {
     const { harga, satuan } = getHargaBahan(b.id);
     const hargaLabel = harga > 0 ? rpFull(harga)+'/'+satuan : '<span style="color:var(--ink4)">belum ada harga</span>';
@@ -4964,6 +4982,21 @@ function acEvbRender(query) {
       </div>
     </div>`;
   }).join('');
+
+  // Tambah bahan dari riwayat pembelian yg belum terdaftar
+  if (beliExtra.length) {
+    html += `<div style="font-size:11px;color:var(--ink3);padding:8px 12px 4px;border-top:1px solid var(--border)">📦 Dari riwayat pembelian (belum terdaftar di master)</div>`;
+    html += beliExtra.map(b => {
+      const hargaLabel = b.harga > 0 ? rpFull(b.harga)+(b.satuan?'/'+b.satuan:'') : '<span style="color:var(--ink4)">belum ada harga</span>';
+      return `<div class="acm-item" onclick="acEvbSelectManual('${b.nama.replace(/'/g,"\\'")}', ${b.harga}, '${b.satuan.replace(/'/g,"\\'")}')">
+        <div>
+          <div style="font-size:14px">${hi(b.nama)} <span style="font-size:10px;color:var(--orange);margin-left:4px">📦 pembelian</span></div>
+          <div style="font-size:11px;color:var(--ink3)">${b.satuan} · ${hargaLabel}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   if (!html) html = '<div class="acm-empty">Belum ada bahan</div>';
   list.innerHTML = html;
 }
@@ -4983,15 +5016,16 @@ function acEvbSelectExisting(id) {
   acModalClose();
 }
 
-function acEvbSelectManual(nama) {
+function acEvbSelectManual(nama, harga, satuan) {
   selectedEvbObj = null;
   document.getElementById('evb-bahan-val').value = '__manual__';
   const t = document.getElementById('evb-bahan-trigger');
   if (t) t.innerHTML = nama ? '✏️ ' + nama : '✏️ Input manual';
   document.getElementById('evb-nama-manual').style.display = '';
   if (nama) document.getElementById('evb-nama-input').value = nama;
-  acSet('evb-satuan', '');
-  document.getElementById('evb-harga').value = '';
+  // Auto-fill harga & satuan jika datang dari riwayat pembelian
+  acSet('evb-satuan', satuan || '');
+  document.getElementById('evb-harga').value = harga || '';
   calcEvbTotal();
   acModalClose();
 }
