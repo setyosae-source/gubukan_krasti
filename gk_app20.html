@@ -1144,9 +1144,9 @@ select.form-control { appearance: none; }
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-gubukan-masuk" style="font-size:13px">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-gubukan-keluar" style="font-size:13px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
-    <div class="stat-card gold" style="flex:1;padding:8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-gubukan-saldo" style="font-size:13px">—</div></div>
-    <div class="stat-card" style="padding:8px;margin:0;border-color:rgba(96,160,240,0.3)"><div class="stat-label" style="font-size:9px">Balance</div><div class="stat-val" id="kv-gubukan-balance" style="font-size:11px;color:var(--blue)">—</div></div>
+  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:stretch">
+    <div class="stat-card gold" style="flex:0 0 auto;min-width:110px;padding:7px 8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-gubukan-saldo" style="font-size:12px">—</div></div>
+    <div class="stat-card" style="flex:1;padding:8px;margin:0;border-color:rgba(96,160,240,0.4)"><div class="stat-label" style="font-size:9px">Balance (Masuk−Keluar)</div><div class="stat-val" id="kv-gubukan-balance" style="font-size:15px;color:var(--blue);font-weight:700">—</div><div id="kv-gubukan-balance-pct" style="font-size:11px;color:var(--ink3);margin-top:1px">—</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:8px;margin-top:8px">
     <button onclick="setTimeout(()=>openKvForm('gubukan','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
@@ -1174,9 +1174,9 @@ select.form-control { appearance: none; }
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-tokba-masuk" style="font-size:13px">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-tokba-keluar" style="font-size:13px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
-    <div class="stat-card gold" style="flex:1;padding:8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-tokba-saldo" style="font-size:13px">—</div></div>
-    <div class="stat-card" style="padding:8px;margin:0;border-color:rgba(96,160,240,0.3)"><div class="stat-label" style="font-size:9px">Balance</div><div class="stat-val" id="kv-tokba-balance" style="font-size:11px;color:var(--blue)">—</div></div>
+  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:stretch">
+    <div class="stat-card gold" style="flex:0 0 auto;min-width:110px;padding:7px 8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-tokba-saldo" style="font-size:12px">—</div></div>
+    <div class="stat-card" style="flex:1;padding:8px;margin:0;border-color:rgba(96,160,240,0.4)"><div class="stat-label" style="font-size:9px">Balance (Masuk−Keluar)</div><div class="stat-val" id="kv-tokba-balance" style="font-size:15px;color:var(--blue);font-weight:700">—</div><div id="kv-tokba-balance-pct" style="font-size:11px;color:var(--ink3);margin-top:1px">—</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:8px;margin-top:8px">
     <button onclick="setTimeout(()=>openKvForm('tokba','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
@@ -1204,9 +1204,9 @@ select.form-control { appearance: none; }
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pemasukan</div><div class="stat-val green" id="kv-rt-masuk" style="font-size:13px">—</div></div>
     <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Pengeluaran</div><div class="stat-val red" id="kv-rt-keluar" style="font-size:13px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
-    <div class="stat-card gold" style="flex:1;padding:8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-rt-saldo" style="font-size:13px">—</div></div>
-    <div class="stat-card" style="padding:8px;margin:0;border-color:rgba(96,160,240,0.3)"><div class="stat-label" style="font-size:9px">Balance</div><div class="stat-val" id="kv-rt-balance" style="font-size:11px;color:var(--blue)">—</div></div>
+  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:stretch">
+    <div class="stat-card gold" style="flex:0 0 auto;min-width:110px;padding:7px 8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-rt-saldo" style="font-size:12px">—</div></div>
+    <div class="stat-card" style="flex:1;padding:8px;margin:0;border-color:rgba(96,160,240,0.4)"><div class="stat-label" style="font-size:9px">Balance (Masuk−Keluar)</div><div class="stat-val" id="kv-rt-balance" style="font-size:15px;color:var(--blue);font-weight:700">—</div><div id="kv-rt-balance-pct" style="font-size:11px;color:var(--ink3);margin-top:1px">—</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:8px;margin-top:8px">
     <button onclick="setTimeout(()=>openKvForm('rt','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
@@ -6010,6 +6010,19 @@ async function loadKvPage(entitas) {
     set(`kv-${entitas==='tokba'?'tokba':entitas}-keluar`,  rpFull(keluar));
     set(`kv-${entitas==='tokba'?'tokba':entitas}-saldo`,   rpFull(saldoAkhir));
     set(`kv-${entitas==='tokba'?'tokba':entitas}-balance`, rpFull(balance));
+    // Persentase balance terhadap pemasukan
+    const pctId = `kv-${entitas==='tokba'?'tokba':entitas}-balance-pct`;
+    const pctEl = document.getElementById(pctId);
+    if (pctEl) {
+      if (masuk > 0) {
+        const pct = Math.round(balance / masuk * 100);
+        const sign = pct >= 0 ? '+' : '';
+        const col  = pct >= 0 ? 'var(--green)' : 'var(--red)';
+        pctEl.innerHTML = `<span style="color:${col};font-weight:600">${sign}${pct}%</span> dari pemasukan`;
+      } else {
+        pctEl.textContent = '—';
+      }
+    }
 
     // Load master deskripsi
     kvMasterDesc = await sbGet('gk_master_desc','select=*&order=deskripsi.asc');
