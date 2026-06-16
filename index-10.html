@@ -1903,10 +1903,21 @@ function openSheet(id) {
 function closeSheet(id) {
   const el = document.getElementById(id);
   if (!el || !el.classList.contains('open')) return;
-  el.classList.remove('open');
-  // Sinkronkan history hanya kalau bukan dipicu oleh popstate
-  if (!_backHandling && history.state && history.state.sheet) {
+  if (_backHandling) {
+    // Dipanggil dari popstate handler (re-entry) — langsung remove .open
+    el.classList.remove('open');
+    return;
+  }
+  // Cek apakah sheet ini sheet paling atas
+  const openSheets = Array.from(document.querySelectorAll('.overlay.open'));
+  const isTopmost  = openSheets.length && openSheets[openSheets.length-1].id === id;
+  if (isTopmost && history.state && history.state.sheet) {
+    // Delegasi ke popstate handler via history.back()
+    // (popstate akan remove .open dari sheet paling atas)
     history.back();
+  } else {
+    // Bukan paling atas, atau gak ada history state — tutup manual
+    el.classList.remove('open');
   }
 }
 
