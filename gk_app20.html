@@ -5148,6 +5148,15 @@ function getLastHargaByNamaBahan(nama) {
 }
 
 let distinctEventMenuNames = []; // semua nama menu unik dari gk_event_menu
+let hiddenResepMenus = JSON.parse(localStorage.getItem('gk_hidden_resep_menus') || '[]'); // nama (normalized) yg disembunyikan dari list resep
+
+// Normalisasi nama menu: rapikan spasi ganda/nbsp, trim, buat key lowercase
+function normMenuName(n) {
+  return (n || '').replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function menuKey(n) {
+  return normMenuName(n).toLowerCase();
+}
 
 async function loadResep() {
   if (!mutasiGubukanData.length && !bahanData.length) {
@@ -5159,29 +5168,46 @@ async function loadResep() {
       sbGet('gk_event_menu', 'select=nama&order=nama.asc')
     ]);
     resepData = resep;
-    distinctEventMenuNames = [...new Set(menuRows.map(r=>(r.nama||'').trim()).filter(Boolean))];
+    // Dedup pakai key ternormalisasi, tapi simpan nama tampilan yg pertama muncul
+    const seen = {};
+    menuRows.forEach(r => {
+      const nama = normMenuName(r.nama);
+      if (!nama) return;
+      const k = menuKey(nama);
+      if (!seen[k]) seen[k] = nama;
+    });
+    distinctEventMenuNames = Object.values(seen);
   } catch(e) { resepData = []; distinctEventMenuNames = []; toast('❌ Gagal load resep: ' + e.message); }
   renderResepList();
 }
 
 // Gabungkan menu dari event (yg sudah pernah diinput) dengan resep yg sudah dibuat
 function buildResepUnifiedList() {
-  const map = {}; // key: nama lowercase -> {nama, resep}
+  const map = {}; // key: nama ternormalisasi -> {nama, resep}
   distinctEventMenuNames.forEach(n => {
-    const k = n.toLowerCase();
+    const k = menuKey(n);
     if (!map[k]) map[k] = { nama: n, resep: null };
   });
   resepData.forEach(r => {
-    const k = r.nama_menu.trim().toLowerCase();
+    const k = menuKey(r.nama_menu);
     if (map[k]) map[k].resep = r;
-    else map[k] = { nama: r.nama_menu, resep: r };
+    else map[k] = { nama: normMenuName(r.nama_menu), resep: r };
   });
   return Object.values(map).sort((a,b) => a.nama.localeCompare(b.nama,'id'));
 }
 
+function hideResepMenu(nama) {
+  const k = menuKey(nama);
+  if (!hiddenResepMenus.includes(k)) {
+    hiddenResepMenus.push(k);
+    localStorage.setItem('gk_hidden_resep_menus', JSON.stringify(hiddenResepMenus));
+  }
+  renderResepList();
+}
+
 function renderResepList() {
   const q = (document.getElementById('resep-search')?.value || '').toLowerCase().trim();
-  const unified = buildResepUnifiedList();
+  const unified = buildResepUnifiedList().filter(x => x.resep || !hiddenResepMenus.includes(menuKey(x.nama)));
   const filtered = unified.filter(x => !q || x.nama.toLowerCase().includes(q));
   document.getElementById('resep-stat-count').textContent = unified.length;
   document.getElementById('resep-stat-bahan').textContent = resepData.length;
@@ -5200,7 +5226,10 @@ function renderResepList() {
             <div style="font-size:14px;font-weight:600">${x.nama}</div>
             <div style="margin-top:4px"><span style="font-size:10px;background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:10px;padding:2px 8px;font-weight:600">⚠️ Belum ada resep</span></div>
           </div>
-          <button onclick="openResepForm(null,'${x.nama.replace(/'/g,"\\'")}')" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:600;flex-shrink:0">+ Buat</button>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button onclick="openResepForm(null,'${x.nama.replace(/'/g,"\\'")}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:4px 8px">✏️</button>
+            <button onclick="hideResepMenu('${x.nama.replace(/'/g,"\\'")}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:4px 8px">🗑️</button>
+          </div>
         </div>
       </div>`;
     }
@@ -5227,6 +5256,8 @@ function renderResepList() {
     </div>`;
   }).join('');
 }
+
+
 
 function openResepForm(id, prefillNama) {
   resepEditId = id || null;
@@ -5440,8 +5471,8 @@ function openTarikResepModal() {
 }
 
 function findResepByNama(nama) {
-  const q = (nama||'').trim().toLowerCase();
-  return resepData.find(r => r.nama_menu.trim().toLowerCase() === q) || null;
+  const q = menuKey(nama);
+  return resepData.find(r => menuKey(r.nama_menu) === q) || null;
 }
 
 function renderTarikResepList() {
