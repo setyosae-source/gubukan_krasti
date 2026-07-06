@@ -1144,7 +1144,7 @@ select.form-control { appearance: none; }
       </div>
       <div id="resep-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Total Menu</div><div class="stat-val" id="resep-stat-count" style="font-size:14px">—</div></div>
-        <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Total Bahan</div><div class="stat-val" id="resep-stat-bahan" style="font-size:14px">—</div></div>
+        <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Sudah Ada Resep</div><div class="stat-val" id="resep-stat-bahan" style="font-size:14px">—</div></div>
       </div>
       <div id="resep-list"></div>
     </div>
@@ -5147,27 +5147,63 @@ function getLastHargaByNamaBahan(nama) {
   return { harga, satuan: m.satuan || '' };
 }
 
+let distinctEventMenuNames = []; // semua nama menu unik dari gk_event_menu
+
 async function loadResep() {
   if (!mutasiGubukanData.length && !bahanData.length) {
     try { await loadBahan(); } catch(e) {}
   }
   try {
-    resepData = await sbGet('gk_resep', 'select=*,gk_resep_bahan(*)&order=nama_menu.asc');
-  } catch(e) { resepData = []; toast('❌ Gagal load resep: ' + e.message); }
+    const [resep, menuRows] = await Promise.all([
+      sbGet('gk_resep', 'select=*,gk_resep_bahan(*)&order=nama_menu.asc'),
+      sbGet('gk_event_menu', 'select=nama&order=nama.asc')
+    ]);
+    resepData = resep;
+    distinctEventMenuNames = [...new Set(menuRows.map(r=>(r.nama||'').trim()).filter(Boolean))];
+  } catch(e) { resepData = []; distinctEventMenuNames = []; toast('❌ Gagal load resep: ' + e.message); }
   renderResepList();
+}
+
+// Gabungkan menu dari event (yg sudah pernah diinput) dengan resep yg sudah dibuat
+function buildResepUnifiedList() {
+  const map = {}; // key: nama lowercase -> {nama, resep}
+  distinctEventMenuNames.forEach(n => {
+    const k = n.toLowerCase();
+    if (!map[k]) map[k] = { nama: n, resep: null };
+  });
+  resepData.forEach(r => {
+    const k = r.nama_menu.trim().toLowerCase();
+    if (map[k]) map[k].resep = r;
+    else map[k] = { nama: r.nama_menu, resep: r };
+  });
+  return Object.values(map).sort((a,b) => a.nama.localeCompare(b.nama,'id'));
 }
 
 function renderResepList() {
   const q = (document.getElementById('resep-search')?.value || '').toLowerCase().trim();
-  const filtered = resepData.filter(r => !q || r.nama_menu.toLowerCase().includes(q));
-  document.getElementById('resep-stat-count').textContent = resepData.length;
-  document.getElementById('resep-stat-bahan').textContent = resepData.reduce((s,r)=>s+(r.gk_resep_bahan?.length||0),0);
+  const unified = buildResepUnifiedList();
+  const filtered = unified.filter(x => !q || x.nama.toLowerCase().includes(q));
+  document.getElementById('resep-stat-count').textContent = unified.length;
+  document.getElementById('resep-stat-bahan').textContent = resepData.length;
   const el = document.getElementById('resep-list');
   if (!filtered.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📖</div><div class="empty-text">${resepData.length ? 'Tidak ditemukan' : 'Belum ada resep — tap + Resep'}</div></div>`;
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📖</div><div class="empty-text">${unified.length ? 'Tidak ditemukan' : 'Belum ada menu di event, atau tap + Resep untuk buat manual'}</div></div>`;
     return;
   }
-  el.innerHTML = filtered.map(r => {
+  el.innerHTML = filtered.map(x => {
+    const r = x.resep;
+    if (!r) {
+      return `
+      <div class="list-card" style="padding:12px;margin-bottom:8px;border:1px dashed var(--border);border-radius:10px;background:var(--bg2);opacity:0.85">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:600">${x.nama}</div>
+            <div style="margin-top:4px"><span style="font-size:10px;background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:10px;padding:2px 8px;font-weight:600">⚠️ Belum ada resep</span></div>
+          </div>
+          <button onclick="openResepForm(null,'${x.nama.replace(/'/g,"\\'")}')" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:600;flex-shrink:0">+ Buat</button>
+        </div>
+      </div>`;
+    }
     const bahanCount = r.gk_resep_bahan?.length || 0;
     let totalHpp = 0;
     (r.gk_resep_bahan||[]).forEach(b => { totalHpp += (Number(b.qty)||0) * getLastHargaByNamaBahan(b.nama_bahan).harga; });
@@ -5192,11 +5228,11 @@ function renderResepList() {
   }).join('');
 }
 
-function openResepForm(id) {
+function openResepForm(id, prefillNama) {
   resepEditId = id || null;
   const r = id ? resepData.find(x => String(x.id) === String(id)) : null;
   document.getElementById('resep-form-title').textContent = r ? 'Edit Resep' : 'Resep Baru';
-  document.getElementById('resep-nama').value = r ? r.nama_menu : '';
+  document.getElementById('resep-nama').value = r ? r.nama_menu : (prefillNama || '');
   document.getElementById('resep-porsi').value = r ? r.qty_porsi : 1;
   document.getElementById('resep-satuan-porsi').value = r ? (r.satuan_porsi||'porsi') : 'porsi';
   document.getElementById('resep-catatan').value = r ? (r.catatan||'') : '';
@@ -5419,7 +5455,7 @@ function renderTarikResepList() {
       <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--bg3);opacity:0.8">
         <div style="font-size:13px;font-weight:600">${m.nama}</div>
         <div style="font-size:11px;color:var(--ink4);margin-top:4px">⚠️ Resep belum dibuat untuk menu ini</div>
-        <button type="button" onclick="closeSheet('sheetTarikResep');setTimeout(()=>openResepForm(),150);document.getElementById('resep-nama').value='${m.nama.replace(/'/g,"\\'")}'" style="margin-top:6px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600">+ Buat Resep Sekarang</button>
+        <button type="button" onclick="closeSheet('sheetTarikResep');setTimeout(()=>openResepForm(null,'${m.nama.replace(/'/g,"\\'")}'),150)" style="margin-top:6px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600">+ Buat Resep Sekarang</button>
       </div>`;
     }
     const scale = (resep.qty_porsi > 0) ? (Number(m.qty)||0) / resep.qty_porsi : 0;
