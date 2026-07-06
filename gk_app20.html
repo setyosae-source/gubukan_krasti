@@ -1663,14 +1663,17 @@ select.form-control { appearance: none; }
       <div class="form-group" id="kv-foto-wrap" style="display:none">
         <label class="form-label">📷 Foto Struk <span style="color:var(--ink4)">(opsional)</span></label>
         <input type="hidden" id="kv-foto-url">
-        <input type="file" id="kv-foto-file" accept="image/*" capture="environment" style="display:none" onchange="kvFotoPick(event)">
+        <input type="file" id="kv-foto-file" accept="image/*" style="display:none" onchange="kvFotoPick(event)">
+        <input type="file" id="kv-foto-file-cam" accept="image/*" capture="environment" style="display:none" onchange="kvFotoPick(event)">
         <div id="kv-foto-empty" style="display:flex;gap:8px">
-          <button type="button" class="btn btn-secondary" style="flex:1" onclick="document.getElementById('kv-foto-file').click()">📷 Ambil / Pilih Foto</button>
+          <button type="button" class="btn btn-secondary" style="flex:1" onclick="document.getElementById('kv-foto-file-cam').click()">📷 Kamera</button>
+          <button type="button" class="btn btn-secondary" style="flex:1" onclick="document.getElementById('kv-foto-file').click()">🖼️ Galeri</button>
         </div>
         <div id="kv-foto-preview" style="display:none;position:relative;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg3)">
           <img id="kv-foto-img" style="width:100%;max-height:240px;object-fit:contain;display:block;cursor:zoom-in" onclick="kvFotoLightbox()">
           <div style="display:flex;gap:6px;padding:6px;background:var(--bg2);border-top:1px solid var(--border)">
-            <button type="button" class="btn btn-secondary" style="flex:1;padding:8px;font-size:12px" onclick="document.getElementById('kv-foto-file').click()">🔄 Ganti</button>
+            <button type="button" class="btn btn-secondary" style="flex:1;padding:8px;font-size:12px" onclick="document.getElementById('kv-foto-file-cam').click()">📷 Kamera</button>
+            <button type="button" class="btn btn-secondary" style="flex:1;padding:8px;font-size:12px" onclick="document.getElementById('kv-foto-file').click()">🖼️ Galeri</button>
             <button type="button" class="btn" style="flex:1;padding:8px;font-size:12px;background:var(--red-dim);color:var(--red);border:1px solid var(--red)" onclick="kvFotoRemove()">🗑 Hapus</button>
           </div>
         </div>
@@ -6477,6 +6480,7 @@ function kvFotoRemove() {
   _kvOcrResult = null;
   document.getElementById('kv-foto-url').value = '';
   document.getElementById('kv-foto-file').value = '';
+  const camEl = document.getElementById('kv-foto-file-cam'); if (camEl) camEl.value = '';
   document.getElementById('kv-foto-empty').style.display = 'flex';
   document.getElementById('kv-foto-preview').style.display = 'none';
   document.getElementById('kv-foto-img').src = '';
