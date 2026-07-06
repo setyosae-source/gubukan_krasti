@@ -1148,10 +1148,6 @@ select.form-control { appearance: none; }
     <div class="stat-card gold" style="flex:0 0 auto;min-width:110px;padding:7px 8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-gubukan-saldo" style="font-size:12px">—</div></div>
     <div class="stat-card" style="flex:1;padding:8px;margin:0;border-color:rgba(96,160,240,0.4)"><div class="stat-label" style="font-size:9px">Balance (Masuk−Keluar)</div><div class="stat-val" id="kv-gubukan-balance" style="font-size:15px;color:var(--blue);font-weight:700">—</div><div id="kv-gubukan-balance-pct" style="font-size:11px;color:var(--ink3);margin-top:1px">—</div></div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px;margin-top:8px">
-    <button onclick="setTimeout(()=>openKvForm('gubukan','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
-    <button onclick="setTimeout(()=>openKvForm('gubukan','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
-  </div>
   <div id="kv-gubukan-chart" style="margin-bottom:8px;display:none">
     <button onclick="toggleKvChart('gubukan')" id="kv-gubukan-chart-toggle"
       style="width:100%;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--ink3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between">
@@ -1177,10 +1173,6 @@ select.form-control { appearance: none; }
   <div style="display:flex;gap:8px;margin-bottom:8px;align-items:stretch">
     <div class="stat-card gold" style="flex:0 0 auto;min-width:110px;padding:7px 8px;margin:0"><div class="stat-label" style="font-size:9px">Saldo Akhir</div><div class="stat-val gold" id="kv-tokba-saldo" style="font-size:12px">—</div></div>
     <div class="stat-card" style="flex:1;padding:8px;margin:0;border-color:rgba(96,160,240,0.4)"><div class="stat-label" style="font-size:9px">Balance (Masuk−Keluar)</div><div class="stat-val" id="kv-tokba-balance" style="font-size:15px;color:var(--blue);font-weight:700">—</div><div id="kv-tokba-balance-pct" style="font-size:11px;color:var(--ink3);margin-top:1px">—</div></div>
-  </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px;margin-top:8px">
-    <button onclick="setTimeout(()=>openKvForm('tokba','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
-    <button onclick="setTimeout(()=>openKvForm('tokba','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
   </div>
   <div id="kv-tokba-chart" style="margin-bottom:8px;display:none">
     <button onclick="toggleKvChart('tokba')" id="kv-tokba-chart-toggle"
@@ -1209,8 +1201,6 @@ select.form-control { appearance: none; }
     <div class="stat-card" style="flex:1;padding:8px;margin:0;border-color:rgba(96,160,240,0.4)"><div class="stat-label" style="font-size:9px">Balance (Masuk−Keluar)</div><div class="stat-val" id="kv-rt-balance" style="font-size:15px;color:var(--blue);font-weight:700">—</div><div id="kv-rt-balance-pct" style="font-size:11px;color:var(--ink3);margin-top:1px">—</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:8px;margin-top:8px">
-    <button onclick="setTimeout(()=>openKvForm('rt','masuk'),50)" style="flex:1;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Masuk</button>
-    <button onclick="setTimeout(()=>openKvForm('rt','keluar'),50)" style="flex:1;padding:8px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">+ Keluar</button>
     <button onclick="setTimeout(()=>openRtTransfer(),50)" style="padding:8px 12px;background:var(--blue-dim,rgba(96,160,240,0.15));border:1px solid var(--blue,#60a0f0);border-radius:8px;color:var(--blue,#60a0f0);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation">↔️</button>
     <button onclick="openRtSaldoAwal()" style="padding:8px 12px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:700;font-size:12px;cursor:pointer">⚖️</button>
   </div>
