@@ -1134,6 +1134,20 @@ select.form-control { appearance: none; }
       </div>
     </div>
 
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- PAGE RESEP                                              -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="page" id="page-resep">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" class="form-control" id="resep-search" placeholder="🔍 Cari nama menu..." style="flex:1;font-size:13px" oninput="renderResepList()">
+        <button onclick="openResepForm()" style="padding:8px 14px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap">+ Resep</button>
+      </div>
+      <div id="resep-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Total Menu</div><div class="stat-val" id="resep-stat-count" style="font-size:14px">—</div></div>
+        <div class="stat-card" style="padding:9px"><div class="stat-label" style="font-size:9px">Total Bahan</div><div class="stat-val" id="resep-stat-bahan" style="font-size:14px">—</div></div>
+      </div>
+      <div id="resep-list"></div>
+    </div>
 
 <!-- ════════════════════════════════════════════════════════ -->
 <!-- KONVENSIONAL: PAGE GUBUKAN                              -->
@@ -1253,6 +1267,9 @@ select.form-control { appearance: none; }
     <button class="tab-item" data-page="laporan" onclick="switchTab(this)">
       <span class="ti">📊</span><span>Laporan</span>
     </button>
+    <button class="tab-item" data-page="resep" onclick="switchTab(this)">
+      <span class="ti">📖</span><span>Resep</span>
+    </button>
   </div>
 
   <!-- TAB BAR KONVENSIONAL -->
@@ -1271,6 +1288,9 @@ select.form-control { appearance: none; }
     </button>
     <button class="tab-item" data-page="rt" onclick="switchTabKv(this)">
       <span class="ti">🏠</span><span>RT</span>
+    </button>
+    <button class="tab-item" data-page="resep" onclick="switchTabKv(this)">
+      <span class="ti">📖</span><span>Resep</span>
     </button>
   </div>
 
@@ -1973,7 +1993,7 @@ window.switchTab = function switchTab(el) {
   });
   const pEl = document.getElementById('page-'+page);
   if (pEl) { pEl.style.display = 'block'; pEl.classList.add('active'); }
-  const noFab = ['laporan'];
+  const noFab = ['laporan','resep'];
   document.getElementById('fab').classList.toggle('hidden', noFab.includes(page));
   loadPage(page);
 }
@@ -1993,6 +2013,7 @@ function loadPage(page) {
   else if (page==='tokba') loadTokba();
   else if (page==='kas') loadKas();
   else if (page==='laporan') loadLaporan();
+  else if (page==='resep') loadResep();
 }
 
 // ── FAB ACTION ─────────────────────────────────────────────
@@ -5106,6 +5127,390 @@ async function saveBahanEvent() {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+// ══════════════════════════════════════════════════════════
+// RESEP — Master resep menu + bahan baku per resep
+// ══════════════════════════════════════════════════════════
+let resepData = [];          // [{id, nama_menu, qty_porsi, satuan_porsi, catatan, gk_resep_bahan:[{id,nama_bahan,qty,satuan,bahan_id}]}]
+let resepBahanRows = [];     // rows sedang diedit di form: [{nama_bahan, qty, satuan, bahan_id}]
+let resepEditId = null;      // id resep yang sedang diedit, null = baru
+let resepBahanEditingRow = null; // index row yang sedang pilih bahan lewat acModal
+
+// Cari harga terakhir sebuah bahan berdasar nama, dari data pengeluaran Gubukan (sama sumbernya dgn tarik HPP manual)
+function getLastHargaByNamaBahan(nama) {
+  const q = (nama||'').trim().toLowerCase();
+  if (!q) return { harga:0, satuan:'' };
+  const matches = (mutasiGubukanData||[]).filter(x => (x.deskripsi||'').trim().toLowerCase() === q);
+  if (!matches.length) return { harga:0, satuan:'' };
+  matches.sort((a,b) => (b.tanggal||'').localeCompare(a.tanggal||''));
+  const m = matches[0];
+  const harga = m.harga || (m.qty && m.jumlah ? Math.round(m.jumlah/m.qty) : 0) || m.jumlah || 0;
+  return { harga, satuan: m.satuan || '' };
+}
+
+async function loadResep() {
+  if (!mutasiGubukanData.length && !bahanData.length) {
+    try { await loadBahan(); } catch(e) {}
+  }
+  try {
+    resepData = await sbGet('gk_resep', 'select=*,gk_resep_bahan(*)&order=nama_menu.asc');
+  } catch(e) { resepData = []; toast('❌ Gagal load resep: ' + e.message); }
+  renderResepList();
+}
+
+function renderResepList() {
+  const q = (document.getElementById('resep-search')?.value || '').toLowerCase().trim();
+  const filtered = resepData.filter(r => !q || r.nama_menu.toLowerCase().includes(q));
+  document.getElementById('resep-stat-count').textContent = resepData.length;
+  document.getElementById('resep-stat-bahan').textContent = resepData.reduce((s,r)=>s+(r.gk_resep_bahan?.length||0),0);
+  const el = document.getElementById('resep-list');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📖</div><div class="empty-text">${resepData.length ? 'Tidak ditemukan' : 'Belum ada resep — tap + Resep'}</div></div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(r => {
+    const bahanCount = r.gk_resep_bahan?.length || 0;
+    let totalHpp = 0;
+    (r.gk_resep_bahan||[]).forEach(b => { totalHpp += (Number(b.qty)||0) * getLastHargaByNamaBahan(b.nama_bahan).harga; });
+    const hppPorsi = r.qty_porsi > 0 ? totalHpp / r.qty_porsi : 0;
+    return `
+    <div class="list-card" style="padding:12px;margin-bottom:8px;border:1px solid var(--border);border-radius:10px;background:var(--bg2)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1;min-width:0" onclick="openResepForm('${r.id}')">
+          <div style="font-size:14px;font-weight:600">${r.nama_menu}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:2px">${bahanCount} bahan · ${r.qty_porsi} ${r.satuan_porsi||'porsi'}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="openResepForm('${r.id}')" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:11px;padding:4px 8px">✏️</button>
+          <button onclick="deleteResep('${r.id}')" style="background:var(--red-dim);border:1px solid rgba(240,96,96,0.2);border-radius:6px;color:var(--red);font-size:11px;padding:4px 8px">🗑️</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px">
+        <span style="color:var(--ink3)">HPP Total: <b style="color:var(--red);font-family:var(--mono)">${rpFull(totalHpp)}</b></span>
+        <span style="color:var(--ink3)">Per Porsi: <b style="color:var(--red);font-family:var(--mono)">${rpFull(hppPorsi)}</b></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openResepForm(id) {
+  resepEditId = id || null;
+  const r = id ? resepData.find(x => String(x.id) === String(id)) : null;
+  document.getElementById('resep-form-title').textContent = r ? 'Edit Resep' : 'Resep Baru';
+  document.getElementById('resep-nama').value = r ? r.nama_menu : '';
+  document.getElementById('resep-porsi').value = r ? r.qty_porsi : 1;
+  document.getElementById('resep-satuan-porsi').value = r ? (r.satuan_porsi||'porsi') : 'porsi';
+  document.getElementById('resep-catatan').value = r ? (r.catatan||'') : '';
+  resepBahanRows = r ? (r.gk_resep_bahan||[]).map(b => ({ nama_bahan:b.nama_bahan, qty:b.qty, satuan:b.satuan, bahan_id:b.bahan_id||null })) : [];
+  if (!resepBahanRows.length) resepBahanRows.push({ nama_bahan:'', qty:'', satuan:'', bahan_id:null });
+  renderResepBahanRows();
+  openSheet('sheetResepForm');
+}
+
+function resepNamaAc(query) {
+  const q = (query||'').toLowerCase().trim();
+  const drop = document.getElementById('resep-nama-ac');
+  // Sumber saran: nama menu master (dari event) + nama resep yang sudah ada
+  const namaSet = new Set([...(menuMasterList||[]), ...resepData.map(r=>r.nama_menu)]);
+  const opts = [...namaSet].filter(n => n && (!q || n.toLowerCase().includes(q)));
+  if (!opts.length) { drop.style.display = 'none'; return; }
+  drop.innerHTML = opts.slice(0,8).map(n =>
+    `<div class="acm-item" style="padding:9px 12px;cursor:pointer;font-size:13px" onmousedown="resepNamaAcSelect('${n.replace(/'/g,"\\'")}')">${n}</div>`
+  ).join('');
+  drop.style.display = 'block';
+}
+function resepNamaAcSelect(nama) {
+  document.getElementById('resep-nama').value = nama;
+  document.getElementById('resep-nama-ac').style.display = 'none';
+}
+
+function resepAddBahanRow() {
+  resepBahanRows.push({ nama_bahan:'', qty:'', satuan:'', bahan_id:null });
+  renderResepBahanRows();
+}
+function resepRemoveBahanRow(idx) {
+  resepBahanRows.splice(idx,1);
+  if (!resepBahanRows.length) resepBahanRows.push({ nama_bahan:'', qty:'', satuan:'', bahan_id:null });
+  renderResepBahanRows();
+}
+function resepBahanRowQtyChange(idx, val) {
+  resepBahanRows[idx].qty = val;
+  renderResepBahanPreview();
+}
+
+function renderResepBahanRows() {
+  const el = document.getElementById('resep-bahan-list');
+  el.innerHTML = resepBahanRows.map((row, idx) => {
+    const last = getLastHargaByNamaBahan(row.nama_bahan);
+    const hargaLabel = row.nama_bahan
+      ? (last.harga > 0 ? rpFull(last.harga) + '/' + (last.satuan||row.satuan||'-') : '<span style="color:var(--ink4)">belum ada harga</span>')
+      : '';
+    const subtotal = (Number(row.qty)||0) * last.harga;
+    return `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--bg3)">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <button type="button" class="ac-trigger" style="flex:1;text-align:left" onclick="resepBahanPick(${idx})">
+          ${row.nama_bahan ? row.nama_bahan : '<span class="ac-placeholder">-- Pilih Bahan --</span>'}
+        </button>
+        <button type="button" onclick="resepRemoveBahanRow(${idx})" style="background:none;color:var(--ink4);font-size:18px;padding:2px 6px">×</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" class="form-control" placeholder="Qty" min="0" step="0.001" value="${row.qty||''}" style="flex:1"
+          oninput="resepBahanRowQtyChange(${idx}, this.value)">
+        <span style="font-size:12px;color:var(--ink3);min-width:50px">${row.satuan||'-'}</span>
+      </div>
+      ${row.nama_bahan ? `<div style="font-size:11px;color:var(--ink3);margin-top:6px;display:flex;justify-content:space-between">
+        <span>Harga terakhir: ${hargaLabel}</span>
+        <span style="color:var(--red);font-weight:600;font-family:var(--mono)">${rpFull(subtotal)}</span>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+  renderResepBahanPreview();
+}
+
+function resepBahanPick(idx) {
+  resepBahanEditingRow = idx;
+  acModalCurrentId = '__resep-bahan__';
+  document.getElementById('acModal-label').textContent = 'Pilih Bahan Baku';
+  document.getElementById('acModal-search').value = '';
+  acResepBahanRender('');
+  document.getElementById('acModal').classList.add('open');
+  history.pushState({ acModal: '__resep-bahan__' }, '');
+  setTimeout(() => document.getElementById('acModal-search').focus(), 100);
+}
+
+function acResepBahanRender(query) {
+  const q = (query||'').toLowerCase().trim();
+  const list = document.getElementById('acModal-list');
+  const namaMap = {};
+  (mutasiGubukanData||[]).forEach(x => {
+    const nm = (x.deskripsi||'').trim();
+    if (!nm) return;
+    if (q && !nm.toLowerCase().includes(q)) return;
+    const key = nm.toLowerCase();
+    if (!namaMap[key]) namaMap[key] = { nama:nm, harga:x.harga||(x.qty&&x.jumlah?Math.round(x.jumlah/x.qty):0)||x.jumlah||0, satuan:x.satuan||'' };
+  });
+  const items = Object.values(namaMap).sort((a,b)=>a.nama.localeCompare(b.nama));
+  function hi(s){ if(!q) return s; return s.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<b>$1</b>'); }
+  let html = '';
+  if (q && !items.some(b=>b.nama.toLowerCase()===q)) {
+    html += `<div class="acm-item new-item" onclick="acResepBahanSelect('${query.replace(/'/g,"\\'")}')"> Input manual: "${query}"</div>`;
+  }
+  html += `<div class="acm-item new-item" style="background:var(--bg3);color:var(--ink2)" onclick="acResepBahanSelect('')"> ✏️ Input manual...</div>`;
+  if (items.length) {
+    html += items.map(b => {
+      const hargaLabel = b.harga>0 ? rpFull(b.harga)+(b.satuan?'/'+b.satuan:'') : '<span style="color:var(--ink4)">belum ada harga</span>';
+      return `<div class="acm-item" onclick="acResepBahanSelect('${b.nama.replace(/'/g,"\\'")}', '${b.satuan.replace(/'/g,"\\'")}')">
+        <div><div style="font-size:14px">${hi(b.nama)}</div><div style="font-size:11px;color:var(--ink3)">${b.satuan||'-'} · ${hargaLabel}</div></div>
+      </div>`;
+    }).join('');
+  } else if (!q) {
+    html += '<div class="acm-empty">Belum ada data pengeluaran Gubukan</div>';
+  } else {
+    html += '<div class="acm-empty">Tidak ditemukan</div>';
+  }
+  list.innerHTML = html;
+}
+
+function acResepBahanSelect(nama, satuan) {
+  const idx = resepBahanEditingRow;
+  if (idx === null || !resepBahanRows[idx]) { acModalClose(); return; }
+  resepBahanRows[idx].nama_bahan = nama || '';
+  resepBahanRows[idx].satuan = satuan || resepBahanRows[idx].satuan || '';
+  resepBahanRows[idx].bahan_id = null;
+  renderResepBahanRows();
+  acModalClose();
+}
+
+function renderResepBahanPreview() {
+  const porsi = Number(document.getElementById('resep-porsi')?.value) || 1;
+  let total = 0;
+  resepBahanRows.forEach(row => { total += (Number(row.qty)||0) * getLastHargaByNamaBahan(row.nama_bahan).harga; });
+  document.getElementById('resep-total-hpp').textContent = rpFull(total);
+  document.getElementById('resep-hpp-porsi').textContent = rpFull(porsi > 0 ? total/porsi : 0);
+}
+
+async function saveResep() {
+  const nama = document.getElementById('resep-nama').value.trim();
+  const porsi = Number(document.getElementById('resep-porsi').value) || 0;
+  const satuanPorsi = document.getElementById('resep-satuan-porsi').value.trim() || 'porsi';
+  const catatan = document.getElementById('resep-catatan').value.trim();
+  if (!nama) { toast('⚠️ Nama menu wajib diisi'); return; }
+  if (!porsi || porsi <= 0) { toast('⚠️ Qty porsi wajib diisi'); return; }
+  const validRows = resepBahanRows.filter(r => r.nama_bahan && Number(r.qty) > 0);
+  if (!validRows.length) { toast('⚠️ Tambahkan minimal 1 bahan baku'); return; }
+  try {
+    let resepId = resepEditId;
+    const payload = { nama_menu: nama, qty_porsi: porsi, satuan_porsi: satuanPorsi, catatan: catatan || null };
+    if (resepId) {
+      await sbUpdate('gk_resep', resepId, payload);
+    } else {
+      const res = await sbInsert('gk_resep', payload);
+      resepId = res[0].id;
+    }
+    if (resepEditId) {
+      // Hapus semua bahan lama, insert ulang (lebih simpel & aman utk edit)
+      const oldBahan = resepData.find(r => String(r.id)===String(resepId))?.gk_resep_bahan || [];
+      for (const ob of oldBahan) { await sbDelete('gk_resep_bahan', ob.id); }
+    }
+    for (const row of validRows) {
+      await sbInsert('gk_resep_bahan', {
+        resep_id: resepId,
+        nama_bahan: row.nama_bahan,
+        qty: Number(row.qty),
+        satuan: row.satuan || '',
+        bahan_id: row.bahan_id || null
+      });
+    }
+    closeSheet('sheetResepForm');
+    toast(resepEditId ? '✅ Resep diperbarui' : '✅ Resep disimpan');
+    loadResep();
+  } catch(e) {
+    if ((e.message||'').toLowerCase().includes('duplicate') || (e.message||'').toLowerCase().includes('unique')) {
+      toast('⚠️ Menu ini sudah punya resep, silakan edit yang sudah ada');
+    } else {
+      toast('❌ ' + e.message);
+    }
+  }
+}
+
+async function deleteResep(id) {
+  if (!confirm('Hapus resep ini? Semua bahan baku di dalamnya juga akan terhapus.')) return;
+  try {
+    await sbDelete('gk_resep', id);
+    toast('✅ Resep dihapus');
+    loadResep();
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ── TARIK HPP DARI RESEP (dipanggil dari halaman Event) ─────
+let tarikResepSelections = {}; // { menuNamaLower: true/false }
+
+function openTarikResepModal() {
+  if (!currentEvent) return;
+  tarikResepSelections = {};
+  const menus = currentEventMenus || [];
+  if (!menus.length) {
+    document.getElementById('tarikresep-info').innerHTML = '⚠️ Belum ada menu ditambahkan di event ini. Tambah menu dulu di bagian atas.';
+    document.getElementById('tarikresep-list').innerHTML = '';
+    document.getElementById('tarikresep-btn-save').style.display = 'none';
+    document.getElementById('tarikresep-grand-total').textContent = rpFull(0);
+    openSheet('sheetTarikResep');
+    return;
+  }
+  document.getElementById('tarikresep-btn-save').style.display = '';
+  document.getElementById('tarikresep-info').innerHTML = `Menu yang sudah ditambahkan di event ini: <b>${menus.length}</b>. Pilih menu yang resepnya mau ditarik ke HPP Bahan.`;
+  renderTarikResepList();
+  openSheet('sheetTarikResep');
+}
+
+function findResepByNama(nama) {
+  const q = (nama||'').trim().toLowerCase();
+  return resepData.find(r => r.nama_menu.trim().toLowerCase() === q) || null;
+}
+
+function renderTarikResepList() {
+  const menus = currentEventMenus || [];
+  const el = document.getElementById('tarikresep-list');
+  el.innerHTML = menus.map((m, i) => {
+    const resep = findResepByNama(m.nama);
+    const key = m.nama.trim().toLowerCase();
+    if (!resep) {
+      return `
+      <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--bg3);opacity:0.8">
+        <div style="font-size:13px;font-weight:600">${m.nama}</div>
+        <div style="font-size:11px;color:var(--ink4);margin-top:4px">⚠️ Resep belum dibuat untuk menu ini</div>
+        <button type="button" onclick="closeSheet('sheetTarikResep');setTimeout(()=>openResepForm(),150);document.getElementById('resep-nama').value='${m.nama.replace(/'/g,"\\'")}'" style="margin-top:6px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600">+ Buat Resep Sekarang</button>
+      </div>`;
+    }
+    const scale = (resep.qty_porsi > 0) ? (Number(m.qty)||0) / resep.qty_porsi : 0;
+    let subtotalMenu = 0;
+    const bahanRows = (resep.gk_resep_bahan||[]).map(b => {
+      const last = getLastHargaByNamaBahan(b.nama_bahan);
+      const qtyScaled = (Number(b.qty)||0) * scale;
+      const subtotal = qtyScaled * last.harga;
+      subtotalMenu += subtotal;
+      return `<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);padding:3px 0">
+        <span>${b.nama_bahan} (${Math.round(qtyScaled*1000)/1000} ${b.satuan})</span>
+        <span style="font-family:var(--mono)">${rpFull(subtotal)}</span>
+      </div>`;
+    }).join('');
+    const checked = tarikResepSelections[key] !== false; // default checked
+    tarikResepSelections[key] = checked;
+    return `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--bg3)">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" ${checked?'checked':''} onchange="tarikResepToggle('${key.replace(/'/g,"\\'")}', this.checked)" style="width:16px;height:16px">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${m.nama}</div>
+          <div style="font-size:10px;color:var(--ink4)">${m.qty} pax dipesan · resep utk ${resep.qty_porsi} ${resep.satuan_porsi||'porsi'} · scale ${Math.round(scale*100)/100}×</div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:var(--red);font-family:var(--mono)">${rpFull(subtotalMenu)}</span>
+      </label>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${bahanRows}</div>
+    </div>`;
+  }).join('');
+  updateTarikResepGrandTotal();
+}
+
+function tarikResepToggle(key, checked) {
+  tarikResepSelections[key] = checked;
+  updateTarikResepGrandTotal();
+}
+
+function updateTarikResepGrandTotal() {
+  const menus = currentEventMenus || [];
+  let grand = 0;
+  menus.forEach(m => {
+    const key = m.nama.trim().toLowerCase();
+    if (!tarikResepSelections[key]) return;
+    const resep = findResepByNama(m.nama);
+    if (!resep) return;
+    const scale = (resep.qty_porsi > 0) ? (Number(m.qty)||0) / resep.qty_porsi : 0;
+    (resep.gk_resep_bahan||[]).forEach(b => {
+      const last = getLastHargaByNamaBahan(b.nama_bahan);
+      grand += (Number(b.qty)||0) * scale * last.harga;
+    });
+  });
+  document.getElementById('tarikresep-grand-total').textContent = rpFull(grand);
+}
+
+async function saveTarikResep() {
+  const menus = currentEventMenus || [];
+  const toInsert = [];
+  menus.forEach(m => {
+    const key = m.nama.trim().toLowerCase();
+    if (!tarikResepSelections[key]) return;
+    const resep = findResepByNama(m.nama);
+    if (!resep) return;
+    const scale = (resep.qty_porsi > 0) ? (Number(m.qty)||0) / resep.qty_porsi : 0;
+    (resep.gk_resep_bahan||[]).forEach(b => {
+      const last = getLastHargaByNamaBahan(b.nama_bahan);
+      const qtyScaled = Math.round((Number(b.qty)||0) * scale * 1000) / 1000;
+      if (qtyScaled <= 0 || last.harga <= 0) return;
+      toInsert.push({
+        event_id: currentEvent.id,
+        nama_bahan: b.nama_bahan,
+        qty: qtyScaled,
+        satuan: b.satuan || last.satuan || '',
+        harga_avg: last.harga,
+        bahan_id: b.bahan_id || null
+      });
+    });
+  });
+  if (!toInsert.length) { toast('⚠️ Tidak ada bahan untuk ditarik (cek harga terakhir sudah ada?)'); return; }
+  try {
+    for (const data of toInsert) {
+      const res = await sbInsert('gk_event_bahan', data);
+      currentEventBahan.push(res[0]);
+    }
+    closeSheet('sheetTarikResep');
+    renderEventDetail();
+    toast(`✅ ${toInsert.length} bahan ditarik dari resep`);
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+
+
 function openAddOpsEvent() {
   document.getElementById('ops-ket').value = '';
   document.getElementById('ops-jumlah').value = '';
@@ -5916,12 +6321,13 @@ function switchTabKv(el) {
   // Scroll ke atas
   const body = document.getElementById('mainBody');
   if (body) body.scrollTop = 0;
-  document.getElementById('fab').classList.toggle('hidden', false);
+  document.getElementById('fab').classList.toggle('hidden', page === 'resep');
   if (page === 'dashboard') loadKvDashboard();
   else if (page === 'event') { loadEvents(); if (!bahanData.length) loadBahan(); }
   else if (page === 'gubukan') loadKvPage('gubukan');
   else if (page === 'kvtokba') loadKvPage('tokba');
   else if (page === 'rt') loadKvPage('rt');
+  else if (page === 'resep') loadResep();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -7285,7 +7691,10 @@ document.addEventListener('DOMContentLoaded', function() {
       <!-- HPP Bahan -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <div class="section-title" style="margin:0">HPP Bahan</div>
-        <button onclick="openAddBahanEvent()" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Tarik</button>
+        <div style="display:flex;gap:6px">
+          <button onclick="openTarikResepModal()" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600">📖 Resep</button>
+          <button onclick="openAddBahanEvent()" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Tarik</button>
+        </div>
       </div>
       <div id="evd-bahan" style="margin-bottom:14px"></div>
 
@@ -7928,6 +8337,7 @@ function acModalFilter() {
   if (acModalCurrentId === '__kf-bahan__')   { acBeliKasRender(q); return; }
   if (acModalCurrentId === '__kf-event__')   { acKasEventRender(q); return; }
   if (acModalCurrentId === '__kf-pesanan__') { acKasPesananRender(q); return; }
+  if (acModalCurrentId === '__resep-bahan__') { acResepBahanRender(q); return; }
   acModalRender(q);
 }
 
@@ -8276,6 +8686,97 @@ initAcFields();
           <div class="theme-preview"></div>
           <span>Sky</span>
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SHEET: RESEP FORM (Add/Edit)                             -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="overlay" id="sheetResepForm" onclick="overlayClose(event,'sheetResepForm')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="resep-form-title">Resep Baru</span>
+      <span class="sheet-close" onclick="closeSheet('sheetResepForm')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label class="form-label">Nama Menu <span style="color:var(--red)">*</span></label>
+        <div style="position:relative">
+          <input type="text" class="form-control" id="resep-nama" placeholder="Contoh: Macaroni Schotel" autocomplete="off"
+            oninput="resepNamaAc(this.value)" onfocus="resepNamaAc(this.value)"
+            onblur="setTimeout(()=>{document.getElementById('resep-nama-ac').style.display='none'},200)">
+          <div id="resep-nama-ac" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-top:2px;max-height:180px;overflow-y:auto;z-index:100"></div>
+        </div>
+        <div class="form-hint">Bisa ambil dari menu yang pernah diinput di event, atau ketik baru</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty Porsi <span style="color:var(--red)">*</span></label>
+          <input type="number" class="form-control" id="resep-porsi" placeholder="1" min="0.1" step="0.1" value="1" oninput="renderResepBahanPreview()">
+          <div class="form-hint">Resep ini menghasilkan berapa porsi</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Satuan</label>
+          <input type="text" class="form-control" id="resep-satuan-porsi" placeholder="porsi" value="porsi">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan <span style="color:var(--ink4)">(opsional)</span></label>
+        <input type="text" class="form-control" id="resep-catatan" placeholder="Catatan cara masak, tips, dll">
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">
+        <div class="section-title" style="margin:0">Bahan Baku</div>
+        <button type="button" onclick="resepAddBahanRow()" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600">+ Bahan</button>
+      </div>
+      <div id="resep-bahan-list"></div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
+          <span>Total HPP Resep</span>
+          <span id="resep-total-hpp" style="font-family:var(--mono);font-weight:700;color:var(--red)">Rp 0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3)">
+          <span>HPP per Porsi</span>
+          <span id="resep-hpp-porsi" style="font-family:var(--mono);font-weight:700;color:var(--red)">Rp 0</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-primary" style="flex:1" onclick="saveResep()">💾 Simpan Resep</button>
+        <button class="btn btn-secondary" onclick="closeSheet('sheetResepForm')">Batal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SHEET: TARIK DARI RESEP (di Event)                       -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="overlay" id="sheetTarikResep" onclick="overlayClose(event,'sheetTarikResep')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">📖 Tarik HPP dari Resep</span>
+      <span class="sheet-close" onclick="closeSheet('sheetTarikResep')">✕</span>
+    </div>
+    <div class="sheet-body">
+      <div id="tarikresep-info" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--ink3)">
+        Loading...
+      </div>
+      <div id="tarikresep-list"></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--ink3)">Total HPP akan diinsert</span>
+          <span id="tarikresep-grand-total" style="font-family:var(--mono);font-weight:700;color:var(--red)">Rp 0</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button id="tarikresep-btn-save" class="btn btn-primary" style="flex:1" onclick="saveTarikResep()">💾 Insert ke HPP</button>
+        <button class="btn btn-secondary" onclick="closeSheet('sheetTarikResep')">Batal</button>
       </div>
     </div>
   </div>
