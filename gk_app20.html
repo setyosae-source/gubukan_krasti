@@ -797,6 +797,18 @@ select.form-control { appearance: none; }
 </style>
 </head>
 <body>
+<div id="gkLoginGate" style="position:fixed;inset:0;z-index:2147483647;background:#071b48;display:flex;align-items:center;justify-content:center;padding:20px;color:#17233b">
+  <form onsubmit="gkLogin(event)" style="width:100%;max-width:380px;background:#fff;border-radius:18px;padding:26px;box-shadow:0 12px 42px #0005">
+    <h2 style="margin:0 0 8px;color:#071b48">Gubukan KRasti</h2>
+    <p style="font-size:14px;margin:0 0 20px;color:#475569">Masuk dengan akun pengelola UBNB (pemilik/admin).</p>
+    <label for="gkLoginUsername">Username</label>
+    <input id="gkLoginUsername" autocomplete="username" required style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0 14px;border:1px solid #94a3b8;border-radius:8px;color:#17233b;background:#fff">
+    <label for="gkLoginPassword">Password</label>
+    <input id="gkLoginPassword" type="password" autocomplete="current-password" required style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0 14px;border:1px solid #94a3b8;border-radius:8px;color:#17233b;background:#fff">
+    <div id="gkLoginError" role="status" style="color:#b91c1c;font-size:13px;margin-bottom:12px" ></div>
+    <button id="gkLoginButton" type="submit" style="width:100%;padding:12px;border:0;border-radius:8px;background:#071b48;color:#fff;font-weight:700">Masuk</button>
+  </form>
+</div>
 <div id="invoice-print-area"></div>
 <div id="app">
 
@@ -812,6 +824,7 @@ select.form-control { appearance: none; }
         <span style="font-size:9px;opacity:0.6">▾</span>
       </div>
       <button class="topbar-sync" onclick="openTheme()" title="Tema" style="font-size:16px">🎨</button>
+      <button class="topbar-sync" onclick="gkLogout()" title="Keluar akun" aria-label="Keluar akun">⏻</button>
       <button class="topbar-sync" id="syncBtn" onclick="syncAll()" title="Refresh">⟳</button>
     </div>
   </div>
@@ -1789,12 +1802,80 @@ select.form-control { appearance: none; }
 const SUPA_URL = 'https://skltbmcrqutevmtcxqxj.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrbHRibWNycXV0ZXZtdGN4cXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzM5ODIsImV4cCI6MjA5MTI0OTk4Mn0._nogUZg5UylVyP45QTGYw69u76pNxGryj9hZORIfE_A';
 
+// KRasti: verified staff session, using the existing UBNB login RPC.
+let gkSession = null;
+let gkStarted = false;
+const GK_SESSION_KEY = 'krasti_verified_staff_v1';
+function gkShowLogin(message='') {
+  const gate=document.getElementById('gkLoginGate');
+  gate.style.display='flex';
+  document.getElementById('gkLoginError').textContent=message;
+  document.getElementById('gkLoginPassword').value='';
+}
+function gkForgetSession() {
+  gkSession=null;
+  try { sessionStorage.removeItem(GK_SESSION_KEY); } catch(e) {}
+}
+async function gkAuthRpc(name,body,token) {
+  const headers={'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'};
+  if(token) headers['x-ubnb-staff']=token;
+  const response=await fetch(`${SUPA_URL}/rest/v1/rpc/${name}`,{method:'POST',headers,body:JSON.stringify(body)});
+  if(!response.ok) throw new Error('Layanan login tidak tersedia ('+response.status+')');
+  return response.json();
+}
+function gkAuthorized(user) { return user && ['pemilik','admin'].includes(user.role); }
+async function gkValidateSession(session) {
+  if(!session?.token || Date.parse(session.expires_at)<=Date.now()) return false;
+  const user=await gkAuthRpc('ubnb_secure_session',{p_kind:'staff'},session.token);
+  return gkAuthorized(user);
+}
+function gkEnter() {
+  document.getElementById('gkLoginGate').style.display='none';
+  if(!gkStarted) { gkStarted=true; init(); }
+  else { location.reload(); }
+}
+async function gkLogin(event) {
+  event.preventDefault();
+  const btn=document.getElementById('gkLoginButton');
+  const error=document.getElementById('gkLoginError');
+  btn.disabled=true; error.textContent='Memeriksa akun…';
+  try {
+    const result=await gkAuthRpc('ubnb_secure_login',{p_kind:'staff',p_identifier:document.getElementById('gkLoginUsername').value.trim(),p_secret:document.getElementById('gkLoginPassword').value});
+    if(!result?.ok) throw new Error(result?.error||'Login gagal');
+    if(!gkAuthorized(result.user)) throw new Error('Akun ini tidak memiliki akses pengelola KRasti.');
+    const session={token:result.token,expires_at:result.expires_at};
+    if(!await gkValidateSession(session)) throw new Error('Sesi tidak dapat diverifikasi.');
+    gkSession=session;
+    try { sessionStorage.setItem(GK_SESSION_KEY,JSON.stringify(session)); } catch(e) {}
+    document.getElementById('gkLoginPassword').value='';
+    gkEnter();
+  } catch(e) { error.textContent=e.message||'Login gagal'; }
+  finally { btn.disabled=false; }
+}
+async function gkBoot() {
+  try {
+    const saved=JSON.parse(sessionStorage.getItem(GK_SESSION_KEY)||'null');
+    if(await gkValidateSession(saved)) { gkSession=saved; gkEnter(); return; }
+    gkForgetSession();
+    gkShowLogin();
+  } catch(e) { gkForgetSession(); gkShowLogin('Tidak dapat memverifikasi sesi. Silakan masuk kembali.'); }
+}
+function gkLogout() {
+  gkForgetSession();
+  location.reload();
+}
+
 // ── SUPABASE FETCH ─────────────────────────────────────────
 async function sb(path, opts={}) {
+  if(!gkSession?.token || Date.parse(gkSession.expires_at)<=Date.now()) {
+    gkForgetSession(); gkShowLogin('Sesi berakhir. Silakan masuk kembali.');
+    throw new Error('Sesi login diperlukan');
+  }
   const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
     headers: {
       'apikey': SUPA_KEY,
       'Authorization': `Bearer ${SUPA_KEY}`,
+      'x-ubnb-staff': gkSession.token,
       'Content-Type': 'application/json',
       'Prefer': opts.prefer || 'return=representation',
       ...opts.headers
@@ -7663,8 +7744,8 @@ function kvPickerSelect(tipe) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  init();
   loadSavedTheme();
+  gkBoot();
 });
 </script>
 
