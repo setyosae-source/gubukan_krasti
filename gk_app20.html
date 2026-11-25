@@ -1928,8 +1928,36 @@ async function sb(path, opts={}) {
   return text ? JSON.parse(text) : [];
 }
 
+// Baca semua halaman REST, bukan hanya batas maksimum satu respons.
 async function sbGet(table, params='') {
-  return sb(`${table}?${params}`);
+  const raw=String(params||'');
+  const limitMatch=raw.match(/(?:^|&)limit=(\d+)(?:&|$)/);
+  const offsetMatch=raw.match(/(?:^|&)offset=(\d+)(?:&|$)/);
+  const max=limitMatch?Number(limitMatch[1]):Infinity;
+  let offset=offsetMatch?Number(offsetMatch[1]):0;
+  let query=raw.split('&').filter(x=>x&&!/^(limit|offset)=/.test(x)).join('&');
+  const key=table==='gk_pl_bulanan'?'bulan':table==='gk_counter'?'key':table==='gk_produk_tokba'?'nama_produk,satuan':/^gk_/.test(table)?'id':null;
+  if(key){
+    const orderMatch=query.match(/(?:^|&)order=([^&]*)/);
+    const order=orderMatch?orderMatch[1]:'';
+    const existing=order.split(',').map(v=>v.split('.')[0]);
+    const extra=key.split(',').filter(k=>!existing.includes(k)).map(k=>k+'.asc').join(',');
+    if(extra){
+      if(orderMatch) query=query.replace(orderMatch[0],orderMatch[0]+(order?',':'')+extra);
+      else query+=(query?'&':'')+'order='+extra;
+    }
+  }
+  const rows=[];
+  while(rows.length<max){
+    const size=Math.min(500,max-rows.length);
+    const page=await sb(table+'?'+(query?query+'&':'')+'limit='+size+'&offset='+offset);
+    if(!Array.isArray(page)) throw new Error('Respons data '+table+' tidak valid');
+    if(!page.length) break;
+    rows.push(...page);
+    offset+=page.length;
+    // Teruskan meski server membatasi jumlah baris di bawah ukuran halaman.
+  }
+  return rows;
 }
 async function sbInsert(table, data) {
   return sb(table, { method:'POST', body: JSON.stringify(data) });
@@ -2253,8 +2281,9 @@ async function loadDashboard() {
   const bulanStr = `${y}-${String(m).padStart(2,'0')}`;
 
   try {
-    const pl = await sbGet('gk_pl_bulanan', `bulan=eq.${bulanStr}-01&select=*`);
-    const row = pl[0] || {};
+    const monthStart=s.slice(0,7)+'-01', monthEnd=e.slice(0,7)+'-01';
+    const pl = await sbGet('gk_pl_bulanan', `bulan=gte.${monthStart}&bulan=lte.${monthEnd}&select=*`);
+    const row=pl.reduce((acc,r)=>{for(const k of Object.keys(r)){if(k!=='bulan')acc[k]=(acc[k]||0)+Number(r[k]||0);}return acc;},{});
     const kas = await sbGet('gk_kas', 'select=nama,jenis,saldo');
 
     // Event mendatang + data pembayaran
@@ -2593,11 +2622,8 @@ async function loadEvents() {
     eventsData = [...onFire, ...upcoming, ...past];
     renderEvents();
   } catch(e) {
-    try {
-      const data = await sbGet('gk_event', 'order=tanggal.desc&select=*');
-      eventsData = data;
-      renderEvents();
-    } catch(e2) { toast('❌ ' + e2.message); }
+    toast('❌ Riwayat event belum lengkap: '+e.message,6000);
+    console.error('loadEvents:',e);
   }
 }
 
@@ -2818,7 +2844,7 @@ function renderEvents() {
     </div>`;
   };
 
-  let html = '';
+  let html = `<div style="font-size:12px;color:var(--ink3);margin-bottom:10px">${all.length} dari ${eventsData.length} event</div>`;
   if (onFire.length) {
     html += `<div style="font-size:11px;font-weight:800;color:#ff6b35;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:flex;align-items:center;gap:4px">
       <span style="font-size:16px">🔥</span> ON FIRE (${onFire.length})
@@ -3617,7 +3643,7 @@ async function openBahanDetail(id) {
 let beliData = [];
 
 async function loadBeliData() {
-  beliData = await sbGet('gk_pembelian', 'order=tanggal.desc&limit=200&select=*,gk_bahan(nama)');
+  beliData = await sbGet('gk_pembelian', 'order=tanggal.desc&select=*,gk_bahan(nama)');
   return beliData;
 }
 
@@ -4022,7 +4048,7 @@ async function saveOffline() {
 // ══════════════════════════════════════════════════════════
 async function loadLaporan() {
   try {
-    const data = await sbGet('gk_pl_bulanan', 'order=bulan.desc&limit=12&select=*');
+    const data = await sbGet('gk_pl_bulanan', 'order=bulan.desc&select=*');
     renderLaporan(data);
   } catch(e) { toast('❌ ' + e.message); }
 }
@@ -4102,8 +4128,23 @@ function openPeriod() {
     ${months.map((x,i) => `<option value="${x.start}|${x.end}" ${i===selIdx?'selected':''}>${x.label}</option>`).join('')}
   </select>
   <button class="btn btn-primary" style="padding:13px" onclick="pdMonthApply()">✅ Terapkan</button>`;
+  html += `<div style="margin-top:12px;display:grid;gap:8px">
+    <button class="btn btn-secondary" onclick="gkAllHistory()">Semua riwayat</button>
+    <div style="display:flex;gap:8px"><button class="btn btn-secondary" onclick="setPeriodYear(${curY})">${curY}</button><button class="btn btn-secondary" onclick="setPeriodYear(${curY-1})">${curY-1}</button></div>
+    <label style="font-size:12px">Rentang tanggal sendiri</label>
+    <input type="date" id="custom-start" class="form-control" value="${periodStart()}">
+    <input type="date" id="custom-end" class="form-control" value="${periodEnd()}">
+    <button class="btn btn-primary" onclick="setPeriodCustom()">Terapkan rentang tanggal</button>
+    </div>`;
   el.innerHTML = html;
   openSheet('sheetPeriod');
+}
+function gkAllHistory(){
+  const now=new Date();
+  state.period={mode:'custom',year:now.getFullYear(),month:now.getMonth()+1,customStart:'2000-01-01',customEnd:'2099-12-31',allHistory:true};
+  document.getElementById('periodLabel').textContent='Semua riwayat';
+  closeSheet('sheetPeriod');
+  loadPage(state.currentTab);
 }
 
 function pdSetMode(mode) {
@@ -4459,7 +4500,7 @@ function acKasPesananOpen() {
 async function acKasPesananRender(q) {
   const list = document.getElementById('acModal-list');
   list.innerHTML = '<div class="acm-empty">Memuat...</div>';
-  const pesanans = await sbGet('gk_tokba_pesanan','order=tanggal.desc&select=id,customer,tanggal,status&limit=50');
+  const pesanans = await sbGet('gk_tokba_pesanan','order=tanggal.desc&select=id,customer,tanggal,status');
   const ql = q.toLowerCase();
   const items = pesanans.filter(p=>!ql||p.customer.toLowerCase().includes(ql));
   list.innerHTML = items.map(p=>`
@@ -4579,7 +4620,7 @@ async function saveKasForm(tipe) {
         await sbInsert('gk_kas_mutasi',{kas_id:kasU.id,tipe:'keluar',keterangan:`Beli: ${namaBahan}${toko?' ('+toko+')':''}`,jumlah:total,tanggal:today,referensi:'pembelian:'+pid});
         await sbUpdate('gk_kas',kasU.id,{saldo:await hitungSaldoKas(kasU.id)});
       }
-      beliData = await sbGet('gk_pembelian','order=tanggal.desc&limit=200&select=*');
+      beliData = await sbGet('gk_pembelian','order=tanggal.desc&select=*');
       toast('✅ Pembelian dicatat');
     }
     else if (tipe === 'ops-event') {
@@ -6309,8 +6350,7 @@ async function loadLaporanEvent(bulan) {
   try {
     // Ambil semua event bulan tsb dari gk_pl_event
     const bulanLabel = new Date(bulan).toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-    const bulanEnd   = new Date(new Date(bulan).getFullYear(), new Date(bulan).getMonth()+1, 0)
-                         .toISOString().slice(0,10);
+    const bulanEnd = localDate(new Date(new Date(bulan).getFullYear(), new Date(bulan).getMonth()+1, 0));
     const events = await sbGet('gk_pl_event',
       `tanggal=gte.${bulan}&tanggal=lte.${bulanEnd}&order=tanggal.asc&select=*`);
     renderLaporanEvent(bulanLabel, events);
@@ -6644,8 +6684,8 @@ async function loadKvPage(entitas) {
       start = p.customStart;
       end   = p.customEnd;
       // prev end = day before start
-      const d = new Date(start); d.setDate(d.getDate()-1);
-      prevEnd = d.toISOString().slice(0,10);
+      const d = new Date(start+'T00:00:00'); d.setDate(d.getDate()-1);
+      prevEnd = localDate(d);
     } else {
       // default: month
       const y = p.year, m = p.month;
@@ -7677,7 +7717,7 @@ async function kvRefEventFilter() {
   // Search dari eventsData (sudah di-load) atau fetch
   let events = eventsData || [];
   if (!events.length) {
-    try { events = await sbGet('gk_event','order=tanggal.desc&limit=50&select=id,no_event,customer,tanggal'); } catch(e) {}
+    try { events = await sbGet('gk_event','order=tanggal.desc&select=id,no_event,customer,tanggal'); } catch(e) {}
   }
   const matched = events.filter(e =>
     (e.no_event||'').includes(q) ||
