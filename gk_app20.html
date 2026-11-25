@@ -797,10 +797,20 @@ select.form-control { appearance: none; }
 </style>
 </head>
 <body>
+<dialog id="gkPasswordDialog" style="width:min(90vw,400px);border:0;border-radius:16px;padding:24px;background:#fff;color:#17233b">
+<form id="gkPasswordForm" onsubmit="gkSaveManagerPassword(event)" style="display:grid;gap:12px">
+<h2 style="font-size:20px;margin:0">Aktivasi akun Santi</h2>
+<p style="font-size:14px;margin:0">Username: <b>santi</b>. Tetapkan password baru (minimal 12 karakter). Penggantian password mengakhiri sesi lama Santi.</p>
+<label for="gkNewPassword">Password baru</label><input id="gkNewPassword" type="password" minlength="12" autocomplete="new-password" required style="padding:10px;border:1px solid #94a3b8;border-radius:8px">
+<label for="gkConfirmPassword">Ulangi password</label><input id="gkConfirmPassword" type="password" minlength="12" autocomplete="new-password" required style="padding:10px;border:1px solid #94a3b8;border-radius:8px">
+<div id="gkPasswordStatus" role="status" style="font-size:13px"></div>
+<button id="gkPasswordSubmit" type="submit" style="background:#071b48;color:white;padding:12px;border:0;border-radius:8px">Simpan password</button>
+<button type="button" onclick="document.getElementById('gkPasswordDialog').close()" style="padding:10px">Tutup</button>
+</form></dialog>
 <div id="gkLoginGate" style="position:fixed;inset:0;z-index:2147483647;background:#071b48;display:flex;align-items:center;justify-content:center;padding:20px;color:#17233b">
   <form onsubmit="gkLogin(event)" style="width:100%;max-width:380px;background:#fff;border-radius:18px;padding:26px;box-shadow:0 12px 42px #0005">
     <h2 style="margin:0 0 8px;color:#071b48">Gubukan KRasti</h2>
-    <p style="font-size:14px;margin:0 0 20px;color:#475569">Masuk dengan akun pengelola UBNB (pemilik/admin).</p>
+    <p style="font-size:14px;margin:0 0 20px;color:#475569">Masuk dengan akun KRasti atau akun pemilik UBNB.</p>
     <label for="gkLoginUsername">Username</label>
     <input id="gkLoginUsername" autocomplete="username" required style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0 14px;border:1px solid #94a3b8;border-radius:8px;color:#17233b;background:#fff">
     <label for="gkLoginPassword">Password</label>
@@ -824,6 +834,7 @@ select.form-control { appearance: none; }
         <span style="font-size:9px;opacity:0.6">▾</span>
       </div>
       <button class="topbar-sync" onclick="openTheme()" title="Tema" style="font-size:16px">🎨</button>
+      <button id="gkManageAccount" hidden class="topbar-sync" onclick="gkManagePassword()" title="Aktivasi akun Santi" aria-label="Aktivasi akun Santi">👤</button>
       <button class="topbar-sync" onclick="gkLogout()" title="Keluar akun" aria-label="Keluar akun">⏻</button>
       <button class="topbar-sync" id="syncBtn" onclick="syncAll()" title="Refresh">⟳</button>
     </div>
@@ -1816,9 +1827,9 @@ function gkForgetSession() {
   gkSession=null;
   try { sessionStorage.removeItem(GK_SESSION_KEY); } catch(e) {}
 }
-async function gkAuthRpc(name,body,token) {
+async function gkAuthRpc(name,body,token,kind='staff') {
   const headers={'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'};
-  if(token) headers['x-ubnb-staff']=token;
+  if(token) headers[kind==='krasti'?'x-krasti-session':'x-ubnb-staff']=token;
   const response=await fetch(`${SUPA_URL}/rest/v1/rpc/${name}`,{method:'POST',headers,body:JSON.stringify(body)});
   if(!response.ok) throw new Error('Layanan login tidak tersedia ('+response.status+')');
   return response.json();
@@ -1826,11 +1837,14 @@ async function gkAuthRpc(name,body,token) {
 function gkAuthorized(user) { return user && ['pemilik','admin'].includes(user.role); }
 async function gkValidateSession(session) {
   if(!session?.token || Date.parse(session.expires_at)<=Date.now()) return false;
+  if(session.kind==='krasti') return (await gkAuthRpc('krasti_session_check',{},session.token,'krasti'))===true;
   const user=await gkAuthRpc('ubnb_secure_session',{p_kind:'staff'},session.token);
+  session.role=user?.role;
   return gkAuthorized(user);
 }
 function gkEnter() {
   document.getElementById('gkLoginGate').style.display='none';
+  document.getElementById('gkManageAccount').hidden=!(gkSession?.kind!=='krasti' && gkSession?.role==='pemilik');
   if(!gkStarted) { gkStarted=true; init(); }
   else { location.reload(); }
 }
@@ -1840,10 +1854,13 @@ async function gkLogin(event) {
   const error=document.getElementById('gkLoginError');
   btn.disabled=true; error.textContent='Memeriksa akun…';
   try {
-    const result=await gkAuthRpc('ubnb_secure_login',{p_kind:'staff',p_identifier:document.getElementById('gkLoginUsername').value.trim(),p_secret:document.getElementById('gkLoginPassword').value});
+    const username=document.getElementById('gkLoginUsername').value.trim();
+    const password=document.getElementById('gkLoginPassword').value;
+    const kind=username.toLowerCase()==='santi'?'krasti':'staff';
+    const result=kind==='krasti'?await gkAuthRpc('krasti_login',{p_username:username,p_password:password}):await gkAuthRpc('ubnb_secure_login',{p_kind:'staff',p_identifier:username,p_secret:password});
     if(!result?.ok) throw new Error(result?.error||'Login gagal');
-    if(!gkAuthorized(result.user)) throw new Error('Akun ini tidak memiliki akses pengelola KRasti.');
-    const session={token:result.token,expires_at:result.expires_at};
+    if(kind==='staff'&&!gkAuthorized(result.user)) throw new Error('Akun ini tidak memiliki akses pengelola KRasti.');
+    const session={kind,token:result.token,expires_at:result.expires_at};
     if(!await gkValidateSession(session)) throw new Error('Sesi tidak dapat diverifikasi.');
     gkSession=session;
     try { sessionStorage.setItem(GK_SESSION_KEY,JSON.stringify(session)); } catch(e) {}
@@ -1860,9 +1877,30 @@ async function gkBoot() {
     gkShowLogin();
   } catch(e) { gkForgetSession(); gkShowLogin('Tidak dapat memverifikasi sesi. Silakan masuk kembali.'); }
 }
-function gkLogout() {
+async function gkLogout() {
+  try { if(gkSession?.kind==='krasti') await gkAuthRpc('krasti_logout',{},gkSession.token,'krasti'); } catch(e) {}
   gkForgetSession();
   location.reload();
+}
+function gkManagePassword() {
+  if(gkSession?.kind==='krasti'||gkSession?.role!=='pemilik') return;
+  document.getElementById('gkPasswordForm').reset();
+  document.getElementById('gkPasswordStatus').textContent='';
+  document.getElementById('gkPasswordDialog').showModal();
+}
+async function gkSaveManagerPassword(event) {
+  event.preventDefault();
+  const status=document.getElementById('gkPasswordStatus');
+  const btn=document.getElementById('gkPasswordSubmit');
+  const p=document.getElementById('gkNewPassword').value;
+  if(p!==document.getElementById('gkConfirmPassword').value){status.textContent='Konfirmasi password tidak sama.';return;}
+  if(p.length<12||new TextEncoder().encode(p).length>72){status.textContent='Password minimal 12 karakter dan maksimal 72 byte.';return;}
+  btn.disabled=true;
+  try{
+    if(await gkAuthRpc('krasti_set_password',{p_password:p},gkSession.token)!==true)throw new Error('Password belum tersimpan.');
+    document.getElementById('gkPasswordForm').reset();
+    status.textContent='Akun santi aktif. Silakan logout dan masuk menggunakan password baru.';
+  }catch(e){status.textContent=e.message||'Gagal menyimpan password.';}finally{btn.disabled=false;}
 }
 
 // ── SUPABASE FETCH ─────────────────────────────────────────
@@ -1875,7 +1913,7 @@ async function sb(path, opts={}) {
     headers: {
       'apikey': SUPA_KEY,
       'Authorization': `Bearer ${SUPA_KEY}`,
-      'x-ubnb-staff': gkSession.token,
+      [gkSession.kind==='krasti'?'x-krasti-session':'x-ubnb-staff']: gkSession.token,
       'Content-Type': 'application/json',
       'Prefer': opts.prefer || 'return=representation',
       ...opts.headers
