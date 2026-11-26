@@ -797,6 +797,13 @@ select.form-control { appearance: none; }
 </style>
 </head>
 <body>
+<dialog id="gkReconDialog" style="width:min(94vw,650px);max-height:85dvh;overflow:auto;border:1px solid var(--border);border-radius:14px;background:var(--bg);color:var(--ink);padding:20px">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <h2 style="font-size:19px;margin:0">Rekonsiliasi pembukuan</h2>
+    <button class="btn btn-secondary" style="width:auto" onclick="document.getElementById('gkReconDialog').close()">Tutup</button>
+  </div>
+  <div id="gkReconBody" style="margin-top:14px;font-size:13px"></div>
+</dialog>
 <dialog id="gkPasswordDialog" style="width:min(90vw,400px);border:0;border-radius:16px;padding:24px;background:#fff;color:#17233b">
 <form id="gkPasswordForm" onsubmit="gkSaveManagerPassword(event)" style="display:grid;gap:12px">
 <h2 style="font-size:20px;margin:0">Aktivasi akun Santi</h2>
@@ -2606,10 +2613,10 @@ async function loadEvents() {
 
     const today = localDate();
     const enriched = data.map(ev => {
-      const omzet    = omzetMap[ev.id]||0;
-      const hppOps   = (hppMap[ev.id]||0) + (opsMap[ev.id]||0);
-      const laba     = omzet - hppOps;
       const terbayar = bayarMap[ev.id]||0;
+      const omzet = gkReconciledRevenue(ev,omzetMap[ev.id]||0,terbayar);
+      const hppOps = (hppMap[ev.id]||0) + (opsMap[ev.id]||0);
+      const laba = omzet - hppOps;
       const sisa     = omzet - terbayar;
       const margin   = omzet>0 ? Math.round(laba/omzet*100) : 0;
       return { ...ev, _omzet: omzet, _terbayar: terbayar, _menus: menuNamaMap[ev.id]||[], summary: { omzet, hppOps, laba, terbayar, sisa, margin } };
@@ -2955,9 +2962,14 @@ async function openEventDetail(id) {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+function gkReconciledRevenue(ev,menuNet,paid) {
+  if(ev?.status==='selesai' && ev.omzet_rekonsiliasi!=null && Number(ev.omzet_rekonsiliasi)===Number(paid))return Number(ev.omzet_rekonsiliasi);
+  return menuNet;
+}
 function renderEventDetail() {
   const ev = currentEvent;
-  const nilaiOrder = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0) - Number(currentEvent.diskon_nominal||0);
+  const rawMenuNet = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0) - Number(ev.diskon_nominal||0);
+  const nilaiOrder = gkReconciledRevenue(ev,rawMenuNet,currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0));
   const hpp        = currentEventBahan.reduce((s,b)=>s+Number(b.total||0),0);
   const ops        = currentEventOps.reduce((s,o)=>s+Number(o.jumlah||0),0);
   const hppOps     = hpp + ops;
@@ -3021,6 +3033,12 @@ function renderEventDetail() {
       </div>`).join('');
   }
 
+  if(nilaiOrder!==rawMenuNet){
+    const note=document.createElement('div');
+    note.style.cssText='font-size:12px;padding:10px;margin:8px 0;border:1px solid var(--border);border-radius:8px;color:var(--ink2)';
+    note.textContent='Rekonsiliasi arsip: total rincian menu '+rpFull(rawMenuNet)+'; penyesuaian '+rpFull(nilaiOrder-rawMenuNet)+'; omzet terverifikasi '+rpFull(nilaiOrder)+'. Rincian menu asli dipertahankan.';
+    menuEl.appendChild(note);
+  }
   // Bahan HPP list
   const bahanEl = document.getElementById('evd-bahan');
   if (!currentEventBahan.length) {
@@ -4130,6 +4148,7 @@ function openPeriod() {
   <button class="btn btn-primary" style="padding:13px" onclick="pdMonthApply()">✅ Terapkan</button>`;
   html += `<div style="margin-top:12px;display:grid;gap:8px">
     <button class="btn btn-secondary" onclick="gkAllHistory()">Semua riwayat</button>
+    <button class="btn btn-secondary" onclick="gkOpenReconciliation()">Rekonsiliasi pembukuan</button>
     <div style="display:flex;gap:8px"><button class="btn btn-secondary" onclick="setPeriodYear(${curY})">${curY}</button><button class="btn btn-secondary" onclick="setPeriodYear(${curY-1})">${curY-1}</button></div>
     <label style="font-size:12px">Rentang tanggal sendiri</label>
     <input type="date" id="custom-start" class="form-control" value="${periodStart()}">
@@ -4138,6 +4157,61 @@ function openPeriod() {
     </div>`;
   el.innerHTML = html;
   openSheet('sheetPeriod');
+}
+async function gkOpenReconciliation(){
+  if(!gkSession?.token)return;
+  const dialog=document.getElementById('gkReconDialog');
+  const out=document.getElementById('gkReconBody');
+  out.textContent='Memuat data pembukuan…'; dialog.showModal();
+  try{
+    const today=localDate();
+    const cut='2026-05-01';
+    const [old,modern,events,menus,archive,kas]=await Promise.all([
+      sbGet('gk_buku_besar','select=id,kas_jenis,tanggal,masuk,keluar&order=tanggal.asc'),
+      sbGet('gk_mutasi','select=id,entitas,tanggal,tipe,jumlah&order=tanggal.asc'),
+      sbGet('gk_event','select=id,no_event,tanggal,omzet_rekonsiliasi,status'),
+      sbGet('gk_event_menu','select=id,event_id,total'),
+      sbGet('gk_pl_event','select=id,omzet,terbayar'),
+      sbGet('gk_kas','select=id,jenis,saldo')
+    ]);
+    const sumOld=arr=>arr.reduce((s,r)=>s+Number(r.masuk||0)-Number(r.keluar||0),0);
+    const sumNew=arr=>arr.reduce((s,r)=>s+(r.tipe==='masuk'?1:-1)*Number(r.jumlah||0),0);
+    const oldUsaha=old.filter(r=>r.kas_jenis==='usaha'&&r.tanggal<cut);
+    const oldRt=old.filter(r=>r.kas_jenis==='rt'&&r.tanggal<cut);
+    const overlap=old.filter(r=>r.kas_jenis==='usaha'&&r.tanggal>=cut&&r.tanggal<='2026-05-02');
+    const bridge=modern.filter(r=>r.tanggal>=cut&&r.tanggal<='2026-05-02'&&['gubukan','tokba'].includes(r.entitas));
+    const realized=modern.filter(r=>r.tanggal>=cut&&r.tanggal<=today);
+    const future=modern.filter(r=>r.tanggal>today);
+    const latest=e=>realized.filter(r=>r.entitas===e);
+    const usaha=sumOld(oldUsaha)+sumNew(latest('gubukan'))+sumNew(latest('tokba'));
+    const rt=sumOld(oldRt)+sumNew(latest('rt'));
+    const archived=events.filter(e=>e.omzet_rekonsiliasi!=null);
+    const menuMap=new Map(), reportMap=new Map(archive.map(r=>[r.id,r]));
+    menus.forEach(m=>menuMap.set(m.event_id,(menuMap.get(m.event_id)||0)+Number(m.total||0)));
+    const div=(label,val)=>'<div class="row"><span class="row-label">'+label+'</span><span class="row-val">'+val+'</span></div>';
+    out.innerHTML='<p>Cutover: 1 Mei 2026. Buku besar sebelum cutover, mutasi konvensional sesudahnya. Ini laporan pembanding, bukan saldo rekening bank terverifikasi.</p>'+
+      '<h3>Saldo berdasarkan catatan s.d. '+today+'</h3>'+
+      div('Usaha hingga 30 Apr 2026',rpFull(sumOld(oldUsaha)))+
+      div('Mutasi Gubukan sejak Mei',rpFull(sumNew(latest('gubukan'))))+
+      div('Mutasi TOKBA sejak Mei',rpFull(sumNew(latest('tokba'))))+
+      div('Saldo usaha rekonsiliasi',rpFull(usaha))+
+      div('Saldo RT sebelum Mei',rpFull(sumOld(oldRt)))+
+      div('Mutasi RT sejak Mei',rpFull(sumNew(latest('rt'))))+
+      div('Saldo RT rekonsiliasi',rpFull(rt))+
+      div('Gabungan pembukuan',rpFull(usaha+rt))+
+      '<h3>Periode tumpang tindih</h3>'+
+      div('Buku besar 1–2 Mei',overlap.length+' transaksi; '+rpFull(sumOld(overlap)))+
+      div('Konvensional 1–2 Mei',bridge.length+' transaksi; '+rpFull(sumNew(bridge)))+
+      div('Selisih bersih',rpFull(sumNew(bridge)-sumOld(overlap)))+
+      '<p>Gunakan mutasi konvensional pada periode peralihan, bukan penjumlahan kedua buku.</p>'+
+      '<h3>Transaksi setelah hari ini</h3>'+div('Jumlah',future.length)+div('Nilai bersih rencana',rpFull(sumNew(future)))+
+      '<h3>Selisih saldo buku besar lama</h3>'+
+      kas.map(k=>div(k.jenis==='rt'?'RT':'Usaha',rpFull(Number(k.saldo||0)-sumOld(old.filter(r=>r.kas_jenis===k.jenis))))).join('')+
+      '<p>Selisih saldo tersimpan vs jumlah mutasi perlu diperiksa; tidak diubah otomatis.</p>'+
+      '<h3>Omzet arsip yang direkonsiliasi ('+archived.length+' event)</h3>'+
+      archived.map(e=>div('#'+String(e.no_event).replace(/[^0-9A-Za-z-]/g,'')+' · '+e.tanggal,rpFull(Number(reportMap.get(e.id)?.omzet||0)-(menuMap.get(e.id)||0)))).join('')+
+      '<p>Selisih omzet ditampilkan sebagai penyesuaian arsip; rincian menu asli tidak diubah.</p>';
+  }catch(e){out.textContent='Rekonsiliasi gagal dimuat: '+e.message;}
 }
 function gkAllHistory(){
   const now=new Date();
@@ -5843,8 +5917,8 @@ function openInvoice() {
   const subtotal  = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
   const diskonNom = Number(ev.diskon_nominal)||0;
   const diskonPct = Number(ev.diskon_persen)||0;
-  const omzet     = subtotal - diskonNom;
   const terbayar  = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
+  const omzet = gkReconciledRevenue(ev,subtotal-diskonNom,terbayar);
   const sisa      = omzet - terbayar;
   const invNo = 'INV/GK/' + (ev.tanggal||'').replace(/-/g,'').slice(2) + '/' + ev.id.slice(-4).toUpperCase();
   const el = document.getElementById('invoice-body');
@@ -5866,6 +5940,7 @@ function openInvoice() {
       ${diskonNom>0?`
       <div class="row"><span class="row-label">Subtotal</span><span style="font-family:var(--mono)">${rpFull(subtotal)}</span></div>
       <div class="row"><span class="row-label" style="color:var(--green)">Diskon${diskonPct>0?' ('+diskonPct+'%)':''}</span><span style="color:var(--green);font-family:var(--mono)">- ${rpFull(diskonNom)}</span></div>`:''}
+      ${omzet!==subtotal-diskonNom?`<div class="row"><span class="row-label">Penyesuaian arsip</span><span>${rpFull(omzet-subtotal+diskonNom)}</span></div>`:""}
       <div class="row"><span style="font-size:14px;font-weight:700">TOTAL</span><span style="font-size:16px;font-weight:700;color:var(--gold);font-family:var(--mono)">${rpFull(omzet)}</span></div>
       <div class="row"><span class="row-label">Terbayar</span><span style="font-size:13px;color:var(--green);font-family:var(--mono)">${rpFull(terbayar)}</span></div>
       ${sisa>0?`<div class="row"><span class="row-label" style="color:var(--red)">Sisa Tagihan</span><span style="font-size:14px;font-weight:700;color:var(--red);font-family:var(--mono)">${rpFull(sisa)}</span></div>`:'<div style="text-align:center;padding:10px;color:var(--green);font-weight:600">LUNAS</div>'}
@@ -5875,9 +5950,11 @@ function openInvoice() {
 }
 
 function downloadInvoicePDF() {
-  const ev       = currentEvent;
-  const omzet    = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
+  const ev = currentEvent;
+  const rawSubtotal = currentEventMenus.reduce((s,m)=>s+Number(m.total||0),0);
+  const netSubtotal=rawSubtotal-Number(ev.diskon_nominal||0);
   const terbayar = currentEventBayar.reduce((s,b)=>s+Number(b.jumlah||0),0);
+  const omzet = gkReconciledRevenue(ev,netSubtotal,terbayar);
   const sisa     = omzet - terbayar;
   const invNo    = 'INV/GK/' + (ev.tanggal||'').replace(/-/g,'').slice(2) + '/' + ev.id.slice(-4).toUpperCase();
 
@@ -5929,6 +6006,8 @@ function downloadInvoicePDF() {
 
       <!-- Total -->
       <div style="border-top:2px solid #1a1a1a;margin-top:16px;padding-top:14px">
+        ${Number(ev.diskon_nominal||0)?'<p style="font-size:12px">Diskon: '+rpFull(ev.diskon_nominal)+'</p>':''}
+        ${omzet!==netSubtotal?'<p style="font-size:12px">Penyesuaian arsip: '+rpFull(omzet-netSubtotal)+'</p>':''}
         <div style="display:flex;justify-content:space-between;margin-bottom:8px">
           <span style="font-size:15px;font-weight:700">TOTAL</span>
           <span style="font-size:17px;font-weight:800;color:#c9a227;font-family:monospace">${rpFull(omzet)}</span>
