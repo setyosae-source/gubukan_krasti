@@ -797,6 +797,18 @@ select.form-control { appearance: none; }
 </style>
 </head>
 <body>
+<dialog id="gkSalesDialog" style="width:min(96vw,760px);max-height:92dvh;overflow:auto;border:1px solid var(--border);border-radius:14px;background:var(--bg);color:var(--ink);padding:15px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="font-size:19px;margin:0">Marketing & Sales</h2><button class="btn btn-secondary" style="width:auto" onclick="document.getElementById('gkSalesDialog').close()">Tutup</button></div>
+<div style="display:flex;gap:6px;overflow-x:auto;margin:12px 0">
+<button class="btn btn-secondary" style="width:auto;white-space:nowrap" onclick="gkSalesTab('agenda')">Agenda</button>
+<button class="btn btn-secondary" style="width:auto;white-space:nowrap" onclick="gkSalesTab('customers')">Pelanggan</button>
+<button class="btn btn-secondary" style="width:auto;white-space:nowrap" onclick="gkSalesTab('pipeline')">Pipeline</button>
+<button class="btn btn-secondary" style="width:auto;white-space:nowrap" onclick="gkSalesTab('quote')">Penawaran</button>
+<button class="btn btn-secondary" style="width:auto;white-space:nowrap" onclick="gkSalesTab('target')">Target</button>
+</div>
+<div id="gkSalesStatus" role="status" style="font-size:12px;color:var(--ink3);margin:8px 0"></div>
+<div id="gkSalesBody"></div>
+</dialog>
 <dialog id="gkControlDialog" style="width:min(94vw,680px);max-height:85dvh;overflow:auto;border:1px solid var(--border);border-radius:14px;background:var(--bg);color:var(--ink);padding:18px">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
 <h2 style="font-size:18px;margin:0">Kontrol Pembukuan</h2>
@@ -869,6 +881,7 @@ select.form-control { appearance: none; }
         <span style="font-size:9px;opacity:0.6">▾</span>
       </div>
       <button class="topbar-sync" onclick="openTheme()" title="Tema" style="font-size:16px">🎨</button>
+      <button class="topbar-sync" onclick="gkSalesOpen()" title="Marketing & Sales" aria-label="Marketing & Sales">📈</button>
       <button id="gkManageAccount" hidden class="topbar-sync" onclick="gkManagePassword()" title="Aktivasi akun Santi" aria-label="Aktivasi akun Santi">👤</button>
       <button class="topbar-sync" onclick="gkLogout()" title="Keluar akun" aria-label="Keluar akun">⏻</button>
       <button class="topbar-sync" id="syncBtn" onclick="syncAll()" title="Refresh">⟳</button>
@@ -887,6 +900,12 @@ select.form-control { appearance: none; }
     <!-- ═══════════════════════════════════════════ -->
     <div class="page active" id="page-dashboard">
       <div class="section-title">Ringkasan Bulan Ini</div>
+<div class="card" style="border-color:var(--gold);margin-bottom:10px">
+<div class="card-title">Marketing & Sales · KRasti</div>
+<div style="font-size:15px;font-weight:700;margin:6px 0" id="gkSalesPreview">Agenda pemasaran dan target penjualan</div>
+<div id="gkSalesPreviewDetail" style="font-size:12px;color:var(--ink3);margin:6px 0">Pelanggan · Prospek · Follow-up · Penawaran</div>
+<button class="btn btn-primary" onclick="gkSalesOpen()">Buka Marketing & Sales</button>
+</div>
 
       <!-- Total Laba Bersih (Gubukan + Tokba) -->
       <div class="card" style="border-color:rgba(240,192,96,0.3);background:linear-gradient(135deg,var(--bg2),rgba(240,192,96,0.04));margin-bottom:8px">
@@ -2184,6 +2203,7 @@ window.switchTab = function switchTab(el) {
 }
 
 function loadPage(page) {
+  if(page==='dashboard')gkSalesPreview();
   if (appMode === 'konvensional') {
     if (page==='dashboard') loadKvDashboard();
     else if (page==='event') { loadEvents(); if (!bahanData.length) loadBahan(); }
@@ -4303,6 +4323,87 @@ async function gkSaveReview(event){
     await gkLoadControls();
   }catch(e){out.textContent=e.message;}finally{btn.disabled=false;}
 }
+
+let gkSalesData={customers:[],leads:[],activities:[],targets:[],events:[],reports:[]},gkSalesCurrent='agenda';
+const gkSalesStages={prospek:'Prospek',penawaran:'Penawaran',followup:'Follow-up',negosiasi:'Negosiasi',booking:'Booking / DP',menang:'Order berhasil',kalah:'Tidak jadi'};
+const gkSalesKinds={pelanggan:'Hubungi pelanggan lama',followup:'Follow-up calon pelanggan',mitra:'Cari mitra baru',whatsapp:'Promosi WhatsApp',sosial:'Konten sosial media',penawaran:'Kirim penawaran'};
+const gkSalesDaily={pelanggan:5,followup:3,mitra:1,whatsapp:1,sosial:0,penawaran:1};
+function gkSalesEsc(v){return String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));}
+function gkSalesEl(id){return document.getElementById(id);}
+function gkSalesToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+function gkSalesName(id){return gkSalesData.customers.find(x=>x.id===id)?.name||'—';}
+function gkSalesOpen(){if(!gkSession?.token)return;gkSalesEl('gkSalesDialog').showModal();gkSalesCurrent='agenda';gkSalesLoad();}
+async function gkSalesLoad(){
+ const status=gkSalesEl('gkSalesStatus');status.textContent='Memuat data penjualan…';
+ try{
+  const [customers,leads,activities,targets,events,reports]=await Promise.all([
+   sbGet('gk_sales_customer','order=name.asc&select=*'),sbGet('gk_sales_lead','order=created_at.desc&select=*'),
+   sbGet('gk_sales_activity','order=day.desc,created_at.desc&select=*'),sbGet('gk_sales_target','order=month.asc&select=*'),
+   sbGet('gk_event','select=id,customer,kontak,tanggal,status,no_event&order=tanggal.desc'),
+   sbGet('gk_pl_event','select=id,omzet,terbayar')
+  ]);
+  gkSalesData={customers,leads,activities,targets,events,reports};status.textContent='Data penjualan terhubung · '+customers.length+' pelanggan/prospek';
+  gkSalesRender();
+ }catch(e){status.textContent='Marketing belum bisa dimuat: '+e.message;}
+}
+function gkSalesTab(t){gkSalesCurrent=t;gkSalesRender();}
+function gkSalesOptions(items,value){return items.map(([k,v])=>'<option value="'+gkSalesEsc(k)+'"'+(k===value?' selected':'')+'>'+gkSalesEsc(v)+'</option>').join('');}
+function gkSalesCustomerOptions(value){return '<option value="">Pilih pelanggan</option>'+gkSalesOptions(gkSalesData.customers.map(x=>[x.id,x.name]),value);}
+function gkSalesFormField(label,html){return '<label style="display:block;font-size:12px;margin:8px 0">'+label+html+'</label>';}
+function gkSalesInput(id,value='',type='text',extra=''){return '<input class="form-control" id="'+id+'" type="'+type+'" value="'+gkSalesEsc(value)+'" '+extra+'>';}
+function gkSalesSelect(id,opts){return '<select class="form-control" id="'+id+'">'+opts+'</select>';}
+function gkSalesBox(html){return '<div style="padding:12px;border:1px solid var(--border);border-radius:10px;margin:8px 0">'+html+'</div>';}
+function gkSalesBtn(label,action){return '<button type="button" class="btn btn-secondary" style="width:auto;margin:4px 4px 0 0" onclick="'+action+'">'+label+'</button>';}
+function gkSalesRender(){
+ const b=gkSalesEl('gkSalesBody'),d=gkSalesData,today=gkSalesToday();
+ if(gkSalesCurrent==='agenda'){
+  const act=d.activities.filter(x=>x.day===today),due=d.leads.filter(x=>!['menang','kalah'].includes(x.stage)&&x.next_followup&&x.next_followup<=today);
+  const hist=d.events.filter(e=>e.tanggal<today&&!['inquiry','cancel'].includes(e.status));
+  const candidates=d.customers.filter(x=>!x.do_not_contact&&hist.some(e=>e.customer.trim().toLowerCase()===x.name_key)&&!d.activities.some(a=>a.customer_id===x.id&&a.day>=new Date(Date.now()-7*86400000).toISOString().slice(0,10))).sort((a,b)=>Number(!!b.contact)-Number(!!a.contact)).slice(0,5);
+  b.innerHTML='<h3>Agenda '+today+'</h3>'+Object.entries(gkSalesKinds).map(([k,label])=>{const n=act.filter(a=>a.kind===k).length;return gkSalesBox('<b>'+label+'</b> · '+n+(gkSalesDaily[k]?' / '+gkSalesDaily[k]:'')+' '+gkSalesBtn('Catat hasil',"gkSalesActivityForm('"+k+"')"));}).join('')+
+  '<h3>Follow-up jatuh tempo ('+due.length+')</h3>'+ (due.map(l=>gkSalesBox('<b>'+gkSalesEsc(gkSalesName(l.customer_id))+'</b><div>'+gkSalesEsc(l.title)+' · '+gkSalesEsc(l.next_followup)+' · '+rpFull(l.estimated_value)+'</div>'+gkSalesBtn('Buka prospek',"gkSalesLeadForm('"+l.id+"')")+gkSalesBtn('Catat follow-up',"gkSalesActivityForm('followup','"+l.customer_id+"','"+l.id+"')"))).join('')||'<p>Tidak ada follow-up jatuh tempo.</p>')+
+  '<h3>Rekomendasi pelanggan lama</h3><p style="font-size:11px;color:var(--ink3)">Berdasarkan riwayat event dan aktivitas 7 hari terakhir; belum merupakan rekomendasi AI generatif.</p>'+ (candidates.map(x=>gkSalesBox('<b>'+gkSalesEsc(x.name)+'</b> · '+(x.contact?'Kontak tersedia':'Lengkapi kontak')+' '+gkSalesBtn('Detail',"gkSalesCustomerForm('"+x.id+"')")+gkSalesBtn('Catat kontak',"gkSalesActivityForm('pelanggan','"+x.id+"')"))).join('')||'<p>Belum ada kandidat.</p>')+
+  '<h3>Aktivitas hari ini</h3>'+act.map(a=>gkSalesBox(gkSalesEsc(gkSalesKinds[a.kind])+' · '+gkSalesEsc(gkSalesName(a.customer_id))+'<div>'+gkSalesEsc(a.note)+'</div>')).join('');
+ }else if(gkSalesCurrent==='customers'){
+  b.innerHTML=gkSalesBtn('+ Pelanggan / mitra baru',"gkSalesCustomerForm()")+'<input class="form-control" placeholder="Cari nama atau kontak" oninput="gkSalesCustomerList(this.value)" style="margin:10px 0"><div id="gkSalesCustomerRows"></div>';gkSalesCustomerList('');
+ }else if(gkSalesCurrent==='pipeline'){
+  b.innerHTML=gkSalesBtn('+ Prospek baru',"gkSalesLeadForm()")+'<p style="font-size:12px">Estimasi pipeline aktif: <b>'+rpFull(d.leads.filter(l=>!['menang','kalah'].includes(l.stage)).reduce((s,l)=>s+Number(l.estimated_value),0))+'</b></p>'+Object.entries(gkSalesStages).map(([k,label])=>{let rows=d.leads.filter(x=>x.stage===k);return '<h3 style="font-size:14px">'+label+' ('+rows.length+')</h3>'+rows.map(l=>gkSalesBox('<b>'+gkSalesEsc(gkSalesName(l.customer_id))+'</b><div>'+gkSalesEsc(l.title)+' · '+rpFull(l.estimated_value)+'</div><div style="font-size:11px">Event: '+gkSalesEsc(l.event_date||'—')+' · Follow-up: '+gkSalesEsc(l.next_followup||'—')+'</div>'+gkSalesBtn('Kelola',"gkSalesLeadForm('"+l.id+"')"))).join('');}).join('');
+ }else if(gkSalesCurrent==='quote'){gkSalesQuoteForm();}
+ else if(gkSalesCurrent==='target'){
+  b.innerHTML='<h3>Target 90 hari</h3>'+d.targets.map(t=>{let ev=d.events.filter(e=>e.tanggal?.startsWith(t.month.slice(0,7))&&!['inquiry','cancel'].includes(e.status));let ids=new Set(ev.map(e=>e.id));let omzet=d.reports.filter(v=>ids.has(v.id)).reduce((s,v)=>s+Number(v.omzet||0),0);let pct=t.gubukan?Math.round(omzet/t.gubukan*100):0;return gkSalesBox('<b>'+gkSalesEsc(t.month.slice(0,7))+'</b><div>Gubukan: '+rpFull(omzet)+' / '+rpFull(t.gubukan)+' ('+pct+'%)</div><progress max="100" value="'+Math.min(100,pct)+'" style="width:100%"></progress><div>Event: '+ev.length+' / '+t.events+'</div><div>TOKBA target: '+rpFull(t.tokba)+' (realisasi penjualan bersih marketplace belum terintegrasi)</div>'+gkSalesBtn('Ubah target',"gkSalesTargetForm('"+t.id+"')"));}).join('')+'<p style="font-size:12px;color:var(--ink3)">Realisasi Gubukan adalah nilai event berstatus selain inquiry/cancel; bukan penerimaan kas.</p>'+gkSalesBtn('+ Target bulan baru',"gkSalesTargetForm()");
+ }
+}
+function gkSalesCustomerList(q){
+ const x=gkSalesEl('gkSalesCustomerRows');if(!x)return;
+ const rows=gkSalesData.customers.filter(c=>(c.name+' '+(c.contact||'')+' '+c.kind).toLowerCase().includes(q.toLowerCase()));
+ x.innerHTML='<p>'+rows.length+' pelanggan/prospek</p>'+rows.map(c=>{let h=gkSalesData.events.filter(e=>e.customer?.trim().toLowerCase()===c.name_key);let phone=(c.contact||'').replace(/[^\d]/g,'');if(phone.startsWith('0'))phone='62'+phone.slice(1);let wa=!c.do_not_contact&&/^62\d{8,13}$/.test(phone)?'<a href="https://wa.me/'+phone+'" target="_blank" rel="noopener noreferrer" style="color:var(--green);margin:8px">Buka WA</a>':'';return gkSalesBox('<b>'+gkSalesEsc(c.name)+'</b><div>'+gkSalesEsc(c.kind)+' · '+h.length+' riwayat event · '+gkSalesEsc(c.contact||'Kontak kosong')+(c.do_not_contact?' · Jangan hubungi':'')+'</div>'+gkSalesBtn('Edit',"gkSalesCustomerForm('"+c.id+"')")+gkSalesBtn('Prospek',"gkSalesLeadForm('', '"+c.id+"')")+wa);}).join('');
+}
+function gkSalesCustomerForm(id=''){
+ let x=gkSalesData.customers.find(c=>c.id===id)||{};
+ gkSalesEl('gkSalesBody').innerHTML='<h3>'+ (id?'Edit pelanggan':'Pelanggan / mitra baru')+'</h3><form onsubmit="gkSalesSaveCustomer(event,\''+id+'\')">'+gkSalesFormField('Nama',gkSalesInput('gs-name',x.name,'text','required'))+gkSalesFormField('Kontak',gkSalesInput('gs-contact',x.contact))+gkSalesFormField('Jenis',gkSalesSelect('gs-kind',gkSalesOptions(['pelanggan','catering','wo','eo','kantor','tokba','lainnya'].map(k=>[k,k]),x.kind||'pelanggan')))+gkSalesFormField('Catatan',gkSalesInput('gs-note',x.note))+ '<label><input type="checkbox" id="gs-optout" '+(x.do_not_contact?'checked':'')+'> Jangan hubungi</label><button class="btn btn-primary" type="submit">Simpan</button></form>'+gkSalesBtn('Kembali',"gkSalesTab('customers')");
+}
+async function gkSalesSaveCustomer(e,id){e.preventDefault();await gkSalesSave(e,'gk_sales_customer',id,{name:gkSalesEl('gs-name').value.trim(),contact:gkSalesEl('gs-contact').value.trim()||null,kind:gkSalesEl('gs-kind').value,note:gkSalesEl('gs-note').value.trim()||null,do_not_contact:gkSalesEl('gs-optout').checked},'customers');}
+function gkSalesLeadForm(id='',customer=''){
+ let x=gkSalesData.leads.find(l=>l.id===id)||{},cid=x.customer_id||customer;
+ const eventOptions='<option value="">Belum ada event terkait</option>'+gkSalesOptions(gkSalesData.events.filter(e=>!gkSalesData.leads.some(l=>l.event_id===e.id&&l.id!==id)).map(e=>[e.id,(e.no_event?'#'+e.no_event+' ':'')+e.customer+' · '+e.tanggal]),x.event_id);
+ gkSalesEl('gkSalesBody').innerHTML='<h3>'+ (id?'Kelola prospek':'Prospek baru')+'</h3><form onsubmit="gkSalesSaveLead(event,\''+id+'\')">'+gkSalesFormField('Pelanggan',gkSalesSelect('gs-customer',gkSalesCustomerOptions(cid)))+gkSalesFormField('Kebutuhan / judul',gkSalesInput('gs-title',x.title,'text','required'))+gkSalesFormField('Tahap',gkSalesSelect('gs-stage',gkSalesOptions(Object.entries(gkSalesStages),x.stage||'prospek')))+gkSalesFormField('Estimasi omzet (Rp)',gkSalesInput('gs-value',x.estimated_value||0,'number','min="0" step="1" required'))+gkSalesFormField('Tanggal acara',gkSalesInput('gs-date',x.event_date,'date'))+gkSalesFormField('Follow-up berikutnya',gkSalesInput('gs-follow',x.next_followup||gkSalesToday(),'date'))+gkSalesFormField('Event terkait (opsional, pilih event yang sudah dibuat)',gkSalesSelect('gs-event',eventOptions))+gkSalesFormField('Catatan',gkSalesInput('gs-note',x.note))+'<button class="btn btn-primary" type="submit">Simpan prospek</button></form>'+ (x.event_id?gkSalesBtn('Buka event',"gkSalesEl('gkSalesDialog').close();openEventDetail('"+x.event_id+"')"):'')+gkSalesBtn('Kembali',"gkSalesTab('pipeline')");
+}
+async function gkSalesSaveLead(e,id){e.preventDefault();let cid=gkSalesEl('gs-customer').value;if(!cid){toast('Pilih pelanggan');return;}await gkSalesSave(e,'gk_sales_lead',id,{customer_id:cid,title:gkSalesEl('gs-title').value.trim(),stage:gkSalesEl('gs-stage').value,estimated_value:Number(gkSalesEl('gs-value').value),event_date:gkSalesEl('gs-date').value||null,next_followup:gkSalesEl('gs-follow').value||null,event_id:gkSalesEl('gs-event').value||null,note:gkSalesEl('gs-note').value.trim()||null},'pipeline');}
+function gkSalesActivityForm(kind,customer='',lead=''){
+ gkSalesEl('gkSalesBody').innerHTML='<h3>Catat aktivitas pemasaran</h3><form onsubmit="gkSalesSaveActivity(event,\''+lead+'\')">'+gkSalesFormField('Aktivitas',gkSalesSelect('gs-kind',gkSalesOptions(Object.entries(gkSalesKinds),kind)))+gkSalesFormField('Pelanggan (jika terkait)',gkSalesSelect('gs-customer',gkSalesCustomerOptions(customer)))+gkSalesFormField('Tanggal',gkSalesInput('gs-date',gkSalesToday(),'date','required'))+gkSalesFormField('Hasil / catatan',gkSalesInput('gs-note','','text','required'))+'<button class="btn btn-primary" type="submit">Simpan hasil</button></form>'+gkSalesBtn('Kembali',"gkSalesTab('agenda')");
+}
+async function gkSalesSaveActivity(e,lead){e.preventDefault();await gkSalesSave(e,'gk_sales_activity','',{kind:gkSalesEl('gs-kind').value,customer_id:gkSalesEl('gs-customer').value||null,lead_id:lead||null,day:gkSalesEl('gs-date').value,note:gkSalesEl('gs-note').value.trim()},'agenda');}
+function gkSalesTargetForm(id=''){let x=gkSalesData.targets.find(t=>t.id===id)||{};gkSalesEl('gkSalesBody').innerHTML='<h3>Target bulanan</h3><form onsubmit="gkSalesSaveTarget(event,\''+id+'\')">'+gkSalesFormField('Bulan',gkSalesInput('gs-month',x.month?.slice(0,7)||gkSalesToday().slice(0,7),'month','required'))+gkSalesFormField('Gubukan (Rp)',gkSalesInput('gs-gub',x.gubukan||0,'number','min="0" required'))+gkSalesFormField('TOKBA (Rp)',gkSalesInput('gs-tok',x.tokba||0,'number','min="0" required'))+gkSalesFormField('Event',gkSalesInput('gs-events',x.events||0,'number','min="0" required'))+'<button class="btn btn-primary" type="submit">Simpan target</button></form>'+gkSalesBtn('Kembali',"gkSalesTab('target')");}
+async function gkSalesSaveTarget(e,id){e.preventDefault();await gkSalesSave(e,'gk_sales_target',id,{month:gkSalesEl('gs-month').value+'-01',gubukan:Number(gkSalesEl('gs-gub').value),tokba:Number(gkSalesEl('gs-tok').value),events:Number(gkSalesEl('gs-events').value)},'target');}
+async function gkSalesSave(e,table,id,data,tab){const btn=e.target.querySelector('button[type=submit]');btn.disabled=true;try{const result=id?await sbUpdate(table,id,data):await sbInsert(table,data);if(!Array.isArray(result)||!result.length)throw Error('Data tidak tersimpan');toast('Data marketing tersimpan');gkSalesCurrent=tab;await gkSalesLoad();}catch(err){gkSalesEl('gkSalesStatus').textContent=err.message;btn.disabled=false;}}
+function gkSalesQuoteForm(){
+ gkSalesEl('gkSalesBody').innerHTML='<h3>Kalkulator penawaran</h3><p style="font-size:12px">Masukkan HPP aktual per pax dan biaya tambahan. Harga belum otomatis mengambil resep; periksa sebelum dikirim.</p><form onsubmit="gkSalesQuoteCalculate(event)">'+gkSalesFormField('Pelanggan',gkSalesSelect('gs-customer',gkSalesCustomerOptions('')))+gkSalesFormField('Paket / menu',gkSalesSelect('gs-package',gkSalesOptions(['Zuppa Soup','Zuppa + Lasagna','Zuppa + Waffle Ice Cream','Zuppa + Lasagna + Waffle','Traditional Stall','Custom Stall'].map(k=>[k,k]),'Zuppa Soup')))+gkSalesFormField('Jumlah pax',gkSalesInput('gs-pax',100,'number','min="1" required'))+gkSalesFormField('HPP total menu per pax (Rp)',gkSalesInput('gs-hpp','','number','min="1" required'))+gkSalesFormField('Transport, tenaga & biaya lain (Rp)',gkSalesInput('gs-cost',0,'number','min="0" required'))+gkSalesFormField('Target margin penjualan (%)',gkSalesInput('gs-margin',25,'number','min="0" max="90" required'))+'<button class="btn btn-primary" type="submit">Hitung penawaran</button></form><div id="gs-quote-output"></div>';
+}
+function gkSalesQuoteCalculate(e){e.preventDefault();let pax=Number(gkSalesEl('gs-pax').value),cost=pax*Number(gkSalesEl('gs-hpp').value)+Number(gkSalesEl('gs-cost').value),margin=Number(gkSalesEl('gs-margin').value)/100,per=Math.ceil(cost/(1-margin)/pax/500)*500,total=per*pax,name=gkSalesName(gkSalesEl('gs-customer').value),menu=gkSalesEl('gs-package').value;let msg=['Assalamu’alaikum, '+(name==='—'?'Bapak/Ibu':name)+'.','Berikut estimasi penawaran Gubukan KRasti:',menu+' · '+pax+' pax','Harga per pax: '+rpFull(per),'Total: '+rpFull(total),'Harga menyesuaikan lokasi, tanggal dan kebutuhan acara. Terima kasih.'].join('\n');let out=gkSalesEl('gs-quote-output');out.replaceChildren();let result=document.createElement('div');result.textContent='Total HPP '+rpFull(cost)+' | Estimasi laba '+rpFull(total-cost)+' | Margin '+((total-cost)/total*100).toFixed(1)+'%';out.appendChild(result);let area=document.createElement('textarea');area.className='form-control';area.rows=7;area.value=msg;out.appendChild(area);let btn=document.createElement('button');btn.className='btn btn-secondary';btn.textContent='Salin penawaran';btn.onclick=async()=>{try{await navigator.clipboard.writeText(area.value);toast('Penawaran disalin');}catch(e){area.select();toast('Salin teks secara manual');}};out.appendChild(btn);}
+async function gkSalesPreview(){
+ try{const today=gkSalesToday();const [leads,acts]=await Promise.all([sbGet('gk_sales_lead','select=id,stage,next_followup'),sbGet('gk_sales_activity','day=eq.'+today+'&select=id,kind')]);const n=leads.filter(l=>!['menang','kalah'].includes(l.stage)&&l.next_followup&&l.next_followup<=today).length;gkSalesEl('gkSalesPreview').textContent=n+' follow-up jatuh tempo';gkSalesEl('gkSalesPreviewDetail').textContent=acts.length+' aktivitas tercatat hari ini · Buka agenda pemasaran';}catch(e){gkSalesEl('gkSalesPreviewDetail').textContent='Buka Marketing & Sales untuk memuat agenda';}
+}
+
 function gkAllHistory(){
   const now=new Date();
   state.period={mode:'custom',year:now.getFullYear(),month:now.getMonth()+1,customStart:'2000-01-01',customEnd:'2099-12-31',allHistory:true};
