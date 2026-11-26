@@ -881,8 +881,9 @@ select.form-control { appearance: none; }
 
       <!-- Total Saldo Akhir (Gubukan + Tokba + RT) -->
       <div class="card" style="border-color:rgba(96,160,240,0.3);background:linear-gradient(135deg,var(--bg2),rgba(96,160,240,0.04));margin-bottom:8px">
-        <div class="card-title">Total Saldo Akhir <span style="font-size:9px;color:var(--ink4)">(Total Jumlah Uang)</span></div>
+        <div class="card-title">Saldo Operasional <span style="font-size:9px;color:var(--ink4)">(Sesuai Catatan)</span></div>
         <div class="card-val" style="color:var(--blue)" id="d-total-saldo">—</div>
+        <div id="d-saldo-basis" style="font-size:11px;color:var(--ink3);margin-top:6px"></div>
       </div>
 
       <!-- Saldo Akhir 3 kolom: Gubukan, Tokba, RT -->
@@ -2342,6 +2343,7 @@ async function loadDashboard() {
     set('d-gk-saldo-akhir', rpFull(gkSaldoAkhir));
     set('d-tb-saldo-akhir', rpFull(tbSaldoAkhir));
     set('d-rt-saldo-akhir', rpFull(rtSaldoAkhir));
+    set('d-saldo-basis','Mutasi konvensional sejak Mei 2026, termasuk transaksi bertanggal mendatang. Arsip pembukuan lama tidak dibawa ke saldo operasional.');
     loadSimpanan6Bulan();
 
   } catch(err) {
@@ -4198,7 +4200,8 @@ async function gkOpenReconciliation(){
     menus.forEach(m=>menuMap.set(m.event_id,(menuMap.get(m.event_id)||0)+Number(m.total||0)));
     const div=(label,val)=>'<div class="row"><span class="row-label">'+label+'</span><span class="row-val">'+val+'</span></div>';
     out.innerHTML='<p>Cutover: 1 Mei 2026. Buku besar sebelum cutover, mutasi konvensional sesudahnya. Ini laporan pembanding, bukan saldo rekening bank terverifikasi.</p>'+
-      '<h3>Saldo berdasarkan catatan s.d. '+today+'</h3>'+
+      '<h3>Saldo operasional (semua mutasi konvensional)</h3>'+div('Gubukan',rpFull(sumNew(modern.filter(r=>r.entitas==='gubukan'))))+div('TOKBA',rpFull(sumNew(modern.filter(r=>r.entitas==='tokba'))))+div('RT',rpFull(sumNew(modern.filter(r=>r.entitas==='rt'))))+div('Total operasional',rpFull(sumNew(modern)))+div('Saldo operasional s.d. hari ini',rpFull(sumNew(realized)))+'<p>Saldo lama dipisahkan sesuai basis pembukuan sebelum pemulihan sistem. Transaksi bertanggal mendatang termasuk dalam total operasional catatan, bukan saldo kas terverifikasi.</p>'+
+      '<h3>Simulasi historis (bukan saldo operasional) s.d. '+today+'</h3>'+
       div('Usaha hingga 30 Apr 2026',rpFull(sumOld(oldUsaha)))+
       div('Mutasi Gubukan sejak Mei',rpFull(sumNew(latest('gubukan'))))+
       div('Mutasi TOKBA sejak Mei',rpFull(sumNew(latest('tokba'))))+
@@ -6717,9 +6720,9 @@ async function loadKvDashboard() {
 
     // Saldo akhir kumulatif semua waktu
     const [allGub, allTok, allRtAll, sawalRtAll] = await Promise.all([
-      sbGet('gk_riwayat_mutasi', `entitas=eq.gubukan&tanggal=lte.${today}&select=tipe,jumlah`),
-      sbGet('gk_riwayat_mutasi', `entitas=eq.tokba&tanggal=lte.${today}&select=tipe,jumlah`),
-      sbGet('gk_riwayat_mutasi', `entitas=eq.rt&tanggal=lte.${today}&select=tipe,jumlah`),
+      sbGet('gk_mutasi', 'entitas=eq.gubukan&select=tipe,jumlah,tanggal'),
+      sbGet('gk_mutasi', 'entitas=eq.tokba&select=tipe,jumlah,tanggal'),
+      sbGet('gk_mutasi', 'entitas=eq.rt&select=tipe,jumlah,tanggal'),
       sbGet('gk_saldo_awal', 'entitas=eq.rt&select=jumlah'),
     ]);
     const sumAll2 = arr => arr.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0)
@@ -6733,6 +6736,8 @@ async function loadKvDashboard() {
     set('d-gk-saldo-akhir', rpFull(gkSaldoAkhir2));
     set('d-tb-saldo-akhir', rpFull(tbSaldoAkhir2));
     set('d-rt-saldo-akhir', rpFull(rtSaldoAkhir2));
+    const futureNet=sumAll2([...allGub,...allTok,...allRtAll].filter(x=>x.tanggal>today));
+    set('d-saldo-basis','Mutasi konvensional sejak Mei 2026; arsip lama tidak dibawa ke saldo operasional. Termasuk transaksi bertanggal mendatang: '+rpFull(futureNet)+'. Saldo s.d. hari ini: '+rpFull(gkSaldoAkhir2+tbSaldoAkhir2+rtSaldoAkhir2-futureNet));
     if (kvSection) kvSection.style.display = 'none';
     loadSimpanan6Bulan();
 
@@ -6796,7 +6801,8 @@ async function loadKvPage(entitas) {
     const balance = masuk - keluar;
 
     // Saldo awal = saldo akhir bulan sebelumnya
-    const prevData = await sbGet('gk_riwayat_mutasi', `entitas=eq.${entitas}&tanggal=lte.${prevEnd}&select=tipe,jumlah`);
+    const cut='2026-05-01';
+    const prevData = await sbGet('gk_riwayat_mutasi', `entitas=eq.${entitas}&tanggal=lte.${prevEnd}&select=tipe,jumlah${start>=cut?'&sumber=eq.konvensional':''}`);
     let saldoAwal = prevData.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0)
                   - prevData.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+Number(r.jumlah||0),0);
 
@@ -6813,7 +6819,8 @@ async function loadKvPage(entitas) {
     }
 
     kvOpeningCache[entitas]=saldoAwal;
-    const saldoAkhir = saldoAwal + balance;
+    const lintasArsip=start<cut&&end>=cut;
+    const saldoAkhir = lintasArsip ? data.filter(r=>r.sumber==='konvensional').reduce((s,r)=>s+(r.tipe==='masuk'?1:-1)*Number(r.jumlah||0),0) + (entitas==='rt'?(kvSaldoAwal||[]).reduce((s,r)=>s+Number(r.jumlah||0),0):0) : saldoAwal + balance;
     set(`kv-${entitas==='tokba'?'tokba':entitas}-masuk`,   rpFull(masuk));
     set(`kv-${entitas==='tokba'?'tokba':entitas}-keluar`,  rpFull(keluar));
     set(`kv-${entitas==='tokba'?'tokba':entitas}-saldo`,   rpFull(saldoAkhir));
@@ -6864,7 +6871,9 @@ function renderKvList(entitas, data, tipe) {
     return (a.created_at||'') < (b.created_at||'') ? -1 : (a.created_at||'') > (b.created_at||'') ? 1 : 0;
   });
   let saldo = saldoAwal;
+  let seenConventional=false;
   const withSaldo = sorted_asc.map(r => {
+    if(r.sumber==='konvensional' && !seenConventional){if(sorted_asc.some(x=>x.sumber==='buku_besar'))saldo=entitas==='rt'?(kvSaldoAwal||[]).reduce((s,x)=>s+Number(x.jumlah||0),0):0;seenConventional=true;}
     if (r.tipe==='masuk') saldo += Number(r.jumlah||0);
     else saldo -= Number(r.jumlah||0);
     return {...r, _saldo: saldo};
@@ -6901,7 +6910,7 @@ function renderKvList(entitas, data, tipe) {
   const thStyle = `padding:8px 6px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;`;
 
   el.innerHTML = `
-  <div style="font-size:11px;color:var(--ink3);padding:8px 0">${filtered.length} transaksi · ${filtered.filter(r=>r.sumber==='buku_besar').length} arsip buku besar · ${filtered.filter(r=>r.sumber==='konvensional').length} konvensional</div>
+  <div style="font-size:11px;color:var(--ink3);padding:8px 0">${filtered.length} transaksi · ${filtered.filter(r=>r.sumber==='buku_besar').length} arsip buku besar · ${filtered.filter(r=>r.sumber==='konvensional').length} konvensional · saldo operasional dimulai dari pembukuan Mei 2026, terpisah dari saldo arsip.</div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
   <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:340px">
     <thead>
