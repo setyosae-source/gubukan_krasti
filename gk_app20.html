@@ -4330,7 +4330,7 @@ const gkSalesKinds={pelanggan:'Hubungi pelanggan lama',followup:'Follow-up calon
 const gkSalesDaily={pelanggan:5,followup:3,mitra:1,whatsapp:1,sosial:0,penawaran:1};
 function gkSalesEsc(v){return String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));}
 function gkSalesEl(id){return document.getElementById(id);}
-function gkSalesToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+function gkSalesToday(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day;}
 function gkSalesName(id){return gkSalesData.customers.find(x=>x.id===id)?.name||'—';}
 function gkSalesOpen(){if(!gkSession?.token)return;gkSalesEl('gkSalesDialog').showModal();gkSalesCurrent='agenda';gkSalesLoad();}
 async function gkSalesLoad(){
@@ -4359,7 +4359,7 @@ function gkSalesRender(){
  if(gkSalesCurrent==='agenda'){
   const act=d.activities.filter(x=>x.day===today),due=d.leads.filter(x=>!['menang','kalah'].includes(x.stage)&&x.next_followup&&x.next_followup<=today);
   const hist=d.events.filter(e=>e.tanggal<today&&!['inquiry','cancel'].includes(e.status));
-  const candidates=d.customers.filter(x=>!x.do_not_contact&&hist.some(e=>e.customer.trim().toLowerCase()===x.name_key)&&!d.activities.some(a=>a.customer_id===x.id&&a.day>=new Date(Date.now()-7*86400000).toISOString().slice(0,10))).sort((a,b)=>Number(!!b.contact)-Number(!!a.contact)).slice(0,5);
+  const candidates=d.customers.filter(x=>!x.do_not_contact&&hist.some(e=>e.customer?.trim().toLowerCase()===x.name_key)&&!d.activities.some(a=>a.customer_id===x.id&&a.day>=new Date(Date.now()-7*86400000).toISOString().slice(0,10))).sort((a,b)=>Number(!!b.contact)-Number(!!a.contact)).slice(0,5);
   b.innerHTML='<h3>Agenda '+today+'</h3>'+Object.entries(gkSalesKinds).map(([k,label])=>{const n=act.filter(a=>a.kind===k).length;return gkSalesBox('<b>'+label+'</b> · '+n+(gkSalesDaily[k]?' / '+gkSalesDaily[k]:'')+' '+gkSalesBtn('Catat hasil',"gkSalesActivityForm('"+k+"')"));}).join('')+
   '<h3>Follow-up jatuh tempo ('+due.length+')</h3>'+ (due.map(l=>gkSalesBox('<b>'+gkSalesEsc(gkSalesName(l.customer_id))+'</b><div>'+gkSalesEsc(l.title)+' · '+gkSalesEsc(l.next_followup)+' · '+rpFull(l.estimated_value)+'</div>'+gkSalesBtn('Buka prospek',"gkSalesLeadForm('"+l.id+"')")+gkSalesBtn('Catat follow-up',"gkSalesActivityForm('followup','"+l.customer_id+"','"+l.id+"')"))).join('')||'<p>Tidak ada follow-up jatuh tempo.</p>')+
   '<h3>Rekomendasi pelanggan lama</h3><p style="font-size:11px;color:var(--ink3)">Berdasarkan riwayat event dan aktivitas 7 hari terakhir; belum merupakan rekomendasi AI generatif.</p>'+ (candidates.map(x=>gkSalesBox('<b>'+gkSalesEsc(x.name)+'</b> · '+(x.contact?'Kontak tersedia':'Lengkapi kontak')+' '+gkSalesBtn('Detail',"gkSalesCustomerForm('"+x.id+"')")+gkSalesBtn('Catat kontak',"gkSalesActivityForm('pelanggan','"+x.id+"')"))).join('')||'<p>Belum ada kandidat.</p>')+
