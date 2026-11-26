@@ -797,6 +797,12 @@ select.form-control { appearance: none; }
 </style>
 </head>
 <body>
+<dialog id="gkArchiveDialog" style="width:min(92vw,430px);border:1px solid var(--border);border-radius:14px;background:var(--bg);color:var(--ink);padding:20px">
+<h2 style="font-size:18px;margin-top:0">Transaksi arsip</h2>
+<p style="font-size:12px;color:var(--ink3)">Berasal dari buku besar sebelum 1 Mei 2026. Data asli tidak disalin dan tidak dapat diedit dari mode konvensional.</p>
+<div id="gkArchiveBody" style="white-space:pre-wrap;font-size:14px;line-height:1.8"></div>
+<button class="btn btn-secondary" onclick="document.getElementById('gkArchiveDialog').close()" style="margin-top:12px">Tutup</button>
+</dialog>
 <dialog id="gkReconDialog" style="width:min(94vw,650px);max-height:85dvh;overflow:auto;border:1px solid var(--border);border-radius:14px;background:var(--bg);color:var(--ink);padding:20px">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
     <h2 style="font-size:19px;margin:0">Rekonsiliasi pembukuan</h2>
@@ -1967,9 +1973,11 @@ async function sbGet(table, params='') {
   return rows;
 }
 async function sbInsert(table, data) {
+  if(table==='gk_mutasi' && data?.tanggal && data.tanggal<'2026-05-01')throw new Error('Tanggal sebelum 1 Mei 2026 adalah periode arsip. Gunakan pembukuan lama untuk koreksi.');
   return sb(table, { method:'POST', body: JSON.stringify(data) });
 }
 async function sbUpdate(table, id, data) {
+  if(table==='gk_mutasi' && data?.tanggal && data.tanggal<'2026-05-01')throw new Error('Tanggal sebelum 1 Mei 2026 adalah periode arsip. Gunakan pembukuan lama untuk koreksi.');
   return sb(`${table}?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(data) });
 }
 async function sbDelete(table, id) {
@@ -6639,6 +6647,7 @@ function switchTabKv(el) {
 // KONVENSIONAL DATA
 // ══════════════════════════════════════════════════════════
 let kvMutasiCache = {}; // {gubukan:[], tokba:[], rt:[]}
+let kvOpeningCache = {};
 let kvMasterDesc  = []; // master deskripsi [{deskripsi,entitas,tipe,satuan,harga_default,kategori}]
 let kvMasterSatuan= []; // unique satuan list
 let kvMasterKategori = []; // unique kategori list
@@ -6666,9 +6675,9 @@ async function loadKvDashboard() {
     else { const y=p.year,m=p.month; const ld=new Date(y,m,0).getDate(); start=`${y}-${String(m).padStart(2,'0')}-01`; end=`${y}-${String(m).padStart(2,'0')}-${String(ld).padStart(2,'0')}`; }
 
     const [gubM, tokM, rtM, sawal, events, remindData] = await Promise.all([
-      sbGet('gk_mutasi',`entitas=eq.gubukan&tanggal=gte.${start}&tanggal=lte.${end}&select=tipe,jumlah`),
-      sbGet('gk_mutasi',`entitas=eq.tokba&tanggal=gte.${start}&tanggal=lte.${end}&select=tipe,jumlah`),
-      sbGet('gk_mutasi',`entitas=eq.rt&tanggal=gte.${start}&tanggal=lte.${end}&select=tipe,jumlah`),
+      sbGet('gk_riwayat_mutasi',`entitas=eq.gubukan&tanggal=gte.${start}&tanggal=lte.${end}&select=tipe,jumlah`),
+      sbGet('gk_riwayat_mutasi',`entitas=eq.tokba&tanggal=gte.${start}&tanggal=lte.${end}&select=tipe,jumlah`),
+      sbGet('gk_riwayat_mutasi',`entitas=eq.rt&tanggal=gte.${start}&tanggal=lte.${end}&select=tipe,jumlah`),
       sbGet('gk_saldo_awal','select=entitas,jumlah'),
       sbGet('gk_event',`tanggal=gte.${today}&status=neq.selesai&order=tanggal.asc&limit=5&select=*`),
       sbGet('gk_event',`tanggal=gte.${today}&status=in.(inquiry,booking,dp,lunas)&order=tanggal.asc&limit=10&select=*`),
@@ -6708,9 +6717,9 @@ async function loadKvDashboard() {
 
     // Saldo akhir kumulatif semua waktu
     const [allGub, allTok, allRtAll, sawalRtAll] = await Promise.all([
-      sbGet('gk_mutasi', 'entitas=eq.gubukan&select=tipe,jumlah'),
-      sbGet('gk_mutasi', 'entitas=eq.tokba&select=tipe,jumlah'),
-      sbGet('gk_mutasi', 'entitas=eq.rt&select=tipe,jumlah'),
+      sbGet('gk_riwayat_mutasi', `entitas=eq.gubukan&tanggal=lte.${today}&select=tipe,jumlah`),
+      sbGet('gk_riwayat_mutasi', `entitas=eq.tokba&tanggal=lte.${today}&select=tipe,jumlah`),
+      sbGet('gk_riwayat_mutasi', `entitas=eq.rt&tanggal=lte.${today}&select=tipe,jumlah`),
       sbGet('gk_saldo_awal', 'entitas=eq.rt&select=jumlah'),
     ]);
     const sumAll2 = arr => arr.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0)
@@ -6747,7 +6756,7 @@ async function loadKvDashboard() {
           </div>`).join('');
       }
     }
-  } catch(e) { /* silent */ }
+  } catch(e) { toast('❌ Dashboard riwayat: '+e.message,6000); console.error(e); }
 }
 
 async function loadKvPage(entitas) {
@@ -6779,7 +6788,7 @@ async function loadKvPage(entitas) {
     }
 
     // Fetch data bulan ini
-    const data = await sbGet('gk_mutasi', `entitas=eq.${entitas}&tanggal=gte.${start}&tanggal=lte.${end}&order=tanggal.desc,created_at.desc&select=*`);
+    const data = await sbGet('gk_riwayat_mutasi', `entitas=eq.${entitas}&tanggal=gte.${start}&tanggal=lte.${end}&order=tanggal.desc,created_at.desc&select=*`);
     kvMutasiCache[entitas] = data;
 
     const masuk  = data.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0);
@@ -6787,7 +6796,7 @@ async function loadKvPage(entitas) {
     const balance = masuk - keluar;
 
     // Saldo awal = saldo akhir bulan sebelumnya
-    const prevData = await sbGet('gk_mutasi', `entitas=eq.${entitas}&tanggal=lte.${prevEnd}&select=tipe,jumlah`);
+    const prevData = await sbGet('gk_riwayat_mutasi', `entitas=eq.${entitas}&tanggal=lte.${prevEnd}&select=tipe,jumlah`);
     let saldoAwal = prevData.filter(r=>r.tipe==='masuk').reduce((s,r)=>s+Number(r.jumlah||0),0)
                   - prevData.filter(r=>r.tipe==='keluar').reduce((s,r)=>s+Number(r.jumlah||0),0);
 
@@ -6803,6 +6812,7 @@ async function loadKvPage(entitas) {
       set(`kv-${entitas==='tokba'?'tokba':entitas}-saldoawal`, rpFull(saldoAwal));
     }
 
+    kvOpeningCache[entitas]=saldoAwal;
     const saldoAkhir = saldoAwal + balance;
     set(`kv-${entitas==='tokba'?'tokba':entitas}-masuk`,   rpFull(masuk));
     set(`kv-${entitas==='tokba'?'tokba':entitas}-keluar`,  rpFull(keluar));
@@ -6847,8 +6857,7 @@ function renderKvList(entitas, data, tipe) {
   const st = window._kvState[entitas];
 
   // Hitung saldo running — selalu ascending by tanggal
-  let saldoAwal = 0;
-  if (entitas === 'rt') saldoAwal = (kvSaldoAwal||[]).reduce((s,r)=>s+Number(r.jumlah||0),0);
+  let saldoAwal = Number(kvOpeningCache[entitas]||0);
   const sorted_asc = [...data].sort((a,b) => {
     const tCmp = (a.tanggal||'') < (b.tanggal||'') ? -1 : (a.tanggal||'') > (b.tanggal||'') ? 1 : 0;
     if (tCmp !== 0) return tCmp;
@@ -6872,6 +6881,7 @@ function renderKvList(entitas, data, tipe) {
     (r.tanggal||'').includes(q)
   ) : withSaldo;
 
+  if(tipe==='masuk'||tipe==='keluar') filtered=filtered.filter(r=>r.tipe===tipe);
   // Sort
   filtered = [...filtered].sort((a,b) => {
     let av = a[st.sortCol], bv = b[st.sortCol];
@@ -6891,6 +6901,7 @@ function renderKvList(entitas, data, tipe) {
   const thStyle = `padding:8px 6px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;`;
 
   el.innerHTML = `
+  <div style="font-size:11px;color:var(--ink3);padding:8px 0">${filtered.length} transaksi · ${filtered.filter(r=>r.sumber==='buku_besar').length} arsip buku besar · ${filtered.filter(r=>r.sumber==='konvensional').length} konvensional</div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
   <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:340px">
     <thead>
@@ -6907,7 +6918,7 @@ function renderKvList(entitas, data, tipe) {
         const masuk  = r.tipe==='masuk'  ? Number(r.jumlah||0) : 0;
         const keluar = r.tipe==='keluar' ? Number(r.jumlah||0) : 0;
         const bg = i%2===0 ? 'var(--bg2)' : 'var(--bg3)';
-        const detail = [r.kategori?`🏷 ${r.kategori}`:null, r.qty?`${r.qty}${r.satuan?' '+r.satuan:''}`:null, r.vendor?`🏪 ${r.vendor}`:null].filter(Boolean).join(' · ');
+        const detail = [r.sumber==='buku_besar'?'Arsip · hanya baca':null,r.kategori?`🏷 ${r.kategori}`:null, r.qty?`${r.qty}${r.satuan?' '+r.satuan:''}`:null, r.vendor?`🏪 ${r.vendor}`:null].filter(Boolean).join(' · ');
         const fotoIcon = r.foto_url ? '<span title="Ada foto struk" style="color:var(--gold);font-size:11px">📎</span> ' : '';
         return `<tr style="background:${bg};cursor:pointer" onclick="kvOpenDetail('${r.id}','${entitas}')">
           <td style="padding:8px 6px;color:var(--ink4);white-space:nowrap;border-bottom:1px solid var(--border);vertical-align:top">${fmtDateShort(r.tanggal)}</td>
@@ -7620,10 +7631,16 @@ async function kvSaveToMaster(entitas, tipe, deskripsi, satuan, harga, kategori)
   } catch(e) { /* silent */ }
 }
 
+function gkShowArchiveTransaction(r){
+  const label={gubukan:'Gubukan',tokba:'Toko Bahan',rt:'Rumah Tangga'}[r.entitas]||r.entitas;
+  document.getElementById('gkArchiveBody').textContent=[fmtDate(r.tanggal),label,r.deskripsi||'—',r.tipe==='masuk'?'Pemasukan: '+rpFull(r.jumlah):'Pengeluaran: '+rpFull(r.jumlah),r.kategori?'Kategori: '+r.kategori:'',r.vendor?'Vendor: '+r.vendor:'',r.qty?'Qty: '+r.qty+' '+(r.satuan||''):''].filter(Boolean).join('\n');
+  document.getElementById('gkArchiveDialog').showModal();
+}
 function kvOpenDetail(id, entitas) {
   const data = kvMutasiCache[entitas]||[];
   const r = data.find(x=>x.id===id);
   if (!r) return;
+  if(r.sumber==='buku_besar'){gkShowArchiveTransaction(r);return;}
   kvCurrentEntitas = entitas;
   kvCurrentTipe    = r.tipe;
   const label = {gubukan:'Gubukan',tokba:'Toko Bahan',rt:'RT'}[entitas]||entitas;
