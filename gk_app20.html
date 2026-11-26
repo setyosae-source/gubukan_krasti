@@ -797,6 +797,28 @@ select.form-control { appearance: none; }
 </style>
 </head>
 <body>
+<dialog id="gkControlDialog" style="width:min(94vw,680px);max-height:85dvh;overflow:auto;border:1px solid var(--border);border-radius:14px;background:var(--bg);color:var(--ink);padding:18px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+<h2 style="font-size:18px;margin:0">Kontrol Pembukuan</h2>
+<button class="btn btn-secondary" style="width:auto" onclick="document.getElementById('gkControlDialog').close()">Tutup</button></div>
+<div id="gkControlSummary" style="font-size:12px;margin:12px 0;white-space:pre-wrap"></div>
+<form id="gkMonthForm" onsubmit="gkSaveReview(event)" style="display:grid;gap:8px;border:1px solid var(--border);padding:12px;border-radius:10px">
+<strong>Rekonsiliasi akhir bulan</strong>
+<p style="font-size:11px;color:var(--ink3);margin:0">Masukkan saldo uang aktual pada akhir bulan, bukan angka perkiraan dari aplikasi. Buku konvensional sejak Mei 2026.</p>
+<label>Bulan<input id="gkReviewMonth" type="month" class="form-control" min="2026-05" required></label>
+<label>Saldo aktual Gubukan (Rp)<input id="gkReviewGub" type="number" step="1" class="form-control" required></label>
+<label>Saldo aktual TOKBA (Rp)<input id="gkReviewTok" type="number" step="1" class="form-control" required></label>
+<label>Saldo aktual RT (Rp)<input id="gkReviewRT" type="number" step="1" class="form-control" required></label>
+<label>Catatan verifikasi<textarea id="gkReviewNote" maxlength="1000" class="form-control"></textarea></label>
+<label id="gkLockLabel" style="display:none;align-items:center;gap:8px"><input type="checkbox" id="gkReviewLock"> Kunci buku sampai akhir bulan ini (pemilik saja)</label>
+<button class="btn btn-primary" type="submit" id="gkReviewSave">Simpan pemeriksaan</button>
+<div id="gkReviewResult" role="status" style="white-space:pre-wrap;font-size:12px"></div>
+</form>
+<h3 style="font-size:14px;margin:16px 0 8px">Riwayat pemeriksaan</h3>
+<div id="gkReviewList"></div>
+<h3 style="font-size:14px;margin:16px 0 8px">Audit perubahan terbaru (maks. 100)</h3>
+<div id="gkAuditList"></div>
+</dialog>
 <dialog id="gkArchiveDialog" style="width:min(92vw,430px);border:1px solid var(--border);border-radius:14px;background:var(--bg);color:var(--ink);padding:20px">
 <h2 style="font-size:18px;margin-top:0">Transaksi arsip</h2>
 <p style="font-size:12px;color:var(--ink3)">Berasal dari buku besar sebelum 1 Mei 2026. Data asli tidak disalin dan tidak dapat diedit dari mode konvensional.</p>
@@ -4159,6 +4181,7 @@ function openPeriod() {
   html += `<div style="margin-top:12px;display:grid;gap:8px">
     <button class="btn btn-secondary" onclick="gkAllHistory()">Semua riwayat</button>
     <button class="btn btn-secondary" onclick="gkOpenReconciliation()">Rekonsiliasi pembukuan</button>
+    <button class="btn btn-secondary" onclick="gkOpenControls()">Kontrol pembukuan · Audit & Backup</button>
     <div style="display:flex;gap:8px"><button class="btn btn-secondary" onclick="setPeriodYear(${curY})">${curY}</button><button class="btn btn-secondary" onclick="setPeriodYear(${curY-1})">${curY-1}</button></div>
     <label style="font-size:12px">Rentang tanggal sendiri</label>
     <input type="date" id="custom-start" class="form-control" value="${periodStart()}">
@@ -4223,6 +4246,62 @@ async function gkOpenReconciliation(){
       archived.map(e=>div('#'+String(e.no_event).replace(/[^0-9A-Za-z-]/g,'')+' · '+e.tanggal,rpFull(Number(reportMap.get(e.id)?.omzet||0)-(menuMap.get(e.id)||0)))).join('')+
       '<p>Selisih omzet ditampilkan sebagai penyesuaian arsip; rincian menu asli tidak diubah.</p>';
   }catch(e){out.textContent='Rekonsiliasi gagal dimuat: '+e.message;}
+}
+function gkControlOwner(){return gkSession?.kind!=='krasti'&&gkSession?.role==='pemilik';}
+async function gkControlRpc(name,body={}){
+  const headers={'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'};
+  headers[gkSession.kind==='krasti'?'x-krasti-session':'x-ubnb-staff']=gkSession.token;
+  const response=await fetch(`${SUPA_URL}/rest/v1/rpc/${name}`,{method:'POST',headers,body:JSON.stringify(body)});
+  const data=await response.json();
+  if(!response.ok)throw new Error(data?.message||'Akses gagal');
+  return data;
+}
+function gkControlAppend(parent,content){
+  const div=document.createElement('div');
+  div.style.cssText='font-size:12px;padding:8px;border-bottom:1px solid var(--border);white-space:pre-wrap;overflow-wrap:anywhere';
+  div.textContent=content; parent.appendChild(div);return div;
+}
+async function gkLoadControls(){
+  const status=document.getElementById('gkControlSummary');
+  try{
+    const d=await gkControlRpc('krasti_control_status');
+    status.textContent='Backup terakhir: '+(d.backup?new Date(d.backup.created_at).toLocaleString('id-ID',{timeZone:'Asia/Jakarta'}):'Belum tersedia')+' WIB\nTabel: '+Object.keys(d.backup?.row_counts||{}).length+' · Total catatan audit: '+d.audit_count;
+    const a=document.getElementById('gkAuditList');a.replaceChildren();
+    if(!d.changes.length)gkControlAppend(a,'Belum ada perubahan setelah audit diaktifkan.');
+    d.changes.forEach(x=>{
+      const row=gkControlAppend(a,[new Date(x.occurred_at).toLocaleString('id-ID',{timeZone:'Asia/Jakarta'})+' · '+x.actor,x.operation+' · '+x.table_name,x.tanggal||'',x.deskripsi||'',x.jumlah!=null?rpFull(x.jumlah):'',x.restored_at?'Sudah dipulihkan':''].filter(Boolean).join('\n'));
+      if(x.can_restore&&gkControlOwner()){
+        const btn=document.createElement('button');btn.type='button';btn.className='btn btn-secondary';btn.textContent='Pulihkan transaksi';btn.style.marginTop='6px';
+        btn.onclick=async()=>{if(!confirm('Pulihkan transaksi asli? Saldo akan berubah sesuai nominal catatan.'))return;btn.disabled=true;try{await gkControlRpc('krasti_restore_mutasi',{p_audit_id:x.id});toast('Transaksi dipulihkan');await gkLoadControls();loadPage(state.currentTab);}catch(e){toast(e.message,5000);btn.disabled=false;}};
+        row.appendChild(btn);
+      }
+    });
+    const reviews=document.getElementById('gkReviewList');reviews.replaceChildren();
+    if(!d.reviews.length)gkControlAppend(reviews,'Belum ada pemeriksaan bulanan.');
+    d.reviews.forEach(x=>gkControlAppend(reviews,x.month.slice(0,7)+' · '+(x.locked?'DITUTUP':'Pemeriksaan')+' · '+x.actor+'\n'+['gubukan','tokba','rt'].map(k=>k+': buku '+rpFull(x.book_balance[k])+' | aktual '+rpFull(x.actual_balance[k])+' | selisih '+rpFull(Number(x.actual_balance[k])-Number(x.book_balance[k]))).join('\n')+'\n'+x.note));
+  }catch(e){status.textContent='Kontrol belum bisa dimuat: '+e.message;}
+}
+function gkOpenControls(){
+  if(!gkSession?.token)return;
+  const now=new Date();const prev=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const month=localDate(prev).slice(0,7);
+  document.getElementById('gkMonthForm').reset();
+  const field=document.getElementById('gkReviewMonth');field.max=month;field.value=month;
+  document.getElementById('gkLockLabel').style.display=gkControlOwner()?'flex':'none';
+  document.getElementById('gkReviewResult').textContent='';
+  document.getElementById('gkControlDialog').showModal();gkLoadControls();
+}
+async function gkSaveReview(event){
+  event.preventDefault();
+  const btn=document.getElementById('gkReviewSave'),out=document.getElementById('gkReviewResult');
+  const lock=gkControlOwner()&&document.getElementById('gkReviewLock').checked;
+  if(lock&&!confirm('Kunci semua transaksi konvensional sampai akhir bulan terpilih? Pastikan seluruh transaksi telah selesai diperiksa.'))return;
+  btn.disabled=true;out.textContent='Memeriksa saldo…';
+  try{
+    const d=await gkControlRpc('krasti_month_reconcile',{p_month:document.getElementById('gkReviewMonth').value+'-01',p_gubukan:Number(document.getElementById('gkReviewGub').value),p_tokba:Number(document.getElementById('gkReviewTok').value),p_rt:Number(document.getElementById('gkReviewRT').value),p_note:document.getElementById('gkReviewNote').value,p_lock:lock});
+    out.textContent=(d.locked?'Buku ditutup.':'Pemeriksaan tersimpan. Belum dikunci.')+'\n'+['gubukan','tokba','rt'].map(k=>k+': buku '+rpFull(d.book[k])+' | selisih '+rpFull(Number(d.actual[k])-Number(d.book[k]))).join('\n');
+    await gkLoadControls();
+  }catch(e){out.textContent=e.message;}finally{btn.disabled=false;}
 }
 function gkAllHistory(){
   const now=new Date();
@@ -7612,11 +7691,9 @@ async function deleteKvMutasi() {
   if (!id) return;
   if (!confirm('Hapus catatan ini?')) return;
   try {
-    // Hapus foto dari storage kalau ada
-    const oldUrl = _kvFotoCurrentUrl;
+    // Simpan foto asli agar catatan yang diarsipkan dapat dipulihkan.
     await sbDelete('gk_mutasi', id);
-    if (oldUrl) await kvFotoDeleteFromStorage(oldUrl);
-    toast('✅ Data dihapus');
+    toast('✅ Data dihapus; riwayat pemulihan tersimpan');
     closeSheet('sheetKvForm');
     loadKvPage(entitas);
   } catch(e) { toast('❌ '+e.message); }
